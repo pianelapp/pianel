@@ -20,3 +20,20 @@ mac:
   extendInfo:
     NSBluetoothAlwaysUsageDescription: Pianel uses Bluetooth to communicate with your Roland piano.
     NSBluetoothPeripheralUsageDescription: Pianel uses Bluetooth to communicate with your Roland piano.
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  # Drop a build/icon.ico (256x256+) here to brand the Windows build;
+  # without it, electron-builder falls back to the default Electron icon.
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Pianel

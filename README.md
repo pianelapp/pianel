@@ -58,6 +58,10 @@ npm run dev:web         # Web PWA
 npm run build:desktop   # desktop
 npm run build:web       # web
 
+# Package desktop installers
+npm run package:desktop:mac   # macOS .dmg (universal)
+npm run package:desktop:win   # Windows NSIS installer + portable .exe
+
 # Tests / lint / typecheck (across workspaces)
 npm test
 npm run lint
