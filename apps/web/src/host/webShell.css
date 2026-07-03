@@ -1,0 +1,55 @@
+/*
+ * Web-host shell overrides (Task 5.1).
+ *
+ * Loaded after the reused desktop `global.css`. It adapts the reused renderer
+ * to a browser/tablet/desktop context without forking any desktop component:
+ *
+ *  1. Strip the Electron-only macOS titlebar-drag chrome. The reused desktop
+ *     `App` renders a 36px (h-9) draggable strip for the macOS traffic lights.
+ *     In the browser that region is meaningless, so collapse it to zero height
+ *     and neutralize the (no-op in a browser) drag affordance.
+ *  2. Viewport / touch configuration for tablets and desktops: comfortable
+ *     touch targets, no tap-highlight flash, no overscroll bounce, and no
+ *     accidental double-tap zoom on the controls.
+ */
+
+/* 1 — collapse the macOS titlebar-drag strip in the browser host. */
+.titlebar-drag {
+  height: 0 !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  -webkit-app-region: no-drag;
+}
+
+/* 2 — touch + viewport configuration for tablets and desktops. */
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+#root {
+  /* Honor safe-area insets on tablets with notches/rounded corners. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  box-sizing: border-box;
+}
+
+body {
+  /* Remove the iOS/Android tap highlight and prevent overscroll bounce so the
+     reused fixed-layout UI behaves like an installed app on touch devices. */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* Interactive controls should not trigger double-tap zoom on touch screens. */
+button,
+[role='button'],
+[role='tab'],
+input[type='range'],
+select {
+  touch-action: manipulation;
+}

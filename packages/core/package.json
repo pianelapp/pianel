@@ -1,0 +1,36 @@
+{
+  "name": "@pianel/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "./engine": "./src/engine/IPianoEngine.ts",
+    "./engine/fp30x": "./src/engine/fp30x/FP30XEngine.ts",
+    "./transport": "./src/transport/types.ts",
+    "./transport/ble": "./src/transport/ble/framing.ts",
+    "./services": "./src/services/PianoService.ts",
+    "./store": "./src/store/index.ts",
+    "./types": "./src/types/types.ts",
+    "./types/metronomePatterns": "./src/types/metronomePatterns.ts",
+    "./types/voicingMode": "./src/types/voicingMode.ts",
+    "./helpers/metronomePatterns": "./src/helpers/metronomePatterns.ts",
+    "./helpers/voicingMode": "./src/helpers/voicingMode.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "build": "tsc",
+    "dev": "tsc --watch --preserveWatchOutput"
+  },
+  "dependencies": {
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.13",
+    "jest": "^29.6.3",
+    "ts-jest": "^29.2.6",
+    "typescript": "^5.8.3"
+  }
+}

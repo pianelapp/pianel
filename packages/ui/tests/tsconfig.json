@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "types": ["node", "jest"],
+    "baseUrl": ".",
+    "paths": {
+      "@pianel/core": ["../../core/src/store/index.ts"],
+      "@pianel/core/*": ["../../core/src/*"]
+    }
+  },
+  "include": ["**/*", "../src/**/*"]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "pianel",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "theme:generate": "node ./scripts/generate-theme.mjs",
+    "test": "npm run test -ws --if-present",
+    "lint": "npm run lint -ws --if-present",
+    "typecheck": "npm run typecheck -ws --if-present",
+    "build:core": "npm run build -w @pianel/core",
+    "build:desktop": "npm run build -w @pianel/desktop",
+    "build:web": "npm run build:core && npm run build -w @pianel/web",
+    "build": "npm run build:core && npm run build:desktop",
+    "dev:core": "npm run dev -w @pianel/core",
+    "dev:desktop": "npm run dev -w @pianel/desktop",
+    "dev:web": "npm run dev -w @pianel/web",
+    "dev": "concurrently --names core,desktop --prefix-colors blue,green \"npm:dev:core\" \"npm:dev:desktop\"",
+    "postinstall": "npm run build:core"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  },
+  "engines": {
+    "node": ">= 22.8.0"
+  }
+}

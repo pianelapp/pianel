@@ -1,0 +1,22 @@
+appId: com.codewally.pianel
+productName: Pianel
+directories:
+  buildResources: build
+  output: release/${version}
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron/*'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+mac:
+  entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - target: dmg
+      arch:
+        - universal
+  category: public.app-category.music
+  hardenedRuntime: false
+  extendInfo:
+    NSBluetoothAlwaysUsageDescription: Pianel uses Bluetooth to communicate with your Roland piano.
+    NSBluetoothPeripheralUsageDescription: Pianel uses Bluetooth to communicate with your Roland piano.

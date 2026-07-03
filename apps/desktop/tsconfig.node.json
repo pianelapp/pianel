@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["electron/**/*"],
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "out",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020"],
+    "module": "ESNext",
+    "paths": {
+      "@pianel/core/*": ["../../packages/core/dist/*"]
+    }
+  }
+}
