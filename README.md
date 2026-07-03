@@ -29,7 +29,7 @@ Pianel is built from a shared TypeScript core so the same logic drives every tar
 |--------|-------|-----------|--------|
 | **Desktop** | Electron (Windows & macOS), Vite + React | Web Bluetooth / Web MIDI | ✅ In this repo |
 | **Web** | Progressive Web App, Vite + React | Web Bluetooth / Web MIDI | ✅ In this repo |
-| **Mobile** | React Native, iOS | Bluetooth LE | 🚧 Planned |
+| **Mobile** | React Native, iOS/Android | Bluetooth LE / USB | 🚧 On Hold |
 
 ## Monorepo structure
 
