@@ -1,0 +1,17 @@
+{
+  // Editor/type-check config for the test suite. The package build config
+  // (../tsconfig.json) intentionally excludes `tests` so specs aren't emitted
+  // into dist; that leaves test files without jest globals in the IDE. This
+  // nested config is found first by the TS language server when a test file is
+  // opened, giving it `jest`/`describe`/`expect` types and the source imports.
+  // Not referenced by `build`/`typecheck` scripts, so it doesn't affect emit.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "rootDir": "..",
+    "types": ["node", "jest"]
+  },
+  "include": ["**/*.ts", "../src/**/*.ts"],
+  "exclude": ["../node_modules", "../dist"]
+}

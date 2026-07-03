@@ -24,8 +24,24 @@ beforeAll(() => {
   createProfilesStore({storage: inMemoryStorage});
 });
 
+// Track every service created in a test so we can tear it down afterwards. A
+// completed connect() starts a heartbeat interval, an auto-reconnect monitor
+// interval, and a state-read safety timeout; without destroy() those keep the
+// Jest worker's event loop alive and trigger the "worker failed to exit
+// gracefully" warning.
+const services: ConnectionService[] = [];
+function createService(transport: Transport): ConnectionService {
+  const service = new ConnectionService(transport);
+  services.push(service);
+  return service;
+}
+
 beforeEach(() => {
   useConnectionStore.getState().reset();
+});
+
+afterEach(async () => {
+  await Promise.all(services.splice(0).map(service => service.destroy()));
 });
 
 function makeFakeBleTransport(devicesToYield: DiscoveredDevice[]): Transport {
@@ -77,7 +93,7 @@ describe('ConnectionService.scan accumulation', () => {
       {id: 'A', name: 'FP-30X #1'},
       {id: 'B', name: 'FP-30X #2'},
     ]);
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await service.scan(10);
     expect(useConnectionStore.getState().discoveredDevices).toEqual([
       {id: 'A', name: 'FP-30X #1'},
@@ -90,21 +106,21 @@ describe('ConnectionService.scan accumulation', () => {
       {id: 'A', name: 'FP-30X'},
       {id: 'B', name: 'FP-30X'},
     ]);
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await service.scan(10);
     expect(transport.stopScan).not.toHaveBeenCalled();
   });
 
   it('finalizes status to discovered when scan yielded results', async () => {
     const transport = makeFakeBleTransport([{id: 'A', name: 'FP-30X'}]);
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await service.scan(10);
     expect(useConnectionStore.getState().status).toBe('discovered');
   });
 
   it('finalizes status to idle when scan yielded nothing', async () => {
     const transport = makeFakeBleTransport([]);
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await service.scan(10);
     expect(useConnectionStore.getState().status).toBe('idle');
   });
@@ -114,7 +130,7 @@ describe('ConnectionService.scan accumulation', () => {
     (transport.scan as jest.Mock).mockImplementationOnce(async () => {
       throw new Error('scan failure');
     });
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await expect(service.scan(10)).rejects.toThrow('scan failure');
     expect(useConnectionStore.getState().status).toBe('idle');
   });
@@ -125,7 +141,7 @@ describe('ConnectionService.connect identity propagation', () => {
     const transport = makeFakeBleTransport([]);
     // Pre-populate the discovery list (as if a scan had run).
     useConnectionStore.getState().addDiscoveredDevice({id: 'XYZ', name: 'My FP-30X'});
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
 
     // The identify path will time out and fall back to default engine, but the
     // store snapshot for name/id should be set before transport.connect runs.
@@ -139,7 +155,7 @@ describe('ConnectionService.connect identity propagation', () => {
   it('does nothing to identity when deviceId is empty (legacy chooser path)', async () => {
     const transport = makeFakeBleTransport([]);
     useConnectionStore.getState().addDiscoveredDevice({id: 'XYZ', name: 'My FP-30X'});
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
 
     await service.connect('').catch(() => undefined);
 
@@ -151,7 +167,7 @@ describe('ConnectionService.connect identity propagation', () => {
 
   it('does nothing when the supplied id is not in discoveredDevices', async () => {
     const transport = makeFakeBleTransport([]);
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
 
     await service.connect('UNKNOWN').catch(() => undefined);
 
@@ -167,7 +183,7 @@ describe('ConnectionService.refreshDiscoveredDevices', () => {
       {id: 'X', name: 'Roland Output'},
       {id: 'Y', name: 'Other MIDI'},
     ]);
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await service.refreshDiscoveredDevices();
     expect(transport.listDevices).toHaveBeenCalled();
     expect(useConnectionStore.getState().discoveredDevices).toEqual([
@@ -181,7 +197,7 @@ describe('ConnectionService.refreshDiscoveredDevices', () => {
   it('clears stale entries before populating fresh ones', async () => {
     const transport = makeFakeWebMIDITransport([{id: 'NEW', name: 'fresh'}]);
     useConnectionStore.getState().addDiscoveredDevice({id: 'STALE', name: 'old'});
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await service.refreshDiscoveredDevices();
     expect(useConnectionStore.getState().discoveredDevices).toEqual([
       {id: 'NEW', name: 'fresh'},
@@ -190,7 +206,7 @@ describe('ConnectionService.refreshDiscoveredDevices', () => {
 
   it('falls back to scan when listDevices is undefined', async () => {
     const transport = makeFakeBleTransport([{id: 'Y', name: 'BLE Piano'}]);
-    const service = new ConnectionService(transport);
+    const service = createService(transport);
     await service.refreshDiscoveredDevices(10);
     expect(transport.scan).toHaveBeenCalled();
     expect(useConnectionStore.getState().discoveredDevices).toEqual([
