@@ -3,7 +3,7 @@
 > An offline-first control surface for the Roland FP‑30X digital piano — the display and controls your piano never had.
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
-![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Web-lightgrey)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Web-lightgrey)
 
 **Pianel** turns your desktop or browser into a far richer control panel for the Roland FP‑30X digital piano. The FP‑30X ships with almost no on-board display and only a handful of button combinations — Pianel surfaces the hundreds of tones, live status, presets, and performance controls that are otherwise locked behind an undocumented Roland SysEx protocol.
 
@@ -27,7 +27,7 @@ Pianel is built from a shared TypeScript core so the same logic drives every tar
 
 | Target | Stack | Transport | Status |
 |--------|-------|-----------|--------|
-| **Desktop** | Electron (macOS), Vite + React | Web Bluetooth / Web MIDI | ✅ In this repo |
+| **Desktop** | Electron (Windows & macOS), Vite + React | Web Bluetooth / Web MIDI | ✅ In this repo |
 | **Web** | Progressive Web App, Vite + React | Web Bluetooth / Web MIDI | ✅ In this repo |
 | **Mobile** | React Native, iOS | Bluetooth LE | 🚧 Planned |
 
