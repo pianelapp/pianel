@@ -65,6 +65,10 @@ export default defineConfig({
         globPatterns: [
           "**/*.{js,css,html,ttf,woff,woff2,png,svg,json,ico}",
         ],
+        // staticwebapp.config.json is Azure SWA's server-side config: it is
+        // never served over HTTP (Azure 404s it), so it must not enter the
+        // precache or the service worker's install step would fail offline.
+        globIgnores: ["staticwebapp.config.json"],
       },
       devOptions: {
         // Avoid serving stale SW caches during development.
