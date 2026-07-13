@@ -1,9 +1,16 @@
 import React from 'react';
+import type { LongPressBindings } from '../../hooks/useLongPress';
 
 interface HardwareButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
+  /**
+   * Optional touch long-press gesture bindings (from {@link useLongPress})
+   * spread onto the underlying element alongside the existing click/context-menu
+   * wiring. Carries the pointer handlers and native-suppression styles.
+   */
+  longPress?: LongPressBindings;
   className?: string;
   active?: boolean;
   disabled?: boolean;
@@ -14,6 +21,7 @@ export function HardwareButton({
   children,
   onClick,
   onContextMenu,
+  longPress,
   className = '',
   active = false,
   disabled = false,
@@ -33,6 +41,7 @@ export function HardwareButton({
     <button
       onClick={onClick}
       onContextMenu={onContextMenu}
+      {...longPress}
       disabled={disabled}
       className={`
         flex items-center justify-center

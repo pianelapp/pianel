@@ -145,3 +145,8 @@ vite.config.ts.timestamp-*
 # Pianel / Electron build artifacts
 apps/desktop/release/
 apps/desktop/out/
+
+#Claude
+.sdd
+.claude
+CLAUDE.md

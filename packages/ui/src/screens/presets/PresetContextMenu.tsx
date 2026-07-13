@@ -4,7 +4,9 @@
  * closes on outside click or Escape.
  */
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useClampedMenuPosition } from '../../hooks/useClampedMenuPosition';
+import { useDismissable } from '../../hooks/useDismissable';
 
 interface PresetContextMenuProps {
   x: number;
@@ -28,27 +30,14 @@ export function PresetContextMenu({
   onAction,
 }: PresetContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('mousedown', onClick);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('mousedown', onClick);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
+  const { top, left } = useClampedMenuPosition(x, y, ref);
+  useDismissable(ref, onClose);
 
   return (
     <div
       ref={ref}
       role="menu"
-      style={{ position: 'fixed', top: y, left: x }}
+      style={{ position: 'fixed', top, left }}
       className={`z-50 min-w-[140px] rounded-xl border shadow-lg overflow-hidden ${
         isLightMode
           ? 'bg-white border-zinc-200'

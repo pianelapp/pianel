@@ -226,6 +226,9 @@ export function ProfilesScreen({ isLightMode }: ProfilesScreenProps) {
                   evt.preventDefault();
                   setMenu({ kind: 'open', profile, x: evt.clientX, y: evt.clientY });
                 }}
+                onLongPress={point =>
+                  setMenu({ kind: 'open', profile, x: point.x, y: point.y })
+                }
               />
             ))}
           </div>

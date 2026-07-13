@@ -5,6 +5,7 @@
  */
 
 import type { Preset } from '../../store';
+import { useLongPress, type LongPressPoint } from '../../hooks/useLongPress';
 
 interface PresetTileProps {
   position: number;
@@ -12,6 +13,12 @@ interface PresetTileProps {
   isLightMode: boolean;
   onClick: () => void;
   onContextMenu: (event: React.MouseEvent) => void;
+  /**
+   * Touch long-press equivalent of the desktop right-click. Enabled only for
+   * filled tiles; empty tiles keep the recognizer inert so an empty-tile
+   * long-press takes no secondary action and never triggers the primary apply.
+   */
+  onLongPress?: (point: LongPressPoint) => void;
 }
 
 export function PresetTile({
@@ -20,7 +27,13 @@ export function PresetTile({
   isLightMode,
   onClick,
   onContextMenu,
+  onLongPress,
 }: PresetTileProps) {
+  const longPress = useLongPress({
+    enabled: preset !== null && onLongPress !== undefined,
+    onLongPress: point => onLongPress?.(point),
+  });
+
   if (!preset) {
     return (
       <button
@@ -42,6 +55,7 @@ export function PresetTile({
     <button
       onClick={onClick}
       onContextMenu={onContextMenu}
+      {...longPress}
       aria-label={`Apply preset "${preset.label}"`}
       className={`
         flex flex-col items-center justify-center p-2 rounded-[1rem] border-2
