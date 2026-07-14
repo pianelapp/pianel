@@ -96,7 +96,7 @@ export function QuickToneSlots({ isLightMode }: QuickToneSlotsProps) {
       const confirmed = await showAlert({
         variant: "error",
         title: "Clear slot?",
-        message: "Clear this Quick assign slot? This cannot be undone.",
+        message: "Clear this Quick-assign slot? This cannot be undone.",
         confirmLabel: "Clear",
         cancelLabel: "Cancel",
       });
