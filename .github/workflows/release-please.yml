@@ -1,0 +1,27 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          # App installation / fine-grained PAT (Contents: R/W, Pull requests: R/W).
+          # Needed so (a) the published release can trigger deploy-web.yml and
+          # (b) the Release PR is opened regardless of the org "Allow Actions to
+          # create PRs" setting. The default GITHUB_TOKEN cannot do either.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

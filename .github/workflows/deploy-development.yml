@@ -1,28 +1,26 @@
-name: Deploy Web (production)
+name: Deploy Web (development)
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [development]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-web-production
-  cancel-in-progress: false
+  group: deploy-web-development
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    name: Deploy to production
+    name: Deploy to development
     runs-on: ubuntu-latest
-    # Required-reviewer gate on the `production` environment pauses the run for
-    # admin approval before the deploy step runs.
+    # Maintainer sandbox: no required reviewers. Declaring the environment is
+    # required if the Azure token is scoped as an environment secret, and gives
+    # GitHub deployment history + a surfaced URL.
     environment:
-      name: production
+      name: development
     steps:
       - uses: actions/checkout@v4
         with:
-          # Deploy the exact release tag. On workflow_dispatch, select a tag as
-          # the ref (github.ref) so it still matches the environment's v* rule.
-          ref: ${{ github.event.release.tag_name || github.ref }}
           submodules: true
           lfs: false
       - name: Build And Deploy
@@ -31,7 +29,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_MANGO_PLANT_0E878670F }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          # No deployment_environment => defaults to the production environment.
+          deployment_environment: "development"
           app_location: "./"
           api_location: ""
           app_build_command: "npm run build:web"
