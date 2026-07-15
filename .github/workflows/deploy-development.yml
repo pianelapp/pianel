@@ -13,11 +13,7 @@ jobs:
   deploy:
     name: Deploy to development
     runs-on: ubuntu-latest
-    # Maintainer sandbox: no required reviewers. Declaring the environment is
-    # required if the Azure token is scoped as an environment secret, and gives
-    # GitHub deployment history + a surfaced URL.
-    environment:
-      name: development
+    environment: development
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,7 +22,7 @@ jobs:
       - name: Build And Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_MANGO_PLANT_0E878670F }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_DEV }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           deployment_environment: "development"

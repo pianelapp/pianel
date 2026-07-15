@@ -13,10 +13,8 @@ jobs:
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
-    # Required-reviewer gate on the `production` environment pauses the run for
-    # admin approval before the deploy step runs.
-    environment:
-      name: production
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+    environment: production
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,7 +26,7 @@ jobs:
       - name: Build And Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_MANGO_PLANT_0E878670F }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROD }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           # No deployment_environment => defaults to the production environment.

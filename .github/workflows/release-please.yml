@@ -16,12 +16,13 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ vars.RELEASE_PLEASE_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
       - uses: googleapis/release-please-action@v4
         with:
-          # App installation / fine-grained PAT (Contents: R/W, Pull requests: R/W).
-          # Needed so (a) the published release can trigger deploy-web.yml and
-          # (b) the Release PR is opened regardless of the org "Allow Actions to
-          # create PRs" setting. The default GITHUB_TOKEN cannot do either.
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
