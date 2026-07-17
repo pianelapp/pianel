@@ -6,6 +6,7 @@
 
 import Check from 'lucide-react/dist/esm/icons/check';
 import type { Profile } from '../../store';
+import { useLongPress, type LongPressPoint } from '../../hooks/useLongPress';
 
 interface ProfileRowProps {
   profile: Profile;
@@ -14,6 +15,13 @@ interface ProfileRowProps {
   isLightMode: boolean;
   onClick: () => void;
   onContextMenu: (event: React.MouseEvent) => void;
+  /**
+   * Touch long-press equivalent of the desktop right-click. Reports the touch
+   * coordinates so the parent can anchor the actions menu there. Existing
+   * click/context-menu wiring is untouched so long-press never triggers the
+   * primary load.
+   */
+  onLongPress?: (point: LongPressPoint) => void;
 }
 
 export function ProfileRow({
@@ -23,11 +31,17 @@ export function ProfileRow({
   isLightMode,
   onClick,
   onContextMenu,
+  onLongPress,
 }: ProfileRowProps) {
+  const longPress = useLongPress({
+    enabled: onLongPress !== undefined,
+    onLongPress: point => onLongPress?.(point),
+  });
   return (
     <button
       onClick={onClick}
       onContextMenu={onContextMenu}
+      {...longPress}
       aria-pressed={isActive}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors text-left ${
         isLightMode

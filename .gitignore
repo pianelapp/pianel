@@ -146,6 +146,7 @@ vite.config.ts.timestamp-*
 apps/desktop/release/
 apps/desktop/out/
 
+#Claude
 .sdd
 .claude
 CLAUDE.md

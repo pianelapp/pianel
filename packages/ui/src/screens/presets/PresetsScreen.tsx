@@ -63,6 +63,15 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
     [byPosition],
   );
 
+  const handlePresetLongPress = useCallback(
+    (position: number, point: { x: number; y: number }) => {
+      const filled = byPosition.get(position);
+      if (!filled) return;
+      setMenu({ kind: 'open', preset: filled, x: point.x, y: point.y });
+    },
+    [byPosition],
+  );
+
   const handleSave = useCallback(
     async (label: string) => {
       if (dialog.kind !== 'save') return;
@@ -135,6 +144,7 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
               isLightMode={isLightMode}
               onClick={() => handlePresetClick(i)}
               onContextMenu={evt => handlePresetContextMenu(i, evt)}
+              onLongPress={preset ? point => handlePresetLongPress(i, point) : undefined}
             />
           );
         })}

@@ -10,6 +10,8 @@ import type { CaptureSource } from "@pianel/core/helpers/quickToneSlot";
 import { useTones } from "../../hooks/useTones";
 import { getPianoService } from "../../hooks/usePiano";
 import { HardwareButton } from "../../components/controls/HardwareButton";
+import { useLongPress } from "../../hooks/useLongPress";
+import { showAlert } from "../../components/modals/AlertModal";
 
 interface QuickToneSlotsProps {
   isLightMode: boolean;
@@ -85,12 +87,31 @@ export function QuickToneSlots({ isLightMode }: QuickToneSlotsProps) {
     [perfSnapshot, setQuickToneSlot],
   );
 
+  // Shared clear-confirmation gate for both the mouse right-click and the touch
+  // long-press. Clears the slot only when the dialog resolves confirmed.
+  const requestClearSlot = useCallback(
+    async (index: 0 | 1 | 2) => {
+      // Nothing to clear on an empty slot — skip the destructive prompt.
+      if (quickToneSlots[index] === null) return;
+      const confirmed = await showAlert({
+        variant: "error",
+        title: "Clear slot?",
+        message: "Clear this Quick-assign slot? This cannot be undone.",
+        confirmLabel: "Clear",
+        cancelLabel: "Cancel",
+      });
+      if (confirmed) setQuickToneSlot(index, null);
+    },
+    [quickToneSlots, setQuickToneSlot],
+  );
+
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, index: 0 | 1 | 2) => {
+      // Suppress the native context menu and open the confirm gate.
       e.preventDefault();
-      setQuickToneSlot(index, null);
+      void requestClearSlot(index);
     },
-    [setQuickToneSlot],
+    [requestClearSlot],
   );
 
   const slotEntries: Array<{ slot: QuickToneSlot | null; index: 0 | 1 | 2 }> = [
@@ -114,10 +135,13 @@ export function QuickToneSlots({ isLightMode }: QuickToneSlotsProps) {
             : null;
 
         return (
-          <HardwareButton
+          <QuickToneSlotButton
             key={index}
+            index={index}
+            isEmpty={isEmpty}
             onClick={() => handleClick(slot, index)}
             onContextMenu={(e) => handleContextMenu(e, index)}
+            onClear={requestClearSlot}
             active={isActive}
             isLightMode={isLightMode}
             className="flex-1 h-full flex flex-col gap-1.5 relative overflow-hidden"
@@ -168,9 +192,59 @@ export function QuickToneSlots({ isLightMode }: QuickToneSlotsProps) {
                 click to assign
               </span>
             )}
-          </HardwareButton>
+          </QuickToneSlotButton>
         );
       })}
     </div>
+  );
+}
+
+interface QuickToneSlotButtonProps {
+  index: 0 | 1 | 2;
+  isEmpty: boolean;
+  onClick: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onClear: (index: 0 | 1 | 2) => void;
+  active: boolean;
+  isLightMode: boolean;
+  className?: string;
+  children: React.ReactNode;
+}
+
+/**
+ * Thin per-slot wrapper that calls `useLongPress` once (hooks cannot run inside
+ * the inline slot `.map`) and forwards the recognizer bindings + suppression
+ * styles through the button primitive. The touch long-press converges on the
+ * same `onClear` gate the mouse right-click uses.
+ */
+function QuickToneSlotButton({
+  index,
+  isEmpty,
+  onClick,
+  onContextMenu,
+  onClear,
+  active,
+  isLightMode,
+  className,
+  children,
+}: QuickToneSlotButtonProps) {
+  // Keep the recognizer inert on empty slots so it neither opens the (no-op)
+  // clear gate nor arms the click-suppression guard that would swallow the
+  // following assign-tap.
+  const longPress = useLongPress({
+    enabled: !isEmpty,
+    onLongPress: () => onClear(index),
+  });
+  return (
+    <HardwareButton
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+      longPress={longPress}
+      active={active}
+      isLightMode={isLightMode}
+      className={className}
+    >
+      {children}
+    </HardwareButton>
   );
 }

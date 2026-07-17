@@ -3,7 +3,9 @@
  * Export / Delete) shown when the user right-clicks a profile row.
  */
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useClampedMenuPosition } from '../../hooks/useClampedMenuPosition';
+import { useDismissable } from '../../hooks/useDismissable';
 
 export type ProfileMenuAction =
   | 'setDefault'
@@ -41,27 +43,14 @@ export function ProfileContextMenu({
     { id: 'delete', label: 'Delete' },
   ];
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('mousedown', onClick);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('mousedown', onClick);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
+  const { top, left } = useClampedMenuPosition(x, y, ref);
+  useDismissable(ref, onClose);
 
   return (
     <div
       ref={ref}
       role="menu"
-      style={{ position: 'fixed', top: y, left: x }}
+      style={{ position: 'fixed', top, left }}
       className={`z-50 min-w-[140px] rounded-xl border shadow-lg overflow-hidden ${
         isLightMode
           ? 'bg-white border-zinc-200'
