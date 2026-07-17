@@ -16,7 +16,7 @@ jobs:
     if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Deploy the exact release tag. On workflow_dispatch, select a tag as
           # the ref (github.ref) so it still matches the environment's v* rule.
