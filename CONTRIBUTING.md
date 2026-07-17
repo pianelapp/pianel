@@ -42,6 +42,23 @@ npm test              # tests across workspaces
 - Use clear, descriptive commit messages (Conventional Commits style is encouraged: `feat:`, `fix:`, `docs:`, `refactor:`, etc.).
 - Open the PR against `main` and fill in the PR template.
 
+## Versioning & releases
+
+Pianel uses a single [SemVer](https://semver.org/) number for the whole product,
+automated with [release-please](https://github.com/googleapis/release-please)
+from your [Conventional Commits](https://www.conventionalcommits.org/). Your
+commit type decides the release:
+
+- `fix:` / `feat:` → a patch release while we are pre-1.0 (e.g. `0.1.0 → 0.1.1`).
+- `feat!:` / `fix!:` / a `BREAKING CHANGE:` footer → a minor release while
+  pre-1.0 (e.g. `0.1.0 → 0.2.0`).
+- `chore:` `docs:` `ci:` `refactor:` `test:` `style:` `build:` `perf:` → no
+  release on their own.
+
+You don't tag or bump versions by hand: release-please keeps an open "Release
+PR" that updates the version and `CHANGELOG.md`, and merging it cuts the release.
+See [docs/VERSIONING.md](docs/VERSIONING.md) for the full rules.
+
 ## Reverse-engineering & legal note
 
 Pianel implements an undocumented protocol determined by **black-box observation** of the piano's own MIDI/Bluetooth traffic. Please do **not** contribute any material copied from Roland's source code, firmware, or copyrighted documentation. Original observations, your own measurements, and independently written implementations are welcome.

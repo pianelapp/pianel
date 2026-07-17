@@ -1,47 +1,36 @@
-name: Azure Static Web Apps CI/CD
+name: Deploy Web (production)
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-production
+  cancel-in-progress: false
 
 jobs:
-  build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+  deploy:
+    name: Deploy to production
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+    environment: production
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
+          # Deploy the exact release tag. On workflow_dispatch, select a tag as
+          # the ref (github.ref) so it still matches the environment's v* rule.
+          ref: ${{ github.event.release.tag_name || github.ref }}
           submodules: true
           lfs: false
       - name: Build And Deploy
-        id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_MANGO_PLANT_0E878670F }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROD }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "./" # App source code path
-          api_location: "" # Api source code path - optional
-          app_build_command: "npm run build:web" # App build command
-          output_location: "apps/web/dist" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
-
-  close_pull_request_job:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    name: Close Pull Request Job
-    steps:
-      - name: Close Pull Request
-        id: closepullrequest
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_MANGO_PLANT_0E878670F }}
-          action: "close"
+          # No deployment_environment => defaults to the production environment.
+          app_location: "./"
+          api_location: ""
+          app_build_command: "npm run build:web"
+          output_location: "apps/web/dist"
