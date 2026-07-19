@@ -62,7 +62,7 @@ export default function App() {
 
   return (
     <div
-      className={`h-screen w-screen min-w-[320px] flex flex-col font-sans select-none overflow-hidden transition-colors duration-500 ${
+      className={`h-dvh w-screen min-w-[320px] flex flex-col font-sans select-none overflow-hidden transition-colors duration-500 ${
         isLightMode ? 'bg-slate-100' : 'bg-zinc-950'
       }`}>
       {/* macOS traffic-light strip (draggable) */}
