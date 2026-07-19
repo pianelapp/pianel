@@ -139,11 +139,11 @@ export function MetronomeModal({ open, onClose, isLightMode }: MetronomeModalPro
       <Dialog.Portal>
         <Dialog.Overlay className={`fixed inset-0 z-50 flex items-center justify-center ${overlayClass}`}>
           <Dialog.Content
-            className={`relative w-[640px] max-h-[85vh] rounded-3xl shadow-2xl border flex flex-col overflow-hidden transition-colors ${contentClass}`}
+            className={`relative w-[640px] max-w-[92vw] max-h-[85vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden transition-colors ${contentClass}`}
             aria-label="Metronome Settings"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
-            <div className={`flex items-center justify-between px-5 py-4 border-b shrink-0 ${headerBgClass} ${dividerClass}`}>
+            <div className={`flex items-center justify-between px-6 py-5 border-b shrink-0 ${headerBgClass} ${dividerClass}`}>
               <Dialog.Title className={`text-sm font-bold tracking-widest uppercase ${isLightMode ? 'text-zinc-700' : 'text-zinc-300'}`}>
                 Metronome Settings
               </Dialog.Title>
