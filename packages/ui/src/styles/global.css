@@ -17,6 +17,28 @@ html {
   font-size: 18px;
 }
 
+/* Mobile root-font scaling. The boundary mirrors MEDIA.mobile in
+   src/constants/breakpoints.ts — these two are the only places the mobile boundary
+   appears and must stay in sync. Lowering the root font-size scales the
+   rem-based type/spacing/component sizes down on phone-width viewports; it is
+   independent of the pixel-based tier queries used by useBreakpoint. */
+@media (max-width: 599.98px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Minimum touch hit-area guard for primary mobile controls (applied by the
+   App-integration wave). Keeps controls tappable after the mobile down-scaling
+   above. */
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 * {
   box-sizing: border-box;
 }

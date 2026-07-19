@@ -20,6 +20,24 @@ if (typeof globalThis.PointerEvent === 'undefined') {
   (globalThis as any).PointerEvent = MouseEvent;
 }
 
+// jsdom lacks the pointer-capture and scroll APIs Radix Popover touches while
+// opening/closing. Provide benign no-op stubs so the dropdown interactions do
+// not throw under jsdom.
+if (typeof Element !== 'undefined') {
+  if (typeof Element.prototype.hasPointerCapture === 'undefined') {
+    Element.prototype.hasPointerCapture = () => false;
+  }
+  if (typeof Element.prototype.setPointerCapture === 'undefined') {
+    Element.prototype.setPointerCapture = () => {};
+  }
+  if (typeof Element.prototype.releasePointerCapture === 'undefined') {
+    Element.prototype.releasePointerCapture = () => {};
+  }
+  if (typeof Element.prototype.scrollIntoView === 'undefined') {
+    Element.prototype.scrollIntoView = () => {};
+  }
+}
+
 if (typeof window !== 'undefined' && !window.matchMedia) {
   // Minimal non-matching stub; overridden per-test where behaviour matters.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
