@@ -120,7 +120,7 @@ export default function App() {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-hidden relative">
+          <div className="flex-1 overflow-x-hidden overflow-y-auto relative">
             {activeTab === 'DISPLAY' && (
               <DisplayScreen isLightMode={isLightMode} />
             )}
