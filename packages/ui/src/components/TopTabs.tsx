@@ -54,13 +54,11 @@ export function TopTabs(props: TopTabsProps) {
           <Popover.Trigger asChild>
             <button
               aria-label={`${activeTab} tab. Show other tabs`}
-              className={`tap-target flex items-center gap-1.5 px-5 py-2 rounded-lg border font-bold tracking-widest text-sm uppercase transition-colors ${
-                isLightMode
-                  ? 'bg-zinc-300/50 border-zinc-200 text-cyan-700'
-                  : 'bg-zinc-900/50 border-zinc-800/50 text-cyan-400'
-              }`}>
+              className={`flex ${tabButtonClass(true, isLightMode)}`}>
               <span className="truncate">{activeTab}</span>
-              <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
+              <span className="ml-2 flex items-center justify-center">
+                <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
+              </span>
             </button>
           </Popover.Trigger>
           <Popover.Portal>
