@@ -71,9 +71,7 @@ export function ChordDisplay({ isLightMode }: ChordDisplayProps) {
           ref={textRef}
           style={marqueeStyle}
           className={`font-mono text-2xl leading-none font-bold tracking-widest whitespace-nowrap ${
-            isLightMode
-              ? 'text-cyan-700'
-              : 'text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.8)]'
+            isLightMode ? 'text-cyan-700' : 'text-cyan-400'
           } ${overflows ? 'animate-marquee-x' : ''}`}>
           {displayName}
         </span>
