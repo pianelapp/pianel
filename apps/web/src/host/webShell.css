@@ -14,12 +14,12 @@
  */
 
 /* 1 — collapse the macOS titlebar-drag strip in the browser host. */
-.titlebar-drag {
+/* .titlebar-drag {
   height: 0 !important;
   min-height: 0 !important;
   border: 0 !important;
   -webkit-app-region: no-drag;
-}
+} */
 
 /* 2 — touch + viewport configuration for tablets and desktops. */
 html,
