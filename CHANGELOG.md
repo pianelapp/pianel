@@ -5,6 +5,13 @@ automatically by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/); see
 [docs/VERSIONING.md](docs/VERSIONING.md) for the versioning rules.
 
+## [0.1.2](https://github.com/pianelapp/pianel/compare/v0.1.1...v0.1.2) (2026-07-20)
+
+
+### Features
+
+* responsiveness improvements ([37ec6ef](https://github.com/pianelapp/pianel/commit/37ec6ef38ded8fa1814e5a7b4d1ad7b5502e6bd3))
+
 ## [0.1.1](https://github.com/pianelapp/pianel/compare/v0.1.0...v0.1.1) (2026-07-17)
 
 
