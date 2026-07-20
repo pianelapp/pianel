@@ -15,24 +15,26 @@ export function DisplayScreen({ isLightMode }: DisplayScreenProps) {
   const [optionsOpen, setOptionsOpen] = useState(false);
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center px-8 gap-5 pb-2">
-      <ToneSlotTabs
-        mode={mode}
-        activeSlot={activeSlot}
-        onChangeSlot={setActiveSlot}
-        onOpenOptions={() => setOptionsOpen(true)}
-        isLightMode={isLightMode}
-      />
-      <ToneSelector isLightMode={isLightMode} />
-      <ChordDisplay isLightMode={isLightMode} />
-      <QuickToneSlots isLightMode={isLightMode} />
+    <div className="w-full h-full overflow-y-auto custom-scrollbar">
+      <div className="min-h-full flex flex-col items-center justify-center px-8 gap-5 py-2">
+        <ToneSlotTabs
+          mode={mode}
+          activeSlot={activeSlot}
+          onChangeSlot={setActiveSlot}
+          onOpenOptions={() => setOptionsOpen(true)}
+          isLightMode={isLightMode}
+        />
+        <ToneSelector isLightMode={isLightMode} />
+        <ChordDisplay isLightMode={isLightMode} />
+        <QuickToneSlots isLightMode={isLightMode} />
 
-      <VoicingOptionsModal
-        open={optionsOpen}
-        onClose={() => setOptionsOpen(false)}
-        isLightMode={isLightMode}
-        mode={mode}
-      />
+        <VoicingOptionsModal
+          open={optionsOpen}
+          onClose={() => setOptionsOpen(false)}
+          isLightMode={isLightMode}
+          mode={mode}
+        />
+      </div>
     </div>
   );
 }

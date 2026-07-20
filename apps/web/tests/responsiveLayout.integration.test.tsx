@@ -1,5 +1,5 @@
 /**
- * Task 7.1 — responsive Library layout + drawer-dismissal verification.
+ *  Responsive Library layout + drawer-dismissal verification.
  *
  * Verifies the reused shared `@pianel/ui` renderer, as mounted by the web host,
  * exhibits the required responsive Library behavior on the web target:
@@ -20,6 +20,7 @@ import { PianoService } from '@pianel/core/services/PianoService';
 import { getDefaultEngine } from '@pianel/core/engine/registry';
 import type { Transport } from '@pianel/core/transport/types';
 import { setPianoService } from '@pianel/ui/hooks/usePiano';
+import { SIDEBAR_BREAKPOINTS } from '@pianel/ui/constants/breakpoints';
 import { initStores, webStorage } from '../src/store';
 
 /** Inert transport stub — the responsive test never connects to a piano. */
@@ -37,7 +38,7 @@ const stubTransport = {
 function setViewport(isNarrow: boolean) {
   const listeners = new Set<(e: MediaQueryListEvent) => void>();
   window.matchMedia = ((query: string) => {
-    const matches = query.includes('max-width: 900px') ? isNarrow : false;
+    const matches = query === SIDEBAR_BREAKPOINTS.mobile ? isNarrow : false;
     return {
       matches,
       media: query,
@@ -131,7 +132,7 @@ describe('Responsive Library layout (web host, reused renderer)', () => {
     // `flex-col items-start` layout class (distinct from category buttons).
     const firstTone = within(drawer)
       .getAllByRole('button')
-      .find((b) => b.className.includes('flex-col items-start'));
+      .find(b => b.className.includes('flex-col items-start'));
     expect(firstTone).toBeTruthy();
     fireEvent.click(firstTone as HTMLElement);
 

@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { usePresets } from '../../hooks/usePresets';
 import { PRESET_TILE_COUNT } from '../../store';
 import type { Preset } from '../../store';
@@ -32,6 +33,8 @@ type MenuState =
 export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
   const { presets, savePresetToTile, applyPreset, updatePreset, renamePreset, deletePreset } =
     usePresets();
+
+  const isMobile = useBreakpoint().viewport === 'mobile';
 
   const [dialog, setDialog] = useState<DialogState>({ kind: 'closed' });
   const [menu, setMenu] = useState<MenuState>({ kind: 'closed' });
@@ -133,7 +136,12 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
 
   return (
     <div className="w-full h-full flex flex-col px-8 py-4">
-      <div className="flex-1 grid grid-cols-4 grid-rows-2 gap-3 pb-3">
+      <div
+        className={
+          isMobile
+            ? 'flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-3'
+            : 'flex-1 grid grid-cols-4 grid-rows-2 gap-3 pb-3'
+        }>
         {Array.from({ length: PRESET_TILE_COUNT }, (_, i) => {
           const preset = byPosition.get(i) ?? null;
           return (
@@ -142,6 +150,7 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
               position={i}
               preset={preset}
               isLightMode={isLightMode}
+              className={isMobile ? 'min-h-[72px] shrink-0' : undefined}
               onClick={() => handlePresetClick(i)}
               onContextMenu={evt => handlePresetContextMenu(i, evt)}
               onLongPress={preset ? point => handlePresetLongPress(i, point) : undefined}

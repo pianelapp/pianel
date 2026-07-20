@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import LibraryBig from 'lucide-react/dist/esm/icons/library-big';
 import Search from 'lucide-react/dist/esm/icons/search';
+import X from 'lucide-react/dist/esm/icons/x';
 import Star from 'lucide-react/dist/esm/icons/star';
 import { useTones } from '../hooks/useTones';
 import { useFavorites } from '../hooks/useFavorites';
@@ -14,11 +15,11 @@ interface LibrarySidebarProps {
 
 const FAVORITES_IDX = -1;
 
-export function LibrarySidebar({ isLightMode, className, onAfterSelect }: LibrarySidebarProps) {
-  // `useTones()` with no arg follows the active slot from appSettingsStore:
-  // categories, activeTone highlight, and tone writes all route to whichever
-  // tab (Tone 1/Tone 2/Upper/Lower) the user is editing. The library never
-  // needs to read voice mode itself.
+export function LibrarySidebar({
+  isLightMode,
+  className,
+  onAfterSelect,
+}: LibrarySidebarProps) {
   const {
     slot,
     categories,
@@ -123,13 +124,11 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
     return (
       <div
         key={tone.id}
-        className={`${toneItemBase} ${isActive ? toneItemActive : toneItemInactive}`}
-      >
+        className={`${toneItemBase} ${isActive ? toneItemActive : toneItemInactive}`}>
         <button
           onClick={() => handleToneClick(tone)}
           aria-pressed={isActive}
-          className="flex flex-col items-start min-w-0 flex-1 text-left"
-        >
+          className="flex flex-col items-start min-w-0 flex-1 text-left">
           <span
             className={`text-lg tracking-wide font-bold truncate ${
               isActive
@@ -139,8 +138,7 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
                 : isLightMode
                   ? 'text-zinc-700'
                   : 'text-zinc-300'
-            }`}
-          >
+            }`}>
             {tone.name}
           </span>
           <span
@@ -152,17 +150,15 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
                 : isLightMode
                   ? 'text-zinc-400'
                   : 'text-zinc-600'
-            }`}
-          >
+            }`}>
             {subtitleSegments.join(' · ')}
           </span>
         </button>
         <button
-          onClick={(e) => handleStarClick(e, tone.id)}
+          onClick={e => handleStarClick(e, tone.id)}
           aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
           aria-pressed={isFav}
-          className="p-1 rounded-full transition-colors hover:bg-zinc-500/10 shrink-0 ml-2"
-        >
+          className="p-1 rounded-full transition-colors hover:bg-zinc-500/10 shrink-0 ml-2">
           <Star
             className={`w-4 h-4 transition-colors ${isFav ? starActiveColor : starInactiveColor}`}
             fill={isFav ? 'currentColor' : 'none'}
@@ -188,8 +184,7 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
 
   return (
     <div
-      className={`h-full flex flex-col border-r transition-colors z-10 ${containerClass} ${className ?? 'w-[30vw] shrink-0'}`}
-    >
+      className={`h-full flex flex-col border-r transition-colors z-10 ${containerClass} ${className ?? 'w-[30vw] shrink-0'}`}>
       {/* Header + search */}
       <div className="p-4 pb-2 shrink-0">
         <div className="flex items-center gap-2 mb-4">
@@ -199,8 +194,7 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
           <h2
             className={`text-2xl font-bold tracking-wide ${
               isLightMode ? 'text-zinc-800' : 'text-zinc-100'
-            }`}
-          >
+            }`}>
             Library
           </h2>
         </div>
@@ -216,12 +210,24 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
             placeholder="Search tones..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className={`w-full pl-9 pr-3 py-2 text-lg rounded-md outline-none transition-all ${
+            className={`w-full pl-9 pr-9 py-2 text-lg rounded-md outline-none transition-all ${
               isLightMode
                 ? 'bg-zinc-200/50 border border-zinc-300 text-zinc-800 placeholder-zinc-500 focus:border-[#519B9F] focus:ring-1 focus:ring-[#519B9F]/20'
                 : 'bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500 shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:border-cyan-700'
             }`}
           />
+          {searchQuery.length > 0 && (
+            <button
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors hover:bg-zinc-500/20 ${
+                isLightMode
+                  ? 'text-zinc-400 hover:text-zinc-600'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}>
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -236,13 +242,14 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
               <span
                 className={`block text-base px-1 py-2 ${
                   isLightMode ? 'text-zinc-400' : 'text-zinc-600'
-                }`}
-              >
+                }`}>
                 No tones match &ldquo;{searchQuery}&rdquo;
               </span>
             ) : (
               <div className="flex flex-col gap-0.5">
-                {searchResults.map(t => renderToneRow(t, { showCategory: true }))}
+                {searchResults.map(t =>
+                  renderToneRow(t, { showCategory: true }),
+                )}
               </div>
             )}
           </div>
@@ -251,16 +258,14 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
         <div className="flex-1 min-h-0 flex">
           {/* Categories column (with Favorites pinned at top) */}
           <div
-            className={`shrink-0 basis-[40%] min-w-[110px] flex flex-col border-r ${dividerClass}`}
-          >
+            className={`shrink-0 basis-[45%] min-w-[110px] flex flex-col border-r ${dividerClass}`}>
             <div className="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar">
               <div className="flex flex-col gap-0.5">
                 <button
                   key={FAVORITES_IDX}
                   onClick={handleFavoritesClick}
                   aria-pressed={favoritesSelected}
-                  className={`${categoryItemBase} ${favoritesSelected ? categoryItemActive : categoryItemInactive}`}
-                >
+                  className={`${categoryItemBase} ${favoritesSelected ? categoryItemActive : categoryItemInactive}`}>
                   <span className="flex items-center gap-2 text-lg font-bold tracking-wide truncate">
                     <Star
                       className={`w-4 h-4 shrink-0 ${
@@ -279,28 +284,27 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
                   <span
                     className={`text-sm mt-0.5 block ${
                       isLightMode ? 'text-zinc-400' : 'text-zinc-600'
-                    }`}
-                  >
-                    {favorites.length} {favorites.length === 1 ? 'tone' : 'tones'}
+                    }`}>
+                    {favorites.length}{' '}
+                    {favorites.length === 1 ? 'tone' : 'tones'}
                   </span>
                 </button>
                 {categories.map((cat, idx) => {
-                  const isActive = !favoritesSelected && idx === selectedCategoryIdx;
+                  const isActive =
+                    !favoritesSelected && idx === selectedCategoryIdx;
                   return (
                     <button
                       key={cat.id}
                       onClick={() => handleCategoryClick(idx)}
                       aria-pressed={isActive}
-                      className={`${categoryItemBase} ${isActive ? categoryItemActive : categoryItemInactive}`}
-                    >
+                      className={`${categoryItemBase} ${isActive ? categoryItemActive : categoryItemInactive}`}>
                       <span className="block text-lg font-bold tracking-wide truncate">
                         {cat.name}
                       </span>
                       <span
                         className={`text-sm mt-0.5 block ${
                           isLightMode ? 'text-zinc-400' : 'text-zinc-600'
-                        }`}
-                      >
+                        }`}>
                         {cat.tones.length} tones
                       </span>
                     </button>
@@ -315,14 +319,12 @@ export function LibrarySidebar({ isLightMode, className, onAfterSelect }: Librar
             <span className={sectionHeaderClass}>{rightColumnLabel}</span>
             <div
               ref={tonesScrollRef}
-              className="flex-1 overflow-y-auto px-3 pb-3 custom-scrollbar"
-            >
+              className="flex-1 overflow-y-auto px-3 pb-3 custom-scrollbar">
               {rightColumnTones.length === 0 ? (
                 <span
                   className={`block text-base px-1 py-2 ${
                     isLightMode ? 'text-zinc-400' : 'text-zinc-600'
-                  }`}
-                >
+                  }`}>
                   {rightColumnEmptyText}
                 </span>
               ) : (

@@ -58,6 +58,11 @@ declare module 'lucide-react/dist/esm/icons/music-2' {
   const Icon: LucideIcon;
   export default Icon;
 }
+declare module 'lucide-react/dist/esm/icons/music-3' {
+  import type { LucideIcon } from 'lucide-react';
+  const Icon: LucideIcon;
+  export default Icon;
+}
 declare module 'lucide-react/dist/esm/icons/play' {
   import type { LucideIcon } from 'lucide-react';
   const Icon: LucideIcon;
@@ -139,6 +144,11 @@ declare module 'lucide-react/dist/esm/icons/refresh-cw' {
   export default Icon;
 }
 declare module 'lucide-react/dist/esm/icons/check' {
+  import type { LucideIcon } from 'lucide-react';
+  const Icon: LucideIcon;
+  export default Icon;
+}
+declare module 'lucide-react/dist/esm/icons/chevron-down' {
   import type { LucideIcon } from 'lucide-react';
   const Icon: LucideIcon;
   export default Icon;
