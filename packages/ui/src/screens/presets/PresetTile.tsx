@@ -11,6 +11,7 @@ interface PresetTileProps {
   position: number;
   preset: Preset | null;
   isLightMode: boolean;
+  className?: string;
   onClick: () => void;
   onContextMenu: (event: React.MouseEvent) => void;
   /**
@@ -25,6 +26,7 @@ export function PresetTile({
   position,
   preset,
   isLightMode,
+  className,
   onClick,
   onContextMenu,
   onLongPress,
@@ -44,7 +46,7 @@ export function PresetTile({
           isLightMode
             ? 'border-zinc-300 bg-zinc-50/50 hover:bg-zinc-200/50 text-zinc-400'
             : 'border-zinc-800 bg-transparent hover:bg-zinc-800/30 text-zinc-700'
-        }`}
+        } ${className ?? ''}`}
       >
         <span className="font-bold tracking-widest text-sm uppercase">+ Empty</span>
       </button>
@@ -65,6 +67,7 @@ export function PresetTile({
             ? 'bg-gradient-to-b from-[#E9F0F8] to-[#D5E1EE] border-[#9DB4CE] shadow-[0_3px_0_#A8BDD4,0_4px_8px_rgba(0,0,0,0.1)] active:shadow-[0_0px_0_#A8BDD4,0_2px_4px_rgba(0,0,0,0.1)] text-zinc-800'
             : 'bg-gradient-to-b from-zinc-800 to-zinc-900 border-cyan-800/80 shadow-[0_3px_0_#112933,inset_0_0_15px_rgba(6,182,212,0.15)] active:shadow-[0_0px_0_#112933,inset_0_0_15px_rgba(6,182,212,0.15)] text-cyan-50'
         }
+        ${className ?? ''}
       `}
     >
       <span
