@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import LibraryBig from 'lucide-react/dist/esm/icons/library-big';
 import Search from 'lucide-react/dist/esm/icons/search';
+import X from 'lucide-react/dist/esm/icons/x';
 import Star from 'lucide-react/dist/esm/icons/star';
 import { useTones } from '../hooks/useTones';
 import { useFavorites } from '../hooks/useFavorites';
@@ -209,12 +210,24 @@ export function LibrarySidebar({
             placeholder="Search tones..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className={`w-full pl-9 pr-3 py-2 text-lg rounded-md outline-none transition-all ${
+            className={`w-full pl-9 pr-9 py-2 text-lg rounded-md outline-none transition-all ${
               isLightMode
                 ? 'bg-zinc-200/50 border border-zinc-300 text-zinc-800 placeholder-zinc-500 focus:border-[#519B9F] focus:ring-1 focus:ring-[#519B9F]/20'
                 : 'bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500 shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:border-cyan-700'
             }`}
           />
+          {searchQuery.length > 0 && (
+            <button
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors hover:bg-zinc-500/20 ${
+                isLightMode
+                  ? 'text-zinc-400 hover:text-zinc-600'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}>
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
