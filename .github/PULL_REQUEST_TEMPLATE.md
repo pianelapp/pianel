@@ -4,7 +4,10 @@
 
 ## Related issue
 
-<!-- e.g. Closes #123 -->
+<!-- Community PRs: link a GitHub issue, e.g. Closes #123 -->
+<!-- Maintainer PRs: the Jira work item links automatically from the branch name
+     (e.g. feat/PIA-42-…) — no action needed. To surface the key in the PR, add a line:
+     Jira: PIA-42 -->
 
 ## Type of change
 
