@@ -12,3 +12,6 @@ export * from './services/PianoService';
 export * from './services/ConnectionService';
 export * from './services/ChordService';
 export * from './services/presets/PresetService';
+export * from './services/songs/SongService';
+export * from './services/setlists/SetlistService';
+export * from './services/cursor/SetlistCursorService';

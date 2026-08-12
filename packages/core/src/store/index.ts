@@ -46,3 +46,19 @@ export {DEFAULT_PERFORMANCE_SNAPSHOT} from '../types/performanceSnapshot';
 
 export type {ThemePreference, AccidentalPreference, AppSettingsState, AppSettingsActions} from './appSettingsStore';
 export {useAppSettingsStore, createAppSettingsStore} from './appSettingsStore';
+
+export type {CursorState, CursorActions} from './cursorStore';
+export {useCursorStore} from './cursorStore';
+
+export type {Scene, Song, SetlistEntry, Setlist} from '../types/setlist';
+export {
+  CURRENT_SCHEMA_VERSION,
+  SongNotFoundError,
+  SceneNotFoundError,
+  SetlistNotFoundError,
+  EmptySongError,
+  EmptySetlistError,
+  MissingSongError,
+} from '../types/setlist';
+
+export {normalizeProfile} from '../helpers/profileMigration';
