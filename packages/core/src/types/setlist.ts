@@ -96,6 +96,19 @@ export class EmptySongError extends Error {
 }
 
 /**
+ * A setlist has no entry that can be performed — it is empty, or every entry
+ * is dangling or resolves to a song with no scenes. Reachable in normal use,
+ * so callers get a distinct type rather than a mislabeled song error.
+ */
+export class EmptySetlistError extends Error {
+  readonly code = 'empty_setlist';
+  constructor(name: string) {
+    super(`Setlist "${name}" has no playable songs.`);
+    this.name = 'EmptySetlistError';
+  }
+}
+
+/**
  * A setlist entry references a library song that has since been deleted.
  * Reachable in normal use — library songs are deletable while referenced —
  * so this is a designed-for case, not corruption (design §8).
