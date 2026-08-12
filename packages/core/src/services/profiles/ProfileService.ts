@@ -45,11 +45,10 @@ export type ImportResult =
 
 // ─── Forward-compatibility migrator table (R8) ─────────────────
 //
-// Pulled forward from the original Task 12 slot by controller decision: the
-// v1→v2 migrator ships in the same change as the MAX_SUPPORTED_SCHEMA_VERSION
-// bump, so raising the max never leaves v1 imports unmigratable. Task 12
-// still owns dedicated `ProfileService.v2Import.test.ts` coverage; this entry
-// is already present when that task lands, so its reviewer should expect it.
+// Invariant: the v1→v2 migrator ships in the same change as the
+// MAX_SUPPORTED_SCHEMA_VERSION bump, so raising the max never leaves v1
+// imports unmigratable. See `ProfileService.v2Import.test.ts` for the
+// dedicated round-trip coverage.
 
 const MIGRATORS: Record<number, (input: unknown) => ProfileExportFile> = {
   // v1 predates songs/setlists — normalizeProfile fills them and bumps the
@@ -57,7 +56,7 @@ const MIGRATORS: Record<number, (input: unknown) => ProfileExportFile> = {
   1: (input: unknown) => {
     const file = (input ?? {}) as Record<string, unknown>;
     return {
-      schemaVersion: 2,
+      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
       exportedAt:
         typeof file.exportedAt === 'string'
           ? file.exportedAt
@@ -109,7 +108,7 @@ export class ProfileService {
     const profile: Profile = {
       id: generateProfileId(),
       name: 'Default',
-      schemaVersion: 2,
+      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
       theme: settings.themePreference,
       accidentals: settings.accidentalPreference,
       favorites: snapshotFavorites(),
@@ -139,7 +138,7 @@ export class ProfileService {
     const profile: Profile = {
       id: generateProfileId(),
       name: trimmed,
-      schemaVersion: 2,
+      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
       theme: useAppSettingsStore.getState().themePreference,
       accidentals: useAppSettingsStore.getState().accidentalPreference,
       favorites: snapshotFavorites(),
@@ -461,7 +460,7 @@ export class ProfileService {
     if (!profile) throw new ProfileNotFoundError(profileId);
 
     const file: ProfileExportFile = {
-      schemaVersion: 2,
+      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       profile,
     };
@@ -579,7 +578,7 @@ export class ProfileService {
     }
 
     return {
-      schemaVersion: 2,
+      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
       exportedAt:
         typeof candidate.exportedAt === 'string'
           ? candidate.exportedAt
@@ -628,7 +627,7 @@ export function applyExportFileDefaults(
   const filled: Profile = {
     id: p.id,
     name: p.name,
-    schemaVersion: 2,
+    schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
     theme: p.theme ?? 'system',
     accidentals: p.accidentals ?? 'sharps',
     favorites: Array.isArray(p.favorites) ? p.favorites : [],
@@ -642,7 +641,7 @@ export function applyExportFileDefaults(
     updatedAt: p.updatedAt ?? new Date().toISOString(),
   };
   return {
-    schemaVersion: 2,
+    schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
     exportedAt: parsed.exportedAt ?? new Date().toISOString(),
     profile: filled,
   };

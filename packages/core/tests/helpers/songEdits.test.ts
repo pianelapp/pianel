@@ -26,6 +26,7 @@ function makeSong(scenes: Scene[] = []): Song {
   return {
     id: '1-aaaaaaaa',
     name: 'Test Song',
+    notes: '',
     scenes,
     createdAt: now,
     updatedAt: now,

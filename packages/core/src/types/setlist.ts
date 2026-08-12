@@ -33,8 +33,8 @@ export interface Scene {
 export interface Song {
   id: string;
   name: string;
-  /** Song-level cue, e.g. "count in 4". */
-  notes?: string;
+  /** Song-level cue, e.g. "count in 4". Empty string when unset — never undefined. */
+  notes: string;
   /** ORDERED. Position in this array is the performance order. */
   scenes: Scene[];
   createdAt: string;
@@ -84,6 +84,15 @@ export class SetlistNotFoundError extends Error {
   constructor(id: string) {
     super(`No setlist with id "${id}".`);
     this.name = 'SetlistNotFoundError';
+  }
+}
+
+/** A setlist entry index does not point at anything in `entries`. */
+export class EntryNotFoundError extends Error {
+  readonly code = 'entry_not_found';
+  constructor(index: number) {
+    super(`No entry at index ${index}.`);
+    this.name = 'EntryNotFoundError';
   }
 }
 

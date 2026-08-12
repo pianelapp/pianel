@@ -15,7 +15,8 @@
     "./transport/*": "./src/transport/*.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck:tests",
+    "typecheck:tests": "tsc --noEmit -p tests/tsconfig.json",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "jest --config jest.config.cjs"
   },

@@ -60,7 +60,7 @@ export class SetlistCursorService {
         entryIndex: playable.entryIndex,
       });
     } else {
-      // Single-song path: unchanged from before this fix.
+      // Single-song path: enter directly on the given song at scene 0.
       const song = this.songService.getSong(opts.songId);
       if (!song) throw new SongNotFoundError(opts.songId);
       if (song.scenes.length === 0) throw new EmptySongError(song.name);
@@ -180,12 +180,12 @@ export class SetlistCursorService {
     }
 
     const entryIndex = this._findPlayableEntry(1);
-    if (entryIndex !== null) {
-      const {setlistId} = useCursorStore.getState();
-      const next =
-        setlistId === null
-          ? null
-          : this.setlistService.resolveEntry(setlistId, entryIndex);
+    const {setlistId} = useCursorStore.getState();
+    // `_findPlayableEntry` itself returns null in single-song mode, so
+    // reaching here with a non-null `entryIndex` guarantees `setlistId` is
+    // also non-null.
+    if (entryIndex !== null && setlistId !== null) {
+      const next = this.setlistService.resolveEntry(setlistId, entryIndex);
       if (next) return {kind: 'song', song: next};
     }
 
@@ -255,6 +255,23 @@ export class SetlistCursorService {
    * macrotask-sourced request such as a UI tap or a MIDI callback can never
    * land inside it, because the microtask queue always fully drains before
    * the next macrotask runs.)
+   *
+   * Await semantics for that restarted caller: its own call to
+   * `_applyCurrent()` returns the OLD `inFlight` promise (the one already
+   * settling), not a promise tied to the new apply kicked off in `.finally`.
+   * So that caller's `await` resolves as soon as the old flight's `.finally`
+   * reaction finishes running — before the restarted apply has sent anything
+   * — not when its own requested state actually reaches the piano. Combined
+   * with failures being swallowed above, an `await` on this method (directly,
+   * or transitively via `enterPerform`/`jumpToScene`/`jumpToSong`/etc.) never
+   * means "the piano received this state"; it only means "some flight, not
+   * necessarily this call's own, finished, successfully or not."
+   *
+   * Known limitation: no timeout bounds a flight. If `applySnapshot` never
+   * settles (e.g. a wedged transport that neither resolves nor rejects),
+   * `inFlight` never clears, so every subsequent `_applyCurrent()` call piles
+   * onto `pending` and never runs — cursor navigation is wedged for the rest
+   * of the session. Not fixed here.
    *
    * Do not move `this.inFlight = null` into a try/finally inside `run()`
    * itself: on the synchronous "!scene" break path `run()` can complete

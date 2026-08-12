@@ -3,7 +3,11 @@ import {createProfilesStore} from '../../../src/store/profilesStore';
 import {SongService} from '../../../src/services/songs/SongService';
 import {SetlistService} from '../../../src/services/setlists/SetlistService';
 import {patchScene} from '../../../src/helpers/songEdits';
-import {SetlistNotFoundError} from '../../../src/types/setlist';
+import {
+  EntryNotFoundError,
+  MissingSongError,
+  SetlistNotFoundError,
+} from '../../../src/types/setlist';
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapshot';
 import type {Profile} from '../../../src/types/profile';
 import type {PresetService} from '../../../src/services/presets/PresetService';
@@ -28,7 +32,17 @@ function makeProfile(): Profile {
 
 function fakePresetService(): PresetService {
   return {
-    captureSnapshot: () => ({...DEFAULT_PERFORMANCE_SNAPSHOT}),
+    // A shallow spread would share `metronome`/`voiceModeSnapshot`/
+    // `quickToneSlots` by reference with the module-level
+    // `DEFAULT_PERFORMANCE_SNAPSHOT` singleton — the deep-mutation tests below
+    // write through those nested objects, so a shallow copy here would leak
+    // mutations into every other test file that imports the same constant.
+    captureSnapshot: () => ({
+      ...DEFAULT_PERFORMANCE_SNAPSHOT,
+      metronome: {...DEFAULT_PERFORMANCE_SNAPSHOT.metronome},
+      voiceModeSnapshot: {...DEFAULT_PERFORMANCE_SNAPSHOT.voiceModeSnapshot},
+      quickToneSlots: [...DEFAULT_PERFORMANCE_SNAPSHOT.quickToneSlots],
+    }),
   } as unknown as PresetService;
 }
 
@@ -72,8 +86,8 @@ describe('SetlistService overrides', () => {
     // lives. A regression to a shallow `{...source, id, updatedAt}` copy
     // would leave `scenes` (and everything inside each scene) pointing at
     // the exact same objects as the library song; only a nested mutation can
-    // catch that. The brief's own assertions (`clone.name`,
-    // `clone.scenes.length`, `clone.id`) all pass on a shallow copy too.
+    // catch that. Assertions on `clone.name`, `clone.scenes.length`, and
+    // `clone.id` alone would still pass on a shallow copy too.
     const before = songs.getSong(songId)!;
     before.scenes[0].snapshot.voiceModeSnapshot.rightToneId = 'lib-original';
 
@@ -147,8 +161,38 @@ describe('SetlistService overrides', () => {
     expect(setlists.countSetlistsUsing(songId)).toBe(1);
   });
 
-  it('customizeEntry throws for an out-of-range index', () => {
+  it('countSetlistsUsing counts a setlist once even if the song appears in it twice', () => {
+    // `listId` already has one uncustomized entry for `songId` from
+    // `beforeEach`; add a second one in the same setlist.
+    setlists.addSong(listId, songId);
+    expect(setlists.countSetlistsUsing(songId)).toBe(1);
+  });
+
+  it('customizeEntry throws EntryNotFoundError for an out-of-range index', () => {
+    expect(() => setlists.customizeEntry(listId, 9)).toThrow(EntryNotFoundError);
     expect(() => setlists.customizeEntry(listId, 9)).toThrow('No entry at index 9');
+  });
+
+  it('customizeEntry throws MissingSongError when the entry references a deleted song', () => {
+    songs.deleteSong(songId);
+    expect(() => setlists.customizeEntry(listId, 0)).toThrow(MissingSongError);
+  });
+
+  it('promoteEntry throws MissingSongError when the library song was deleted after customization', () => {
+    setlists.customizeEntry(listId, 0);
+    songs.deleteSong(songId);
+    expect(() => setlists.promoteEntry(listId, 0)).toThrow(MissingSongError);
+  });
+
+  it('removeEntry is a no-op for an out-of-range index: no write, updatedAt unchanged', () => {
+    const before = setlists.getSetlist(listId)!;
+    const beforeUpdatedAt = before.updatedAt;
+
+    const result = setlists.removeEntry(listId, 9);
+
+    expect(result).toEqual(before);
+    expect(setlists.getSetlist(listId)?.updatedAt).toBe(beforeUpdatedAt);
+    expect(setlists.getSetlist(listId)?.entries).toHaveLength(1);
   });
 
   describe('editOverride', () => {
@@ -203,8 +247,11 @@ describe('SetlistService overrides', () => {
       );
     });
 
-    it('throws "No entry at index" for a bad index', () => {
+    it('throws EntryNotFoundError for a bad index', () => {
       setlists.customizeEntry(listId, 0);
+      expect(() => setlists.editOverride(listId, 9, song => song)).toThrow(
+        EntryNotFoundError,
+      );
       expect(() => setlists.editOverride(listId, 9, song => song)).toThrow(
         'No entry at index 9',
       );

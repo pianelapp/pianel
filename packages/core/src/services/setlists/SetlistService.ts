@@ -9,7 +9,12 @@
 
 import {requireActiveProfile, writeActiveProfile} from '../activeProfile';
 import {generateProfileId} from '../../helpers/profileId';
-import {SetlistNotFoundError, SongNotFoundError} from '../../types/setlist';
+import {
+  EntryNotFoundError,
+  MissingSongError,
+  SetlistNotFoundError,
+  SongNotFoundError,
+} from '../../types/setlist';
 import type {Setlist, Song} from '../../types/setlist';
 import type {SongService} from '../songs/SongService';
 
@@ -74,10 +79,19 @@ export class SetlistService {
     }));
   }
 
+  /**
+   * Drop the entry at `entryIndex`. An out-of-range index is a no-op that
+   * returns the setlist unchanged — it does not write, so `updatedAt` is not
+   * bumped.
+   */
   removeEntry(setlistId: string, entryIndex: number): Setlist {
-    return this._patchSetlist(setlistId, list => ({
-      ...list,
-      entries: list.entries.filter((_, i) => i !== entryIndex),
+    const list = this.getSetlist(setlistId);
+    if (!list) throw new SetlistNotFoundError(setlistId);
+    if (!list.entries[entryIndex]) return list;
+
+    return this._patchSetlist(setlistId, l => ({
+      ...l,
+      entries: l.entries.filter((_, i) => i !== entryIndex),
     }));
   }
 
@@ -126,11 +140,14 @@ export class SetlistService {
     const list = this.getSetlist(setlistId);
     if (!list) throw new SetlistNotFoundError(setlistId);
     const entry = list.entries[entryIndex];
-    if (!entry) throw new Error(`No entry at index ${entryIndex}.`);
+    if (!entry) throw new EntryNotFoundError(entryIndex);
     if (entry.override) return entry.override;
 
+    // The entry's `songId` no longer resolves in the library — a dangling
+    // reference (design §8), not a caller-supplied bad id, so this gets
+    // `MissingSongError` rather than the generic `SongNotFoundError`.
     const source = this.songService.getSong(entry.songId);
-    if (!source) throw new SongNotFoundError(entry.songId);
+    if (!source) throw new MissingSongError(entry.songId);
 
     const clone: Song = {
       ...(JSON.parse(JSON.stringify(source)) as Song),
@@ -149,7 +166,7 @@ export class SetlistService {
   revertEntry(setlistId: string, entryIndex: number): Setlist {
     const list = this.getSetlist(setlistId);
     if (!list) throw new SetlistNotFoundError(setlistId);
-    if (!list.entries[entryIndex]) throw new Error(`No entry at index ${entryIndex}.`);
+    if (!list.entries[entryIndex]) throw new EntryNotFoundError(entryIndex);
 
     return this._patchSetlist(setlistId, l => ({
       ...l,
@@ -165,11 +182,13 @@ export class SetlistService {
     const list = this.getSetlist(setlistId);
     if (!list) throw new SetlistNotFoundError(setlistId);
     const entry = list.entries[entryIndex];
-    if (!entry) throw new Error(`No entry at index ${entryIndex}.`);
+    if (!entry) throw new EntryNotFoundError(entryIndex);
     if (!entry.override) throw new Error(`Entry ${entryIndex} is not customized.`);
 
+    // Same dangling-reference case as `customizeEntry`: the library song this
+    // override would merge back into has since been deleted.
     const target = this.songService.getSong(entry.songId);
-    if (!target) throw new SongNotFoundError(entry.songId);
+    if (!target) throw new MissingSongError(entry.songId);
 
     const merged: Song = {
       ...(JSON.parse(JSON.stringify(entry.override)) as Song),
@@ -201,7 +220,7 @@ export class SetlistService {
     const list = this.getSetlist(setlistId);
     if (!list) throw new SetlistNotFoundError(setlistId);
     const entry = list.entries[entryIndex];
-    if (!entry) throw new Error(`No entry at index ${entryIndex}.`);
+    if (!entry) throw new EntryNotFoundError(entryIndex);
     if (!entry.override) throw new Error(`Entry ${entryIndex} is not customized.`);
 
     const next: Song = {
@@ -218,14 +237,17 @@ export class SetlistService {
     return next;
   }
 
-  /** How many setlist entries still follow this library song. */
+  /**
+   * How many distinct setlists still have at least one uncustomized entry
+   * following this library song. A song entered more than once in the same
+   * setlist counts that setlist once — this is meant to back a "delete this
+   * song?" confirmation, where the number that matters is how many setlists
+   * are affected, not how many entries.
+   */
   countSetlistsUsing(songId: string): number {
-    return requireActiveProfile().setlists.reduce(
-      (count, list) =>
-        count +
-        list.entries.filter(e => e.songId === songId && !e.override).length,
-      0,
-    );
+    return requireActiveProfile().setlists.filter(list =>
+      list.entries.some(e => e.songId === songId && !e.override),
+    ).length;
   }
 
   // ─── Internals ───────────────────────────────────────────────

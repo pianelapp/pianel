@@ -19,7 +19,8 @@
     "./helpers/voicingMode": "./src/helpers/voicingMode.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck:tests",
+    "typecheck:tests": "tsc --noEmit -p tests/tsconfig.json",
     "test": "jest",
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput"

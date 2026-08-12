@@ -9,8 +9,7 @@
  *
  * `ProfileService.schemaVersion.test.ts` already covers the malformed/
  * rejection edges of the same migration path (T081); this file is scoped to
- * the "does songs/setlists data survive the round trip" behaviour that the
- * Task 12 brief calls out specifically.
+ * the "does songs/setlists data survive the round trip" behaviour instead.
  */
 
 import {inMemoryStorage} from '../../../src/store/storage';
@@ -41,10 +40,8 @@ function v1ExportFile() {
 }
 
 function makeService(fileContents: string): ProfileService {
-  // NOTE: the real `FilePickerAdapter` interface uses `openProfileJson` /
-  // `saveProfileJson` (see src/services/profiles/FilePickerAdapter.ts) — the
-  // brief's snippet named these `openFile`/`saveFile`, which do not exist on
-  // the interface and would leave `importProfile()` calling `undefined()`.
+  // The real `FilePickerAdapter` interface uses `openProfileJson` /
+  // `saveProfileJson` (see src/services/profiles/FilePickerAdapter.ts).
   const filePicker: FilePickerAdapter = {
     openProfileJson: async () => fileContents,
     saveProfileJson: async () => true,

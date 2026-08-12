@@ -7,13 +7,21 @@
  */
 
 import type {PerformanceSnapshot} from './performanceSnapshot';
+import {CURRENT_SCHEMA_VERSION} from './setlist';
 import type {Setlist, Song} from './setlist';
 
 /** Fixed number of preset tiles per profile (Assumptions — *Preset tile count*). */
 export const PRESET_TILE_COUNT = 8;
 
-/** Maximum supported `schemaVersion` for `ProfileExportFile` imports (R2, R8). */
-export const MAX_SUPPORTED_SCHEMA_VERSION = 2;
+/**
+ * Maximum supported `schemaVersion` for `ProfileExportFile` imports (R2, R8).
+ * Mirrors `CURRENT_SCHEMA_VERSION` (types/setlist.ts) — the version this
+ * build emits is by definition the newest version it will accept on import,
+ * so the two must never drift apart. Re-exported here (rather than only from
+ * setlist.ts) because it is validated as part of the Profile/export-file
+ * shapes defined in this module.
+ */
+export const MAX_SUPPORTED_SCHEMA_VERSION = CURRENT_SCHEMA_VERSION;
 
 /** Lightweight favorite-tone reference embedded in a profile (data-model §5). */
 export interface FavoriteRef {

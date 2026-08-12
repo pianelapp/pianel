@@ -49,6 +49,7 @@ export class SongService {
     const song: Song = {
       id: generateProfileId(),
       name: trimmed,
+      notes: '',
       scenes: [],
       createdAt: now,
       updatedAt: now,

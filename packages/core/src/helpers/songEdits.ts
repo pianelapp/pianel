@@ -1,5 +1,5 @@
 /**
- * Pure Song/Scene transforms (Task 7b).
+ * Pure Song/Scene transforms.
  *
  * Extracted from `SongService`'s scene methods so the exact same rules —
  * index clamping, `SceneNotFoundError`, the deep-copy on pad import, the
