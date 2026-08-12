@@ -25,6 +25,7 @@ import {createFavoritesStore} from '../../../src/store/favoritesStore';
 import {createConnectionStore} from '../../../src/store/connectionStore';
 import {inMemoryStorage} from '../../../src/store/storage';
 import {
+  MAX_SUPPORTED_SCHEMA_VERSION,
   MalformedProfileFileError,
   UnsupportedProfileVersionError,
 } from '../../../src/types/profile';
@@ -83,16 +84,18 @@ beforeEach(() => {
 function validExportFile(id: string, name: string): ProfileExportFile {
   const now = new Date().toISOString();
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: now,
     profile: {
       id,
       name,
-      schemaVersion: 1,
+      schemaVersion: 2,
       theme: 'system',
       accidentals: 'sharps',
       favorites: [],
       presets: [],
+      songs: [],
+      setlists: [],
       defaultState: {
         volume: 100,
         tempo: 120,
@@ -130,7 +133,8 @@ describe('ProfileService.importProfile — validation', () => {
 
   it('throws UnsupportedProfileVersionError when schemaVersion > MAX', async () => {
     const file = validExportFile('1234567890-abcdefgh', 'Alpha');
-    (file as unknown as {schemaVersion: number}).schemaVersion = 2;
+    (file as unknown as {schemaVersion: number}).schemaVersion =
+      MAX_SUPPORTED_SCHEMA_VERSION + 1;
     const service = buildService(buildPicker(JSON.stringify(file)));
     await expect(service.importProfile()).rejects.toBeInstanceOf(
       UnsupportedProfileVersionError,

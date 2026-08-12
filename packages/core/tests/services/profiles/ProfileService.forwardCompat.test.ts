@@ -14,12 +14,12 @@ function minimalExport(): ProfileExportFile {
   // Build a parsed-export-file with the bare-minimum fields the validator
   // accepts. The loader fills in everything else.
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: '2026-01-01T00:00:00Z',
     profile: {
       id: '1234567890-abcdefgh',
       name: 'Test',
-      schemaVersion: 1,
+      schemaVersion: 2,
       // omit theme, accidentals, favorites, presets, defaultState
       // (and createdAt/updatedAt) to verify defaults kick in.
     } as ProfileExportFile['profile'],

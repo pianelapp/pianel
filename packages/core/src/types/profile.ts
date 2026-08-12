@@ -7,12 +7,13 @@
  */
 
 import type {PerformanceSnapshot} from './performanceSnapshot';
+import type {Setlist, Song} from './setlist';
 
 /** Fixed number of preset tiles per profile (Assumptions — *Preset tile count*). */
 export const PRESET_TILE_COUNT = 8;
 
 /** Maximum supported `schemaVersion` for `ProfileExportFile` imports (R2, R8). */
-export const MAX_SUPPORTED_SCHEMA_VERSION = 1;
+export const MAX_SUPPORTED_SCHEMA_VERSION = 2;
 
 /** Lightweight favorite-tone reference embedded in a profile (data-model §5). */
 export interface FavoriteRef {
@@ -49,8 +50,8 @@ export interface Profile {
   /** User-visible label. Unique across local profile list at create/rename (R6). */
   name: string;
 
-  /** Forward-compatibility marker. Always `1` for this release. */
-  schemaVersion: 1;
+  /** Forward-compatibility marker. Always `2` for this release. */
+  schemaVersion: 2;
 
   /** UI theme override. Mirrors `AppSettingsStore.themePreference`. */
   theme: 'system' | 'light' | 'dark';
@@ -64,6 +65,12 @@ export interface Profile {
   /** Per-tile preset grid (FR-009 — never global). */
   presets: Preset[];
 
+  /** Reusable song library, scoped to this profile (design D6). */
+  songs: Song[];
+
+  /** Ordered gig setlists (design D6). */
+  setlists: Setlist[];
+
   /** Default performance state applied on profile load (FR-011 §5). */
   defaultState: PerformanceSnapshot;
 
@@ -74,7 +81,7 @@ export interface Profile {
 
 /** Export-file shape (data-model §6, profile-export.schema.json). */
 export interface ProfileExportFile {
-  schemaVersion: 1;
+  schemaVersion: 2;
   /** ISO 8601 timestamp produced at export time. */
   exportedAt: string;
   /** Exactly one profile per export (FR-018, R3). */

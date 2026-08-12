@@ -12,6 +12,7 @@
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 
+import {normalizeProfile} from '../helpers/profileMigration';
 import type {Profile} from '../types/profile';
 import type {StateStorage} from './storage';
 
@@ -85,6 +86,39 @@ function _build(storage: StateStorage) {
       {
         name: 'pianel:profiles',
         storage: createJSONStorage(() => storage),
+        // Persist version is independent of `Profile.schemaVersion`; both are
+        // 2 here by coincidence of timing, not by contract.
+        version: 2,
+        migrate: (persisted: unknown) => {
+          const state = (persisted ?? {}) as Partial<ProfilesState>;
+          return {
+            ...state,
+            profiles: (Array.isArray(state.profiles) ? state.profiles : []).map(
+              normalizeProfile,
+            ),
+            activeProfileId: state.activeProfileId ?? '',
+          } as ProfilesState;
+        },
+        // `migrate` above only runs when the stored payload carries an
+        // explicit numeric `version` that differs from the one configured
+        // here (zustand's own gate). Records written by builds that predate
+        // persist versioning entirely have no `version` key at all, so they
+        // never reach `migrate` — but `merge` runs unconditionally on every
+        // hydration, so it is the one hook guaranteed to normalize every
+        // profile regardless of how the stored payload got here. Re-running
+        // `normalizeProfile` on already-migrated data is a no-op.
+        merge: (persisted, current) => {
+          const state = (persisted ?? {}) as Partial<ProfilesState>;
+          return {
+            ...current,
+            ...state,
+            profiles: (Array.isArray(state.profiles)
+              ? state.profiles
+              : current.profiles
+            ).map(normalizeProfile),
+            activeProfileId: state.activeProfileId ?? current.activeProfileId,
+          };
+        },
       },
     ),
   );
@@ -103,6 +137,19 @@ _proxy.setState = (state: any, replace?: any) =>
 _proxy.subscribe = (...args: Parameters<StoreType['subscribe']>) =>
   _get().subscribe(...args);
 _proxy.getInitialState = () => _get().getInitialState();
+// Forward the persist middleware's API (added by `persist()` in `_build`) so
+// callers can drive rehydration explicitly, e.g. in tests. Each method looks
+// up the live store via `_get()` rather than capturing a stale reference, in
+// case `createProfilesStore` is called again with a new storage adapter.
+_proxy.persist = {
+  setOptions: options => _get().persist.setOptions(options),
+  clearStorage: () => _get().persist.clearStorage(),
+  rehydrate: () => _get().persist.rehydrate(),
+  hasHydrated: () => _get().persist.hasHydrated(),
+  onHydrate: listener => _get().persist.onHydrate(listener),
+  onFinishHydration: listener => _get().persist.onFinishHydration(listener),
+  getOptions: () => _get().persist.getOptions(),
+};
 
 export const useProfilesStore = _proxy;
 

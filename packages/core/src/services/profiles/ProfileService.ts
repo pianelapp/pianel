@@ -15,6 +15,7 @@ import {useFavoritesStore} from '../../store/favoritesStore';
 import {usePerformanceStore} from '../../store/performanceStore';
 import {useProfilesStore} from '../../store/profilesStore';
 import {generateProfileId, PROFILE_ID_PATTERN} from '../../helpers/profileId';
+import {normalizeProfile} from '../../helpers/profileMigration';
 import {
   DEFAULT_PERFORMANCE_SNAPSHOT,
   type PerformanceSnapshot,
@@ -43,8 +44,28 @@ export type ImportResult =
   | {kind: 'cancelled'};
 
 // ─── Forward-compatibility migrator table (R8) ─────────────────
+//
+// Pulled forward from the original Task 12 slot by controller decision: the
+// v1→v2 migrator ships in the same change as the MAX_SUPPORTED_SCHEMA_VERSION
+// bump, so raising the max never leaves v1 imports unmigratable. Task 12
+// still owns dedicated `ProfileService.v2Import.test.ts` coverage; this entry
+// is already present when that task lands, so its reviewer should expect it.
 
-const MIGRATORS: Record<number, (input: unknown) => ProfileExportFile> = {};
+const MIGRATORS: Record<number, (input: unknown) => ProfileExportFile> = {
+  // v1 predates songs/setlists — normalizeProfile fills them and bumps the
+  // profile's own schemaVersion.
+  1: (input: unknown) => {
+    const file = (input ?? {}) as Record<string, unknown>;
+    return {
+      schemaVersion: 2,
+      exportedAt:
+        typeof file.exportedAt === 'string'
+          ? file.exportedAt
+          : new Date().toISOString(),
+      profile: normalizeProfile(file.profile),
+    };
+  },
+};
 
 // ─── Service ────────────────────────────────────────────────────
 
@@ -88,11 +109,13 @@ export class ProfileService {
     const profile: Profile = {
       id: generateProfileId(),
       name: 'Default',
-      schemaVersion: 1,
+      schemaVersion: 2,
       theme: settings.themePreference,
       accidentals: settings.accidentalPreference,
       favorites: snapshotFavorites(),
       presets: [],
+      songs: [],
+      setlists: [],
       defaultState,
       createdAt: now,
       updatedAt: now,
@@ -116,7 +139,7 @@ export class ProfileService {
     const profile: Profile = {
       id: generateProfileId(),
       name: trimmed,
-      schemaVersion: 1,
+      schemaVersion: 2,
       theme: useAppSettingsStore.getState().themePreference,
       accidentals: useAppSettingsStore.getState().accidentalPreference,
       favorites: snapshotFavorites(),
@@ -125,6 +148,8 @@ export class ProfileService {
       presets: store.profiles.find(p => p.id === store.activeProfileId)?.presets
         ? [...(store.profiles.find(p => p.id === store.activeProfileId)?.presets ?? [])]
         : [],
+      songs: [],
+      setlists: [],
       defaultState: this.presetService.captureSnapshot(),
       createdAt: now,
       updatedAt: now,
@@ -436,7 +461,7 @@ export class ProfileService {
     if (!profile) throw new ProfileNotFoundError(profileId);
 
     const file: ProfileExportFile = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: new Date().toISOString(),
       profile,
     };
@@ -519,6 +544,14 @@ export class ProfileService {
     if (schemaVersion > MAX_SUPPORTED_SCHEMA_VERSION) {
       throw new UnsupportedProfileVersionError(schemaVersion);
     }
+
+    // Migrate to the current schema version first, then validate once below.
+    // Both an already-current file and a migrated one must pass the exact
+    // same shape checks — a migrator's job is to fill in new fields, not to
+    // vouch for the fields it inherited unchanged (a v1 file with a missing
+    // or malformed profile.id must still be rejected, not silently persisted
+    // with an undefined id).
+    let candidate: Record<string, unknown> = obj;
     if (schemaVersion < MAX_SUPPORTED_SCHEMA_VERSION) {
       const migrator = MIGRATORS[schemaVersion];
       if (!migrator) {
@@ -526,11 +559,11 @@ export class ProfileService {
           `no migrator for schemaVersion ${schemaVersion}`,
         );
       }
-      return migrator(input);
+      candidate = migrator(input) as unknown as Record<string, unknown>;
     }
 
-    // schemaVersion === MAX_SUPPORTED. Validate the profile shape.
-    const profile = obj.profile;
+    // candidate is now schemaVersion === MAX_SUPPORTED shape. Validate it.
+    const profile = candidate.profile;
     if (!profile || typeof profile !== 'object') {
       throw new MalformedProfileFileError('missing profile object');
     }
@@ -546,10 +579,10 @@ export class ProfileService {
     }
 
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt:
-        typeof obj.exportedAt === 'string'
-          ? obj.exportedAt
+        typeof candidate.exportedAt === 'string'
+          ? candidate.exportedAt
           : new Date().toISOString(),
       profile: profile as Profile,
     };
@@ -595,19 +628,21 @@ export function applyExportFileDefaults(
   const filled: Profile = {
     id: p.id,
     name: p.name,
-    schemaVersion: 1,
+    schemaVersion: 2,
     theme: p.theme ?? 'system',
     accidentals: p.accidentals ?? 'sharps',
     favorites: Array.isArray(p.favorites) ? p.favorites : [],
     presets: Array.isArray(p.presets)
       ? p.presets.map(applyPresetDefaults)
       : [],
+    songs: Array.isArray(p.songs) ? p.songs : [],
+    setlists: Array.isArray(p.setlists) ? p.setlists : [],
     defaultState: filledSnapshot,
     createdAt: p.createdAt ?? new Date().toISOString(),
     updatedAt: p.updatedAt ?? new Date().toISOString(),
   };
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: parsed.exportedAt ?? new Date().toISOString(),
     profile: filled,
   };

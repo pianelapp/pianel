@@ -64,11 +64,13 @@ function makeProfile(id: string, overrides: Partial<Profile> = {}): Profile {
   return {
     id,
     name: id,
-    schemaVersion: 1,
+    schemaVersion: 2,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
     presets: [],
+    songs: [],
+    setlists: [],
     defaultState: {...DEFAULT_PERFORMANCE_SNAPSHOT},
     createdAt: now,
     updatedAt: now,
@@ -145,7 +147,7 @@ describe('export / import carries theme + accidentals (Req 3.4 / 6.4 / 7.7)', ()
   it('importing a file restores theme and accidentals', async () => {
     const service = newService();
     const file: ProfileExportFile = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2026-01-02T00:00:00.000Z',
       profile: makeProfile('1700000000000-dddddddd', {theme: 'dark', accidentals: 'flats'}),
     };
@@ -161,7 +163,7 @@ describe('export / import carries theme + accidentals (Req 3.4 / 6.4 / 7.7)', ()
 
   it('applyExportFileDefaults fills missing theme/accidentals with system/sharps', () => {
     const file = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2026-01-02T00:00:00.000Z',
       // theme + accidentals intentionally omitted.
       profile: {

@@ -2,7 +2,7 @@
  * T064 — ProfileService export tests (US3).
  *
  * Covers:
- *  - exportProfile serializes to ProfileExportFile JSON (schemaVersion 1).
+ *  - exportProfile serializes to ProfileExportFile JSON (schemaVersion 2).
  *  - Filename is `<sanitized-name>.pianel-profile.json`.
  *  - Resolves `{saved: true}` when the adapter writes; `{saved: false}` when
  *    the user cancels the dialog.
@@ -72,7 +72,7 @@ beforeEach(() => {
 });
 
 describe('ProfileService.exportProfile', () => {
-  it('serializes to ProfileExportFile shape with schemaVersion 1', async () => {
+  it('serializes to ProfileExportFile shape with schemaVersion 2', async () => {
     const {picker, saveCalls} = buildPicker(true);
     const service = buildService(picker);
     const profile = await service.createProfile('Alpha');
@@ -82,7 +82,7 @@ describe('ProfileService.exportProfile', () => {
     expect(saveCalls).toHaveLength(1);
 
     const file = JSON.parse(saveCalls[0].contents) as ProfileExportFile;
-    expect(file.schemaVersion).toBe(1);
+    expect(file.schemaVersion).toBe(2);
     expect(file.profile.id).toBe(profile.id);
     expect(file.profile.name).toBe('Alpha');
     expect(typeof file.exportedAt).toBe('string');
