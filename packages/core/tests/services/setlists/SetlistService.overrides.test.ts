@@ -2,6 +2,8 @@ import {inMemoryStorage} from '../../../src/store/storage';
 import {createProfilesStore} from '../../../src/store/profilesStore';
 import {SongService} from '../../../src/services/songs/SongService';
 import {SetlistService} from '../../../src/services/setlists/SetlistService';
+import {patchScene} from '../../../src/helpers/songEdits';
+import {SetlistNotFoundError} from '../../../src/types/setlist';
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapshot';
 import type {Profile} from '../../../src/types/profile';
 import type {PresetService} from '../../../src/services/presets/PresetService';
@@ -147,5 +149,65 @@ describe('SetlistService overrides', () => {
 
   it('customizeEntry throws for an out-of-range index', () => {
     expect(() => setlists.customizeEntry(listId, 9)).toThrow('No entry at index 9');
+  });
+
+  describe('editOverride', () => {
+    it('changes what resolveEntry returns', () => {
+      setlists.customizeEntry(listId, 0);
+      setlists.editOverride(listId, 0, song => ({...song, name: 'Gig Name'}));
+      expect(setlists.resolveEntry(listId, 0)?.name).toBe('Gig Name');
+    });
+
+    it('leaves the library song unaffected — the point of the whole feature', () => {
+      setlists.customizeEntry(listId, 0);
+      setlists.editOverride(listId, 0, song => ({...song, name: 'Gig Name'}));
+      expect(songs.getSong(songId)?.name).toBe("Isn't She Lovely");
+    });
+
+    it('composes a scene-level edit, changing only the override scene', () => {
+      const clone = setlists.customizeEntry(listId, 0);
+      const sceneId = clone.scenes[0].id;
+
+      setlists.editOverride(listId, 0, song =>
+        patchScene(song, sceneId, s => ({...s, label: 'Gig Chorus'})),
+      );
+
+      expect(setlists.resolveEntry(listId, 0)?.scenes[0].label).toBe('Gig Chorus');
+      // The library song's scene keeps its original label.
+      expect(songs.getSong(songId)?.scenes[0].label).toBe('Intro');
+    });
+
+    it('stamps the override updatedAt', () => {
+      setlists.customizeEntry(listId, 0);
+      // A `>=` comparison against the pre-edit `updatedAt` can't fail: if the
+      // stamp were dropped entirely, `next.updatedAt` would just echo the
+      // stored value back, which is still `>=` itself. Write a sentinel the
+      // stamp must overwrite instead — this only passes if `editOverride`
+      // actually replaces `updatedAt` with a fresh timestamp.
+      const next = setlists.editOverride(listId, 0, s => ({
+        ...s,
+        updatedAt: '2000-01-01T00:00:00.000Z',
+      }));
+      expect(next.updatedAt).not.toBe('2000-01-01T00:00:00.000Z');
+    });
+
+    it('throws "is not customized" for an entry with no override', () => {
+      expect(() => setlists.editOverride(listId, 0, song => song)).toThrow(
+        'is not customized',
+      );
+    });
+
+    it('throws SetlistNotFoundError for an unknown setlist', () => {
+      expect(() => setlists.editOverride('nope', 0, song => song)).toThrow(
+        SetlistNotFoundError,
+      );
+    });
+
+    it('throws "No entry at index" for a bad index', () => {
+      setlists.customizeEntry(listId, 0);
+      expect(() => setlists.editOverride(listId, 9, song => song)).toThrow(
+        'No entry at index 9',
+      );
+    });
   });
 });

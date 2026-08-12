@@ -10,6 +10,15 @@
 
 import {requireActiveProfile, writeActiveProfile} from '../activeProfile';
 import {generateProfileId} from '../../helpers/profileId';
+import {
+  appendScene,
+  autoSceneLabel,
+  buildScene,
+  moveSceneInSong,
+  patchScene,
+  removeScene,
+  sceneFromPad,
+} from '../../helpers/songEdits';
 import type {Preset, Profile} from '../../types/profile';
 import {SceneNotFoundError, SongNotFoundError} from '../../types/setlist';
 import type {Scene, Song} from '../../types/setlist';
@@ -82,23 +91,14 @@ export class SongService {
     // caller error and must be rejected the same way `renameScene` does.
     let resolvedLabel: string;
     if (label === undefined) {
-      resolvedLabel = `Scene ${song.scenes.length + 1}`;
+      resolvedLabel = autoSceneLabel(song);
     } else {
       resolvedLabel = label.trim();
       if (!resolvedLabel) throw new Error('Scene label cannot be empty.');
     }
 
-    const now = new Date().toISOString();
-    const scene: Scene = {
-      id: generateProfileId(),
-      label: resolvedLabel,
-      notes: '',
-      snapshot: this.presetService.captureSnapshot(),
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this._patchSong(songId, s => ({...s, scenes: [...s.scenes, scene]}));
+    const scene = buildScene(resolvedLabel, this.presetService.captureSnapshot());
+    this._patchSong(songId, s => appendScene(s, scene));
     return scene;
   }
 
@@ -125,27 +125,17 @@ export class SongService {
     const song = this.getSong(songId);
     if (!song) throw new SongNotFoundError(songId);
 
-    const last = song.scenes.length - 1;
-    const src = Math.max(0, Math.min(last, from));
-    const dest = Math.max(0, Math.min(last, to));
-    if (src === dest) return song;
-
-    const scenes = [...song.scenes];
-    const [moved] = scenes.splice(src, 1);
-    scenes.splice(dest, 0, moved);
-    return this._patchSong(songId, s => ({...s, scenes}));
+    // Decide up front whether this is a no-op so we can skip the write (and
+    // the updatedAt stamp) entirely. The actual write below re-derives the
+    // move from `_patchSong`'s freshly-resolved song, per its normal
+    // "patch the song you're handed" contract, rather than reusing this
+    // outer `song` reference.
+    if (moveSceneInSong(song, from, to) === song) return song;
+    return this._patchSong(songId, s => moveSceneInSong(s, from, to));
   }
 
   deleteScene(songId: string, sceneId: string): void {
-    const song = this.getSong(songId);
-    if (!song) throw new SongNotFoundError(songId);
-    if (!song.scenes.some(s => s.id === sceneId)) {
-      throw new SceneNotFoundError(sceneId);
-    }
-    this._patchSong(songId, s => ({
-      ...s,
-      scenes: s.scenes.filter(scene => scene.id !== sceneId),
-    }));
+    this._patchSong(songId, s => removeScene(s, sceneId));
   }
 
   /**
@@ -157,41 +147,26 @@ export class SongService {
     const song = this.getSong(songId);
     if (!song) throw new SongNotFoundError(songId);
 
-    const now = new Date().toISOString();
-    const scene: Scene = {
-      id: generateProfileId(),
-      label: pad.label,
-      notes: '',
-      // Deep clone via JSON round-trip: safe today because PerformanceSnapshot
-      // is plain data (numbers/strings/null/nested plain objects and arrays).
-      // Revisit this if that type ever grows a `Date`, `Map`/`Set`, or a
-      // meaningful `undefined`-valued key — JSON would silently drop/mangle those.
-      snapshot: JSON.parse(JSON.stringify(pad.snapshot)),
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this._patchSong(songId, s => ({...s, scenes: [...s.scenes, scene]}));
+    const scene = sceneFromPad(pad);
+    this._patchSong(songId, s => appendScene(s, scene));
     return scene;
   }
 
-  /** Patch one scene inside one song, refreshing its `updatedAt`. */
+  /** Patch one scene inside one song, refreshing its `updatedAt`. Delegates to the pure `patchScene` helper. */
   protected _patchScene(
     songId: string,
     sceneId: string,
     patch: (scene: Scene) => Scene,
   ): Scene {
-    const song = this.getSong(songId);
-    if (!song) throw new SongNotFoundError(songId);
-    const existing = song.scenes.find(s => s.id === sceneId);
-    if (!existing) throw new SceneNotFoundError(sceneId);
-
-    const next: Scene = {...patch(existing), updatedAt: new Date().toISOString()};
-    this._patchSong(songId, s => ({
-      ...s,
-      scenes: s.scenes.map(scene => (scene.id === sceneId ? next : scene)),
-    }));
-    return next;
+    const next = this._patchSong(songId, s => patchScene(s, sceneId, patch));
+    // Re-find by id rather than assuming position: defensive against a
+    // future `patch` that reorders `next.scenes`. If `patch` ever rewrote
+    // `scene.id` itself, this would legitimately fail to find it — surface
+    // that as the same SceneNotFoundError callers already handle, not an
+    // `undefined` silently typed as `Scene`.
+    const patched = next.scenes.find(s => s.id === sceneId);
+    if (!patched) throw new SceneNotFoundError(sceneId);
+    return patched;
   }
 
   // ─── Internals ───────────────────────────────────────────────

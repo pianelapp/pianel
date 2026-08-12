@@ -186,6 +186,38 @@ export class SetlistService {
     return merged;
   }
 
+  /**
+   * Apply a pure Song transform to a customized entry's override.
+   *
+   * This is the only supported way to edit a detached gig version. Compose it
+   * with the transforms in helpers/songEdits.ts, e.g.
+   *   editOverride(id, 0, song => moveSceneInSong(song, 2, 0))
+   */
+  editOverride(
+    setlistId: string,
+    entryIndex: number,
+    transform: (song: Song) => Song,
+  ): Song {
+    const list = this.getSetlist(setlistId);
+    if (!list) throw new SetlistNotFoundError(setlistId);
+    const entry = list.entries[entryIndex];
+    if (!entry) throw new Error(`No entry at index ${entryIndex}.`);
+    if (!entry.override) throw new Error(`Entry ${entryIndex} is not customized.`);
+
+    const next: Song = {
+      ...transform(entry.override),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this._patchSetlist(setlistId, l => ({
+      ...l,
+      entries: l.entries.map((e, i) =>
+        i === entryIndex ? {...e, override: next} : e,
+      ),
+    }));
+    return next;
+  }
+
   /** How many setlist entries still follow this library song. */
   countSetlistsUsing(songId: string): number {
     return requireActiveProfile().setlists.reduce(
