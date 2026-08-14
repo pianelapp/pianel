@@ -1,27 +1,15 @@
-/**
- * T005 — profilesStore unit tests.
- *
- * Covers:
- *  - create / update / rename / delete via the store actions.
- *  - `activeProfileId` invariant (FR-017) — setActiveProfileId switches it
- *    and persist round-trip preserves it.
- *  - MRU fallback on active-deletion is covered at the ProfileService level
- *    (T040); here we only verify that the store itself doesn't auto-pick a
- *    new active when one is removed.
- *  - Persist round-trip with `version: 1` via in-memory storage.
- */
-
 import {inMemoryStorage} from '../../src/store/storage';
 import {createProfilesStore} from '../../src/store/profilesStore';
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../src/types/performanceSnapshot';
 import type {Profile} from '../../src/types/profile';
+import {CURRENT_SCHEMA_VERSION} from '../../src/types/schemaVersion';
 
 function makeProfile(id: string, name: string): Profile {
   const now = new Date().toISOString();
   return {
     id,
     name,
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
@@ -38,7 +26,6 @@ describe('profilesStore', () => {
   let store: ReturnType<typeof createProfilesStore>;
 
   beforeEach(async () => {
-    // Clear in-memory storage to avoid cross-test bleed via the singleton.
     await inMemoryStorage.removeItem('pianel:profiles');
     store = createProfilesStore({storage: inMemoryStorage});
   });
@@ -90,8 +77,6 @@ describe('profilesStore', () => {
     store.getState().removeProfile(a.id);
 
     expect(store.getState().profiles.map(p => p.id)).toEqual([b.id]);
-    // activeProfileId is intentionally NOT auto-rebound here; ProfileService
-    // owns the MRU fallback per data-model §2.
     expect(store.getState().activeProfileId).toBe(a.id);
   });
 
@@ -122,7 +107,6 @@ describe('profilesStore', () => {
     store.getState().addProfile(a);
     store.getState().setActiveProfileId(a.id);
 
-    // Zustand persist writes synchronously to our in-memory storage.
     const raw = await inMemoryStorage.getItem('pianel:profiles');
     expect(raw).not.toBeNull();
     const parsed = JSON.parse(raw as string) as {

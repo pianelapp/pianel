@@ -11,13 +11,14 @@ import {
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapshot';
 import type {Profile} from '../../../src/types/profile';
 import type {PresetService} from '../../../src/services/presets/PresetService';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 function makeProfile(): Profile {
   const now = new Date().toISOString();
   return {
     id: '1-aaaaaaaa',
     name: 'Workspace',
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
@@ -32,11 +33,6 @@ function makeProfile(): Profile {
 
 function fakePresetService(): PresetService {
   return {
-    // A shallow spread would share `metronome`/`voiceModeSnapshot`/
-    // `quickToneSlots` by reference with the module-level
-    // `DEFAULT_PERFORMANCE_SNAPSHOT` singleton — the deep-mutation tests below
-    // write through those nested objects, so a shallow copy here would leak
-    // mutations into every other test file that imports the same constant.
     captureSnapshot: () => ({
       ...DEFAULT_PERFORMANCE_SNAPSHOT,
       metronome: {...DEFAULT_PERFORMANCE_SNAPSHOT.metronome},
@@ -76,34 +72,21 @@ describe('SetlistService overrides', () => {
     expect(setlists.isCustomized(listId, 0)).toBe(true);
     expect(clone.name).toBe("Isn't She Lovely");
     expect(clone.scenes).toHaveLength(1);
-    // A distinct id keeps the clone independent of the library record.
     expect(clone.id).not.toBe(songId);
   });
 
   it('customizeEntry produces a true deep clone: nested mutations never cross', () => {
-    // Give the library scene distinguishable nested content, including
-    // inside `snapshot.voiceModeSnapshot` -- that is where the real nesting
-    // lives. A regression to a shallow `{...source, id, updatedAt}` copy
-    // would leave `scenes` (and everything inside each scene) pointing at
-    // the exact same objects as the library song; only a nested mutation can
-    // catch that. Assertions on `clone.name`, `clone.scenes.length`, and
-    // `clone.id` alone would still pass on a shallow copy too.
     const before = songs.getSong(songId)!;
     before.scenes[0].snapshot.voiceModeSnapshot.rightToneId = 'lib-original';
 
     const clone = setlists.customizeEntry(listId, 0);
 
-    // Direction 1: mutate the library song's stored scene object directly.
-    // A shallow clone would leak this straight into `clone`.
     const librarySong = songs.getSong(songId)!;
     librarySong.scenes[0].label = 'Mutated In Library';
     librarySong.scenes[0].snapshot.voiceModeSnapshot.rightToneId = 'mutated-in-library';
     expect(clone.scenes[0].label).toBe('Intro');
     expect(clone.scenes[0].snapshot.voiceModeSnapshot.rightToneId).toBe('lib-original');
 
-    // Direction 2 -- the one most likely to be missed: `customizeEntry` hands
-    // back a live reference into store state, so mutating the clone directly
-    // is possible. That must not reach the library song either.
     clone.scenes[0].label = 'Mutated In Clone';
     clone.scenes[0].snapshot.voiceModeSnapshot.rightToneId = 'mutated-in-clone';
     const libraryAfter = songs.getSong(songId)!;
@@ -139,11 +122,6 @@ describe('SetlistService overrides', () => {
 
   it('promoteEntry copies the override back into the library and clears it', () => {
     const clone = setlists.customizeEntry(listId, 0);
-    // The override is a full copy embedded in the entry, not a row in the
-    // song library (SetlistEntry.override: Song | null) — SongService has no
-    // way to address it by id, so the gig-specific edit is modeled directly
-    // on the clone rather than through `songs.renameSong(clone.id, ...)`,
-    // which would throw SongNotFoundError.
     clone.name = 'Gig Version';
     const promoted = setlists.promoteEntry(listId, 0);
 
@@ -162,8 +140,6 @@ describe('SetlistService overrides', () => {
   });
 
   it('countSetlistsUsing counts a setlist once even if the song appears in it twice', () => {
-    // `listId` already has one uncustomized entry for `songId` from
-    // `beforeEach`; add a second one in the same setlist.
     setlists.addSong(listId, songId);
     expect(setlists.countSetlistsUsing(songId)).toBe(1);
   });
@@ -217,17 +193,11 @@ describe('SetlistService overrides', () => {
       );
 
       expect(setlists.resolveEntry(listId, 0)?.scenes[0].label).toBe('Gig Chorus');
-      // The library song's scene keeps its original label.
       expect(songs.getSong(songId)?.scenes[0].label).toBe('Intro');
     });
 
     it('stamps the override updatedAt', () => {
       setlists.customizeEntry(listId, 0);
-      // A `>=` comparison against the pre-edit `updatedAt` can't fail: if the
-      // stamp were dropped entirely, `next.updatedAt` would just echo the
-      // stored value back, which is still `>=` itself. Write a sentinel the
-      // stamp must overwrite instead — this only passes if `editOverride`
-      // actually replaces `updatedAt` with a fresh timestamp.
       const next = setlists.editOverride(listId, 0, s => ({
         ...s,
         updatedAt: '2000-01-01T00:00:00.000Z',

@@ -5,13 +5,14 @@ import {SceneNotFoundError} from '../../../src/types/setlist';
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapshot';
 import type {Profile, Preset} from '../../../src/types/profile';
 import type {PresetService} from '../../../src/services/presets/PresetService';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 function makeProfile(): Profile {
   const now = new Date().toISOString();
   return {
     id: '1-aaaaaaaa',
     name: 'Workspace',
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
@@ -24,7 +25,6 @@ function makeProfile(): Profile {
   };
 }
 
-/** Returns a distinguishable snapshot each call so copies can be told apart. */
 function fakePresetService(): PresetService {
   let tempo = 100;
   return {
@@ -153,8 +153,6 @@ describe('SongService scenes', () => {
       snapshot: {
         ...DEFAULT_PERFORMANCE_SNAPSHOT,
         tempo: 77,
-        // Populate nested structures so mutating them post-copy can prove
-        // the copy is deep, not just top-level primitives.
         voiceModeSnapshot: {
           voiceMode: 'split',
           rightToneId: 'tone-right',
@@ -177,10 +175,6 @@ describe('SongService scenes', () => {
     expect(scene.snapshot.tempo).toBe(77);
     expect(scene.notes).toBe('');
 
-    // Copy, not link — mutating the pad, including at depth, must not touch
-    // the scene. A shallow `{...pad.snapshot}` would share the nested
-    // `voiceModeSnapshot` object and `quickToneSlots` entries by reference,
-    // so these mutations only stay isolated under a genuine deep copy.
     pad.snapshot.tempo = 999;
     pad.snapshot.voiceModeSnapshot.rightToneId = 'mutated-right';
     pad.snapshot.quickToneSlots[0]!.rightToneId = 'mutated-slot';

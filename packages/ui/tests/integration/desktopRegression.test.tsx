@@ -1,17 +1,3 @@
-/**
- * Desktop mouse behavior is preserved.
- *
- *  - mouse right-click on a profile row / preset card opens the existing menu
- *    unchanged; mouse right-click on a Quick-assign button now opens the shared
- *    clear-confirmation dialog (the one intentional change)
- *  - the native context menu stays suppressed on all three controls
- *  - a mouse press-and-hold never triggers the touch long-press path (left-click
- *    primary actions stay unchanged); an empty-tile left-click still opens the
- *    naming dialog
- *
- * The behavior is identical for the Electron desktop app because it relies on
- * the shared @pianel/ui package with no app-specific branching.
- */
 import * as React from 'react';
 import {act} from 'react';
 import {render} from '../utils/render';
@@ -29,6 +15,7 @@ import {QuickToneSlots} from '../../src/screens/display/QuickToneSlots';
 import {ProfilesScreen} from '../../src/screens/profiles/ProfilesScreen';
 import {PresetsScreen} from '../../src/screens/presets/PresetsScreen';
 import {AlertModal} from '../../src/components/modals/AlertModal';
+import {CURRENT_SCHEMA_VERSION} from '@pianel/core/store';
 
 beforeAll(() => {
   initTestStores();
@@ -53,7 +40,7 @@ const PRESET: Preset = {
 const PROFILE: Profile = {
   id: 'p1',
   name: 'My Profile',
-  schemaVersion: 2,
+  schemaVersion: CURRENT_SCHEMA_VERSION,
   theme: 'system',
   accidentals: 'sharps',
   favorites: [],

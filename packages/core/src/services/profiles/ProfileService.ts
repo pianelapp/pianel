@@ -1,29 +1,22 @@
-/**
- * ProfileService — owns profile lifecycle (create / update / rename / delete /
- * load), preset-grid manipulation through the active profile, and JSON
- * export/import (007-profiles-preset-pivot).
- *
- * Constitution V: lives in `packages/core`, depends only on other core
- * services + a `FilePickerAdapter` injected by the host app. Piano writes
- * delegate to `PianoService` via `PresetService` — no direct engine/transport
- * touches.
- */
-
 import type {PianoService} from '../PianoService';
 import {useAppSettingsStore} from '../../store/appSettingsStore';
 import {useFavoritesStore} from '../../store/favoritesStore';
 import {usePerformanceStore} from '../../store/performanceStore';
 import {useProfilesStore} from '../../store/profilesStore';
 import {generateProfileId, PROFILE_ID_PATTERN} from '../../helpers/profileId';
-import {normalizeProfile} from '../../helpers/profileMigration';
+import {
+  migrateToCurrent,
+  MissingMigratorError,
+  OLDEST_SCHEMA_VERSION,
+} from '../../helpers/schemaHistory';
 import {
   DEFAULT_PERFORMANCE_SNAPSHOT,
   type PerformanceSnapshot,
 } from '../../types/performanceSnapshot';
+import {CURRENT_SCHEMA_VERSION} from '../../types/schemaVersion';
 import {
   DuplicateProfileNameError,
   MalformedProfileFileError,
-  MAX_SUPPORTED_SCHEMA_VERSION,
   PresetGridFullError,
   PRESET_TILE_COUNT,
   ProfileNotFoundError,
@@ -36,37 +29,10 @@ import {
 import type {FilePickerAdapter} from './FilePickerAdapter';
 import {PresetService, sanitizeFilename} from '../presets/PresetService';
 
-// ─── Import result discriminated union ──────────────────────────
-
 export type ImportResult =
   | {kind: 'imported'; profile: Profile}
   | {kind: 'conflict'; parsed: ProfileExportFile; existing: Profile}
   | {kind: 'cancelled'};
-
-// ─── Forward-compatibility migrator table (R8) ─────────────────
-//
-// Invariant: the v1→v2 migrator ships in the same change as the
-// MAX_SUPPORTED_SCHEMA_VERSION bump, so raising the max never leaves v1
-// imports unmigratable. See `ProfileService.v2Import.test.ts` for the
-// dedicated round-trip coverage.
-
-const MIGRATORS: Record<number, (input: unknown) => ProfileExportFile> = {
-  // v1 predates songs/setlists — normalizeProfile fills them and bumps the
-  // profile's own schemaVersion.
-  1: (input: unknown) => {
-    const file = (input ?? {}) as Record<string, unknown>;
-    return {
-      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
-      exportedAt:
-        typeof file.exportedAt === 'string'
-          ? file.exportedAt
-          : new Date().toISOString(),
-      profile: normalizeProfile(file.profile),
-    };
-  },
-};
-
-// ─── Service ────────────────────────────────────────────────────
 
 export class ProfileService {
   private pianoService: PianoService;
@@ -83,18 +49,14 @@ export class ProfileService {
     this.presetService = presetService;
   }
 
-  // ─── Lifecycle ───────────────────────────────────────────────
-
   async ensureDefaultProfile(): Promise<Profile> {
     const store = useProfilesStore.getState();
     const settings = useAppSettingsStore.getState();
     if (store.profiles.length > 0) {
-      // If activeProfileId points at a missing profile, fall back to MRU.
       const active = store.profiles.find(p => p.id === store.activeProfileId);
       const resolved = active ?? mostRecentlyUpdated(store.profiles);
       if (!active) store.setActiveProfileId(resolved.id);
 
-      // Repair bootProfileId if it's unset or stale.
       const bootValid = store.profiles.some(
         p => p.id === settings.bootProfileId,
       );
@@ -103,25 +65,30 @@ export class ProfileService {
       return resolved;
     }
 
+    const profile = this._addDefaultProfile();
+    store.setActiveProfileId(profile.id);
+    settings.setBootProfileId(profile.id);
+    return profile;
+  }
+
+  private _addDefaultProfile(): Profile {
     const now = new Date().toISOString();
-    const defaultState = this.presetService.captureSnapshot();
+    const settings = useAppSettingsStore.getState();
     const profile: Profile = {
       id: generateProfileId(),
       name: 'Default',
-      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       theme: settings.themePreference,
       accidentals: settings.accidentalPreference,
       favorites: snapshotFavorites(),
       presets: [],
       songs: [],
       setlists: [],
-      defaultState,
+      defaultState: this.presetService.captureSnapshot(),
       createdAt: now,
       updatedAt: now,
     };
-    store.addProfile(profile);
-    store.setActiveProfileId(profile.id);
-    settings.setBootProfileId(profile.id);
+    useProfilesStore.getState().addProfile(profile);
     return profile;
   }
 
@@ -138,12 +105,10 @@ export class ProfileService {
     const profile: Profile = {
       id: generateProfileId(),
       name: trimmed,
-      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       theme: useAppSettingsStore.getState().themePreference,
       accidentals: useAppSettingsStore.getState().accidentalPreference,
       favorites: snapshotFavorites(),
-      // New profile captures the *current* preset grid as its starting point —
-      // documented under FR-012 "captures current state".
       presets: store.profiles.find(p => p.id === store.activeProfileId)?.presets
         ? [...(store.profiles.find(p => p.id === store.activeProfileId)?.presets ?? [])]
         : [],
@@ -155,7 +120,7 @@ export class ProfileService {
     };
 
     store.addProfile(profile);
-    store.setActiveProfileId(profile.id); // FR-012 auto-activate.
+    store.setActiveProfileId(profile.id);
     return profile;
   }
 
@@ -222,51 +187,33 @@ export class ProfileService {
     const wasActive = store.activeProfileId === profileId;
     const settings = useAppSettingsStore.getState();
     const wasBoot = settings.bootProfileId === profileId;
-    store.removeProfile(profileId);
 
     if (!wasActive) {
+      store.removeProfile(profileId);
       if (wasBoot) settings.setBootProfileId(null);
-      return {newActiveProfileId: store.activeProfileId};
+      return {newActiveProfileId: useProfilesStore.getState().activeProfileId};
     }
 
-    const remaining = useProfilesStore.getState().profiles;
-    if (remaining.length === 0) {
-      // `ensureDefaultProfile` repoints bootProfileId to the freshly
-      // created Default — no extra patch needed here.
-      const recreated = await this.ensureDefaultProfile();
-      return {newActiveProfileId: recreated.id};
-    }
-    const mru = mostRecentlyUpdated(remaining);
-    store.setActiveProfileId(mru.id);
-    if (wasBoot) settings.setBootProfileId(mru.id);
-    return {newActiveProfileId: mru.id};
+    const remaining = store.profiles.filter(p => p.id !== profileId);
+    const isLast = remaining.length === 0;
+    const next = isLast ? this._addDefaultProfile() : mostRecentlyUpdated(remaining);
+
+    store.setActiveProfileId(next.id);
+    if (wasBoot || isLast) settings.setBootProfileId(next.id);
+    store.removeProfile(profileId);
+    return {newActiveProfileId: next.id};
   }
 
-  /**
-   * Load a profile's *app-side configuration* — theme, accidentals,
-   * favorites, quick-tone slot assignments — and mark it active.
-   *
-   * Intentionally does NOT touch the piano: no DT1 writes, no snapshot
-   * apply, no pending-on-connect stash. If the user is playing when a
-   * profile loads, the audio is undisturbed. To push state to the piano,
-   * apply a preset (which is a deliberate, user-triggered action).
-   */
   async loadProfile(profileId: string): Promise<void> {
     const store = useProfilesStore.getState();
     const profile = store.profiles.find(p => p.id === profileId);
     if (!profile) throw new ProfileNotFoundError(profileId);
 
-    // 1. UI preferences.
     useAppSettingsStore.getState().setThemePreference(profile.theme);
     useAppSettingsStore.getState().setAccidentalPreference(profile.accidentals);
 
-    // 2. Favorites — mirrored from the profile snapshot into the live store.
     replaceFavorites(profile.favorites);
 
-    // 3. Quick-tone slot assignments — these live in `defaultState` for
-    //    historical reasons (they're part of the captured snapshot) but
-    //    they're UI buttons, not audible piano state, so restoring them
-    //    here is safe.
     const slots = profile.defaultState?.quickToneSlots;
     if (slots) {
       const appSettings = useAppSettingsStore.getState();
@@ -275,12 +222,8 @@ export class ProfileService {
       });
     }
 
-    // 4. Activate. The active profile's preset list flows to the UI via
-    //    `selectActivePresets` — no extra wiring needed.
     store.setActiveProfileId(profileId);
   }
-
-  // ─── Read accessors ──────────────────────────────────────────
 
   getActiveProfile(): Profile | null {
     const store = useProfilesStore.getState();
@@ -299,8 +242,6 @@ export class ProfileService {
     );
   }
 
-  /** Write-through helper invoked by `useFavorites` after a favorites edit so
-   *  the active profile's `favorites` mirror stays in sync (data-model §5). */
   syncActiveFavorites(): void {
     const store = useProfilesStore.getState();
     const active = store.profiles.find(p => p.id === store.activeProfileId);
@@ -313,13 +254,6 @@ export class ProfileService {
     store.updateProfileInList(next);
   }
 
-  /**
-   * Narrow per-field write-back: persist only the active profile's `theme`
-   * (plus `updatedAt`) from the live app-settings store. Mirrors
-   * `syncActiveFavorites` — it MUST NOT recapture `defaultState` or touch
-   * `presets`/`favorites` (009-settings-preferences, Requirements 3.2/3.3/3.7).
-   * No-ops when there is no active profile.
-   */
   syncActiveTheme(): void {
     const store = useProfilesStore.getState();
     const active = store.profiles.find(p => p.id === store.activeProfileId);
@@ -332,13 +266,6 @@ export class ProfileService {
     store.updateProfileInList(next);
   }
 
-  /**
-   * Narrow per-field write-back: persist only the active profile's
-   * `accidentals` (plus `updatedAt`) from the live app-settings store. Mirrors
-   * `syncActiveFavorites` — it MUST NOT recapture `defaultState` or touch
-   * `presets`/`favorites` (009-settings-preferences, Requirements 6.2/6.3/6.7).
-   * No-ops when there is no active profile.
-   */
   syncActiveAccidentals(): void {
     const store = useProfilesStore.getState();
     const active = store.profiles.find(p => p.id === store.activeProfileId);
@@ -350,8 +277,6 @@ export class ProfileService {
     };
     store.updateProfileInList(next);
   }
-
-  // ─── Preset-grid operations (scoped to active profile) ───────
 
   async savePresetToTile(tilePosition: number, label: string): Promise<Preset> {
     if (tilePosition < 0 || tilePosition >= PRESET_TILE_COUNT) {
@@ -453,14 +378,12 @@ export class ProfileService {
     }));
   }
 
-  // ─── Export / Import ─────────────────────────────────────────
-
   async exportProfile(profileId: string): Promise<{saved: boolean}> {
     const profile = this.getProfileById(profileId);
     if (!profile) throw new ProfileNotFoundError(profileId);
 
     const file: ProfileExportFile = {
-      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       profile,
     };
@@ -490,7 +413,6 @@ export class ProfileService {
       return {kind: 'conflict', parsed: filled, existing};
     }
 
-    // No ID collision: handle name conflict via " (Imported)" suffix.
     const finalProfile = {
       ...filled.profile,
       name: uniqueImportName(filled.profile.name, store.profiles.map(p => p.name)),
@@ -505,13 +427,10 @@ export class ProfileService {
     store.replaceProfileById(filled.profile);
 
     if (store.activeProfileId === filled.profile.id) {
-      // Re-apply defaultState since the active profile's snapshot changed.
       await this.loadProfile(filled.profile.id);
     }
     return filled.profile;
   }
-
-  // ─── Internals ────────────────────────────────────────────────
 
   private _getActiveProfileOrThrow(): Profile {
     const active = this.getActiveProfile();
@@ -534,34 +453,30 @@ export class ProfileService {
     }
     const obj = input as Record<string, unknown>;
 
-    // schemaVersion defaults to 1 if missing (R2).
     const schemaVersion =
-      typeof obj.schemaVersion === 'number' ? obj.schemaVersion : 1;
-    if (!Number.isInteger(schemaVersion) || schemaVersion < 1) {
+      typeof obj.schemaVersion === 'number'
+        ? obj.schemaVersion
+        : OLDEST_SCHEMA_VERSION;
+    if (
+      !Number.isInteger(schemaVersion) ||
+      schemaVersion < OLDEST_SCHEMA_VERSION
+    ) {
       throw new MalformedProfileFileError('invalid schemaVersion');
     }
-    if (schemaVersion > MAX_SUPPORTED_SCHEMA_VERSION) {
+    if (schemaVersion > CURRENT_SCHEMA_VERSION) {
       throw new UnsupportedProfileVersionError(schemaVersion);
     }
 
-    // Migrate to the current schema version first, then validate once below.
-    // Both an already-current file and a migrated one must pass the exact
-    // same shape checks — a migrator's job is to fill in new fields, not to
-    // vouch for the fields it inherited unchanged (a v1 file with a missing
-    // or malformed profile.id must still be rejected, not silently persisted
-    // with an undefined id).
     let candidate: Record<string, unknown> = obj;
-    if (schemaVersion < MAX_SUPPORTED_SCHEMA_VERSION) {
-      const migrator = MIGRATORS[schemaVersion];
-      if (!migrator) {
-        throw new MalformedProfileFileError(
-          `no migrator for schemaVersion ${schemaVersion}`,
-        );
+    if (schemaVersion < CURRENT_SCHEMA_VERSION) {
+      try {
+        candidate = migrateToCurrent(obj, schemaVersion);
+      } catch (error) {
+        if (!(error instanceof MissingMigratorError)) throw error;
+        throw new MalformedProfileFileError(error.message);
       }
-      candidate = migrator(input) as unknown as Record<string, unknown>;
     }
 
-    // candidate is now schemaVersion === MAX_SUPPORTED shape. Validate it.
     const profile = candidate.profile;
     if (!profile || typeof profile !== 'object') {
       throw new MalformedProfileFileError('missing profile object');
@@ -578,7 +493,7 @@ export class ProfileService {
     }
 
     return {
-      schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       exportedAt:
         typeof candidate.exportedAt === 'string'
           ? candidate.exportedAt
@@ -588,8 +503,6 @@ export class ProfileService {
   }
 }
 
-// ─── Helpers ───────────────────────────────────────────────────
-
 function snapshotFavorites(): FavoriteRef[] {
   return useFavoritesStore
     .getState()
@@ -597,9 +510,6 @@ function snapshotFavorites(): FavoriteRef[] {
 }
 
 function replaceFavorites(refs: FavoriteRef[]): void {
-  // Replace the contents of useFavoritesStore by removing every existing
-  // entry then re-adding in `sortOrder` order. This keeps the existing store
-  // API (no `replace` action) intact.
   const store = useFavoritesStore.getState();
   const existingIds = store.favorites.map(f => f.toneId);
   existingIds.forEach(id => store.removeFavorite(id));
@@ -614,11 +524,6 @@ function mostRecentlyUpdated(profiles: Profile[]): Profile {
   )[0];
 }
 
-/**
- * Apply documented defaults (data-model §9) to any missing field in a parsed
- * ProfileExportFile. Used both for the no-conflict import path and for
- * `confirmImportOverwrite`.
- */
 export function applyExportFileDefaults(
   parsed: ProfileExportFile,
 ): ProfileExportFile {
@@ -627,7 +532,7 @@ export function applyExportFileDefaults(
   const filled: Profile = {
     id: p.id,
     name: p.name,
-    schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: p.theme ?? 'system',
     accidentals: p.accidentals ?? 'sharps',
     favorites: Array.isArray(p.favorites) ? p.favorites : [],
@@ -641,7 +546,7 @@ export function applyExportFileDefaults(
     updatedAt: p.updatedAt ?? new Date().toISOString(),
   };
   return {
-    schemaVersion: MAX_SUPPORTED_SCHEMA_VERSION,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     exportedAt: parsed.exportedAt ?? new Date().toISOString(),
     profile: filled,
   };
@@ -679,11 +584,6 @@ function applySnapshotDefaults(
   };
 }
 
-/**
- * Pick a name that doesn't collide with the supplied set. On first collision
- * append `" (Imported)"`; subsequent collisions append `" (Imported N)"` with
- * N starting at 2.
- */
 export function uniqueImportName(
   desired: string,
   existing: string[],
@@ -702,8 +602,4 @@ export function uniqueImportName(
   }
 }
 
-// ─── Suppress unused-perf-import warnings when not yet wired ───
-// `usePerformanceStore` will be used once `replayPendingOnConnect` hook
-// integration lands in App bootstrap. Mark a no-op reference so linters
-// don't strip the import (we may need it for pendingTone integration).
 void usePerformanceStore;

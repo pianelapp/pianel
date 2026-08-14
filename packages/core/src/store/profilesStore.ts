@@ -1,14 +1,3 @@
-/**
- * Profiles Zustand Store (data-model.md §2 / §7).
- *
- * Top-level container for the new Profiles & Presets pivot. Persists the full
- * list of profiles and the `activeProfileId` invariant (FR-017). Replaces the
- * previous globally-scoped `presetsStore`/`padConfigStore` for state ownership.
- *
- * Constitution I: Offline-First — persisted via the shared `StateStorage`
- * adapter (MMKV on mobile, electron-store on desktop).
- */
-
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 
@@ -22,17 +11,11 @@ export interface ProfilesState {
 }
 
 export interface ProfilesActions {
-  /** Append a profile to the list. Does not affect `activeProfileId`. */
   addProfile: (profile: Profile) => void;
-  /** Replace a profile's full record in place (`updateProfile`, etc.). */
   updateProfileInList: (profile: Profile) => void;
-  /** Patch a profile's `name` + `updatedAt`; leaves other fields untouched. */
   renameProfileInList: (profileId: string, newName: string) => void;
-  /** Remove a profile from the list. Does not adjust `activeProfileId`. */
   removeProfile: (profileId: string) => void;
-  /** Set the active profile id (FR-017). */
   setActiveProfileId: (profileId: string) => void;
-  /** Overwrite-in-place for import flows that replace an existing id. */
   replaceProfileById: (profile: Profile) => void;
 }
 
@@ -86,9 +69,6 @@ function _build(storage: StateStorage) {
       {
         name: 'pianel:profiles',
         storage: createJSONStorage(() => storage),
-        // Persist version is independent of `Profile.schemaVersion`; both are
-        // 2 here by coincidence of timing, not by contract.
-        version: 2,
         migrate: (persisted: unknown) => {
           const state = (persisted ?? {}) as Partial<ProfilesState>;
           return {
@@ -99,14 +79,6 @@ function _build(storage: StateStorage) {
             activeProfileId: state.activeProfileId ?? '',
           } as ProfilesState;
         },
-        // `migrate` above only runs when the stored payload carries an
-        // explicit numeric `version` that differs from the one configured
-        // here (zustand's own gate). Records written by builds that predate
-        // persist versioning entirely have no `version` key at all, so they
-        // never reach `migrate` — but `merge` runs unconditionally on every
-        // hydration, so it is the one hook guaranteed to normalize every
-        // profile regardless of how the stored payload got here. Re-running
-        // `normalizeProfile` on already-migrated data is a no-op.
         merge: (persisted, current) => {
           const state = (persisted ?? {}) as Partial<ProfilesState>;
           return {
@@ -137,10 +109,6 @@ _proxy.setState = (state: any, replace?: any) =>
 _proxy.subscribe = (...args: Parameters<StoreType['subscribe']>) =>
   _get().subscribe(...args);
 _proxy.getInitialState = () => _get().getInitialState();
-// Forward the persist middleware's API (added by `persist()` in `_build`) so
-// callers can drive rehydration explicitly, e.g. in tests. Each method looks
-// up the live store via `_get()` rather than capturing a stale reference, in
-// case `createProfilesStore` is called again with a new storage adapter.
 _proxy.persist = {
   setOptions: options => _get().persist.setOptions(options),
   clearStorage: () => _get().persist.clearStorage(),
@@ -158,9 +126,6 @@ export function createProfilesStore({storage}: {storage: StateStorage}) {
   return useProfilesStore;
 }
 
-// ─── Selectors ────────────────────────────────────────────────
-
-/** Active profile (or `null` if `activeProfileId` does not match a profile). */
 export function selectActiveProfile(
   state: ProfilesState,
 ): Profile | null {
@@ -169,7 +134,6 @@ export function selectActiveProfile(
   );
 }
 
-/** Active profile's preset list (empty array when no active profile). */
 export function selectActivePresets(state: ProfilesState) {
   return selectActiveProfile(state)?.presets ?? [];
 }

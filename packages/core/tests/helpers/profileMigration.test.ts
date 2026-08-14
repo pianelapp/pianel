@@ -1,11 +1,13 @@
 import {normalizeProfile} from '../../src/helpers/profileMigration';
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../src/types/performanceSnapshot';
+import {CURRENT_SCHEMA_VERSION} from '../../src/types/schemaVersion';
+import {OLDEST_SCHEMA_VERSION} from '../../src/helpers/schemaHistory';
 
 function v1Profile() {
   return {
     id: '1-aaaaaaaa',
     name: 'Gig Day',
-    schemaVersion: 1,
+    schemaVersion: OLDEST_SCHEMA_VERSION,
     theme: 'dark',
     accidentals: 'flats',
     favorites: [{toneId: '0-0-0', sortOrder: 0}],
@@ -25,7 +27,7 @@ describe('normalizeProfile', () => {
 
   it('bumps schemaVersion to 2', () => {
     const out = normalizeProfile(v1Profile());
-    expect(out.schemaVersion).toBe(2);
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
   });
 
   it('preserves every existing v1 field', () => {
@@ -47,7 +49,7 @@ describe('normalizeProfile', () => {
       createdAt: 'x',
       updatedAt: 'x',
     };
-    const input = {...v1Profile(), schemaVersion: 2, songs: [song], setlists: []};
+    const input = {...v1Profile(), schemaVersion: CURRENT_SCHEMA_VERSION, songs: [song], setlists: []};
     const out = normalizeProfile(input);
     expect(out.songs).toEqual([song]);
   });

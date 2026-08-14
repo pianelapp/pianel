@@ -33,7 +33,6 @@ export type {
 } from '../types/profile';
 export {
   PRESET_TILE_COUNT,
-  MAX_SUPPORTED_SCHEMA_VERSION,
   DuplicateProfileNameError,
   ProfileNotFoundError,
   MalformedProfileFileError,
@@ -51,11 +50,13 @@ export type {CursorState, CursorActions} from './cursorStore';
 export {useCursorStore} from './cursorStore';
 
 export type {Scene, Song, SetlistEntry, Setlist} from '../types/setlist';
+export type {SchemaVersion} from '../types/schemaVersion';
+export {CURRENT_SCHEMA_VERSION} from '../types/schemaVersion';
 export {
-  CURRENT_SCHEMA_VERSION,
   SongNotFoundError,
   SceneNotFoundError,
   SetlistNotFoundError,
+  EntryNotFoundError,
   EmptySongError,
   EmptySetlistError,
   MissingSongError,

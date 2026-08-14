@@ -1,13 +1,3 @@
-/**
- * Task 3.3 — integration test for web ProfileService + file-picker wiring.
- *
- * Proves:
- *  - the web `FilePickerAdapter`, injected via `createWebProfileService`,
- *    round-trips a profile (export then import → imported), going through the
- *    real `webFilePicker` File System Access path (mocked FSA handles);
- *  - a malformed / unsupported-version file surfaces the existing core
- *    validation error without corrupting stored data.
- */
 import { PianoService } from '@pianel/core/services/PianoService';
 import { PresetService } from '@pianel/core/services/presets/PresetService';
 import { FP30XEngine } from '@pianel/core/engine/fp30x/FP30XEngine';
@@ -21,6 +11,7 @@ import {
   inMemoryStorage,
   UnsupportedProfileVersionError,
   MalformedProfileFileError,
+  CURRENT_SCHEMA_VERSION,
 } from '@pianel/core/store';
 import type { Transport } from '@pianel/core/transport/types';
 import { createWebProfileService } from '../src/services/profileService.web';
@@ -39,11 +30,6 @@ class FakeTransport implements Transport {
   async send(): Promise<void> {}
 }
 
-/**
- * In-memory File System Access stand-in: `showSaveFilePicker` captures written
- * contents; `showOpenFilePicker` replays whatever was last written (or an
- * override). This drives the *real* webFilePicker FSA branch.
- */
 function installFakeFsa() {
   const state: { lastWritten: string | null; openOverride: string | null } = {
     lastWritten: null,
@@ -98,7 +84,6 @@ describe('web ProfileService + webFilePicker wiring', () => {
     expect(saved).toBe(true);
     expect(fsa.lastWritten).not.toBeNull();
 
-    // Remove it so re-import is a fresh add, not a conflict.
     useProfilesStore.getState().removeProfile(created.id);
     expect(useProfilesStore.getState().profiles.some((p) => p.id === created.id)).toBe(false);
 
@@ -113,7 +98,7 @@ describe('web ProfileService + webFilePicker wiring', () => {
   it('surfaces the core unsupported-version error and leaves stored data unchanged', async () => {
     const fsa = installFakeFsa();
     const service = buildService();
-    fsa.openOverride = JSON.stringify({ schemaVersion: 9999, profile: { id: 'x', name: 'Y' } });
+    fsa.openOverride = JSON.stringify({ schemaVersion: CURRENT_SCHEMA_VERSION + 1, profile: { id: 'x', name: 'Y' } });
 
     const before = useProfilesStore.getState().profiles.length;
     await expect(service.importProfile()).rejects.toBeInstanceOf(UnsupportedProfileVersionError);

@@ -1,5 +1,4 @@
 import {
-  CURRENT_SCHEMA_VERSION,
   SongNotFoundError,
   SceneNotFoundError,
   SetlistNotFoundError,
@@ -8,10 +7,6 @@ import {
 } from '../../src/types/setlist';
 
 describe('setlist types', () => {
-  it('declares the current schema version as 2', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(2);
-  });
-
   it('SongNotFoundError carries a code and the id', () => {
     const err = new SongNotFoundError('123-abcdefgh');
     expect(err.code).toBe('song_not_found');

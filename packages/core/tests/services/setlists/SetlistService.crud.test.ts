@@ -6,13 +6,14 @@ import {SetlistNotFoundError, SongNotFoundError} from '../../../src/types/setlis
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapshot';
 import type {Profile} from '../../../src/types/profile';
 import type {PresetService} from '../../../src/services/presets/PresetService';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 function makeProfile(): Profile {
   const now = new Date().toISOString();
   return {
     id: '1-aaaaaaaa',
     name: 'Workspace',
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],

@@ -1,11 +1,3 @@
-/**
- * Preset tile long-press.
- *
- *  - a long-press on a filled tile opens the actions menu at the touch point
- *  - a long-press on an empty tile does nothing (parity with ignored empty
- *    right-click); the primary apply does not fire
- *  - selecting Delete runs the existing confirm flow
- */
 import * as React from 'react';
 import {act} from 'react';
 import {render} from '../utils/render';
@@ -19,6 +11,7 @@ import {
 } from '../../src/store';
 import {PresetsScreen} from '../../src/screens/presets/PresetsScreen';
 import {AlertModal} from '../../src/components/modals/AlertModal';
+import {CURRENT_SCHEMA_VERSION} from '@pianel/core/store';
 
 beforeAll(() => {
   initTestStores();
@@ -36,7 +29,7 @@ const PRESET: Preset = {
 const PROFILE: Profile = {
   id: 'p1',
   name: 'Profile',
-  schemaVersion: 2,
+  schemaVersion: CURRENT_SCHEMA_VERSION,
   theme: 'system',
   accidentals: 'sharps',
   favorites: [],
@@ -128,7 +121,6 @@ describe('preset tile long-press', () => {
     const {container, unmount} = render(ui());
     await longPress(emptyTile(container));
     expect(menu()).toBeNull();
-    // No naming dialog opened either (primary apply/save not triggered).
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     unmount();
   });
@@ -151,7 +143,7 @@ describe('preset tile long-press', () => {
     await longPress(filledTile(container));
 
     await act(async () => {
-      jest.advanceTimersByTime(1000); // disarm suppression guard
+      jest.advanceTimersByTime(1000);
     });
     const deleteItem = Array.from(
       menu()!.querySelectorAll('[role="menuitem"]'),

@@ -8,6 +8,7 @@ describe('barrel exports', () => {
     expect(typeof storeBarrel.SongNotFoundError).toBe('function');
     expect(typeof storeBarrel.SceneNotFoundError).toBe('function');
     expect(typeof storeBarrel.SetlistNotFoundError).toBe('function');
+    expect(typeof storeBarrel.EntryNotFoundError).toBe('function');
     expect(typeof storeBarrel.EmptySongError).toBe('function');
     expect(typeof storeBarrel.EmptySetlistError).toBe('function');
     expect(typeof storeBarrel.MissingSongError).toBe('function');

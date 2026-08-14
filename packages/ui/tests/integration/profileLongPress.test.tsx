@@ -1,12 +1,3 @@
-/**
- * Profile row long-press.
- *
- *  - a long-press opens the profile actions menu at the touch point with the
- *    full action set
- *  - an outside tap closes it; the primary load does not fire (emulated click
- *    suppressed)
- *  - selecting Delete runs the existing confirm flow
- */
 import * as React from 'react';
 import {act} from 'react';
 import {render} from '../utils/render';
@@ -19,6 +10,7 @@ import {
 } from '../../src/store';
 import {ProfilesScreen} from '../../src/screens/profiles/ProfilesScreen';
 import {AlertModal} from '../../src/components/modals/AlertModal';
+import {CURRENT_SCHEMA_VERSION} from '@pianel/core/store';
 
 beforeAll(() => {
   initTestStores();
@@ -27,7 +19,7 @@ beforeAll(() => {
 const PROFILE: Profile = {
   id: 'p1',
   name: 'My Profile',
-  schemaVersion: 2,
+  schemaVersion: CURRENT_SCHEMA_VERSION,
   theme: 'system',
   accidentals: 'sharps',
   favorites: [],
@@ -162,7 +154,7 @@ describe('profile row long-press', () => {
     await longPress(profileRow(container));
 
     await act(async () => {
-      jest.advanceTimersByTime(1000); // disarm suppression guard
+      jest.advanceTimersByTime(1000);
     });
     await act(async () => {
       menuItem('Delete').dispatchEvent(

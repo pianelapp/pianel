@@ -13,13 +13,14 @@ import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapsh
 import type {Profile} from '../../../src/types/profile';
 import type {PerformanceSnapshot} from '../../../src/types/performanceSnapshot';
 import type {PresetService} from '../../../src/services/presets/PresetService';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 function makeProfile(): Profile {
   const now = new Date().toISOString();
   return {
     id: '1-aaaaaaaa',
     name: 'Workspace',
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
@@ -32,7 +33,6 @@ function makeProfile(): Profile {
   };
 }
 
-/** Records every applied snapshot so tests can assert what was sent. */
 function recordingPresetService() {
   const applied: PerformanceSnapshot[] = [];
   let tempo = 100;
@@ -98,7 +98,6 @@ describe('SetlistCursorService enter/exit/jump', () => {
     const empty = songs.createSong('Empty').id;
     await expect(cursor.enterPerform({songId: empty})).rejects.toThrow(EmptySongError);
     expect(useCursorStore.getState().isPerforming).toBe(false);
-    // The failed enter must not have reached the piano.
     expect(applied).toHaveLength(0);
   });
 
@@ -146,11 +145,6 @@ describe('SetlistCursorService enter/exit/jump', () => {
   });
 
   it('enterPerform skips a dangling entry 0 and lands on the first playable entry', async () => {
-    // Every other setlist-path test in this file uses a single-entry
-    // setlist, so the skip loop in _firstPlayableEntry never has to advance
-    // past index 0. This setlist puts a dangling reference FIRST and the
-    // real, playable song SECOND, so landing on index 0 or on "whatever
-    // resolveEntry returns non-null" would both be wrong.
     const doomed = songs.createSong('Doomed').id;
     songs.captureScene(doomed, 'X');
     const gig = setlists.createSetlist('Skip Gig').id;
@@ -167,9 +161,6 @@ describe('SetlistCursorService enter/exit/jump', () => {
   });
 
   it('enterPerform skips a zero-scene entry 0 and lands on the first playable entry', async () => {
-    // Entry 0 resolves to a real, non-dangling song — just one with no
-    // scenes to perform. A loop that only checks "resolveEntry is non-null"
-    // (dropping the scenes.length guard) would wrongly stop here.
     const bare = songs.createSong('No Scenes Yet').id;
     const gig = setlists.createSetlist('Skip Gig 2').id;
     setlists.addSong(gig, bare);
@@ -201,7 +192,6 @@ describe('SetlistCursorService enter/exit/jump', () => {
 
     await cursor.enterPerform({setlistId: listId});
     expect(cursor.getCurrentSong()?.name).toBe('Gig-Only Version');
-    // The library record is untouched — the override is a copy, not a link.
     expect(songs.getSong(songId)?.name).toBe("Isn't She Lovely");
   });
 
@@ -231,7 +221,6 @@ describe('SetlistCursorService enter/exit/jump', () => {
     expect(s.entryIndex).toBe(1);
     expect(s.songId).toBe(second);
     expect(s.sceneIndex).toBe(0);
-    // A successful jump is a move, and R2 says every move applies.
     expect(applied).toHaveLength(2);
   });
 
@@ -245,11 +234,9 @@ describe('SetlistCursorService enter/exit/jump', () => {
     const before = useCursorStore.getState();
     await cursor.jumpToSong(1);
     const after = useCursorStore.getState();
-    // Position is unchanged: there is nothing valid to jump to.
     expect(after.entryIndex).toBe(before.entryIndex);
     expect(after.songId).toBe(before.songId);
     expect(after.sceneIndex).toBe(before.sceneIndex);
-    // Nothing beyond the initial enterPerform apply was sent.
     expect(applied).toHaveLength(1);
   });
 

@@ -1,14 +1,3 @@
-/**
- * 009-settings-preferences Task 7.1 / 7.2 — relaunch agreement, profile-switch
- * round-trip, and export/import carry-over for theme + accidentals.
- *
- * Requirements 3.4/3.5/3.6, 6.4/6.5/6.6, 7.1/7.2/7.3/7.6/7.7:
- *  - Change theme/accidentals via the narrow write-back, then simulate a
- *    relaunch (`loadProfile` re-run) → no divergent value (store ↔ profile).
- *  - Switching the active profile applies the newly active profile's theme and
- *    accidentals into the store.
- *  - Export then re-import carries theme + accidentals with no regression.
- */
 import {ProfileService, applyExportFileDefaults} from '../../../src/services/profiles/ProfileService';
 import {PresetService} from '../../../src/services/presets/PresetService';
 import {PianoService} from '../../../src/services/PianoService';
@@ -23,6 +12,7 @@ import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapsh
 import type {Profile, ProfileExportFile} from '../../../src/types/profile';
 import type {Transport} from '../../../src/transport/types';
 import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerAdapter';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 class FakeTransport implements Transport {
   status: 'idle' | 'connected' | 'disconnected' = 'idle';
@@ -64,7 +54,7 @@ function makeProfile(id: string, overrides: Partial<Profile> = {}): Profile {
   return {
     id,
     name: id,
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
@@ -99,13 +89,11 @@ describe('relaunch agreement (Req 3.7 / 6.7)', () => {
     const profile = makeProfile('prof-aaaaaaaaaaaa', {theme: 'system', accidentals: 'sharps'});
     useProfilesStore.setState({profiles: [profile], activeProfileId: profile.id});
 
-    // User changes both preferences (store first, then narrow write-back).
     useAppSettingsStore.getState().setThemePreference('dark');
     service.syncActiveTheme();
     useAppSettingsStore.getState().setAccidentalPreference('flats');
     service.syncActiveAccidentals();
 
-    // Simulate relaunch: clear the live store, then loadProfile re-applies.
     useAppSettingsStore.setState({themePreference: 'system', accidentalPreference: 'sharps'});
     await service.loadProfile(profile.id);
 
@@ -147,7 +135,7 @@ describe('export / import carries theme + accidentals (Req 3.4 / 6.4 / 7.7)', ()
   it('importing a file restores theme and accidentals', async () => {
     const service = newService();
     const file: ProfileExportFile = {
-      schemaVersion: 2,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       exportedAt: '2026-01-02T00:00:00.000Z',
       profile: makeProfile('1700000000000-dddddddd', {theme: 'dark', accidentals: 'flats'}),
     };
@@ -163,9 +151,8 @@ describe('export / import carries theme + accidentals (Req 3.4 / 6.4 / 7.7)', ()
 
   it('applyExportFileDefaults fills missing theme/accidentals with system/sharps', () => {
     const file = {
-      schemaVersion: 2,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       exportedAt: '2026-01-02T00:00:00.000Z',
-      // theme + accidentals intentionally omitted.
       profile: {
         id: '1700000000001-eeeeeeee',
         name: 'No Prefs',

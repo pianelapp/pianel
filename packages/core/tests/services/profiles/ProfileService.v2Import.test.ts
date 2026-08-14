@@ -1,17 +1,3 @@
-/**
- * Task 12 — Export/import at schemaVersion 2.
- *
- * Covers the two end-to-end import shapes not exercised elsewhere:
- *  - a v1 export file (no songs/setlists) imports cleanly, gaining empty
- *    arrays and schemaVersion 2 (the v1->v2 migrator, R8).
- *  - a v2 export file with populated `songs` imports with that data intact
- *    (migration must be a no-op passthrough for an already-current file).
- *
- * `ProfileService.schemaVersion.test.ts` already covers the malformed/
- * rejection edges of the same migration path (T081); this file is scoped to
- * the "does songs/setlists data survive the round trip" behaviour instead.
- */
-
 import {inMemoryStorage} from '../../../src/store/storage';
 import {createProfilesStore} from '../../../src/store/profilesStore';
 import {ProfileService} from '../../../src/services/profiles/ProfileService';
@@ -19,15 +5,17 @@ import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapsh
 import type {PianoService} from '../../../src/services/PianoService';
 import type {PresetService} from '../../../src/services/presets/PresetService';
 import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerAdapter';
+import {OLDEST_SCHEMA_VERSION} from '../../../src/helpers/schemaHistory';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 function v1ExportFile() {
   return {
-    schemaVersion: 1,
+    schemaVersion: OLDEST_SCHEMA_VERSION,
     exportedAt: '2026-01-01T00:00:00.000Z',
     profile: {
       id: '1-aaaaaaaa',
       name: 'Legacy Gig',
-      schemaVersion: 1,
+      schemaVersion: OLDEST_SCHEMA_VERSION,
       theme: 'dark',
       accidentals: 'sharps',
       favorites: [],
@@ -40,8 +28,6 @@ function v1ExportFile() {
 }
 
 function makeService(fileContents: string): ProfileService {
-  // The real `FilePickerAdapter` interface uses `openProfileJson` /
-  // `saveProfileJson` (see src/services/profiles/FilePickerAdapter.ts).
   const filePicker: FilePickerAdapter = {
     openProfileJson: async () => fileContents,
     saveProfileJson: async () => true,
@@ -72,7 +58,7 @@ describe('ProfileService v2 import', () => {
 
     expect(result.kind).toBe('imported');
     if (result.kind !== 'imported') return;
-    expect(result.profile.schemaVersion).toBe(2);
+    expect(result.profile.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(result.profile.songs).toEqual([]);
     expect(result.profile.setlists).toEqual([]);
     expect(result.profile.name).toBe('Legacy Gig');
@@ -83,7 +69,7 @@ describe('ProfileService v2 import', () => {
     v2.schemaVersion = 2;
     const profile = v2.profile as Record<string, unknown>;
     profile.schemaVersion = 2;
-    profile.id = '2-cccccccc'; // distinct id from the v1 fixture above
+    profile.id = '2-cccccccc';
     profile.songs = [
       {
         id: '2-bbbbbbbb',
@@ -102,9 +88,6 @@ describe('ProfileService v2 import', () => {
     if (result.kind !== 'imported') return;
     expect(result.profile.songs).toHaveLength(1);
     expect(result.profile.songs[0].name).toBe('Superstition');
-    // Guards against a migrator that discards songs on an already-current
-    // file: setlists must survive untouched too, as an empty array (not
-    // silently repopulated or dropped to undefined).
     expect(result.profile.setlists).toEqual([]);
   });
 });

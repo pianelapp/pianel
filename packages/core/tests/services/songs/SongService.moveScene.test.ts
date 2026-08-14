@@ -1,34 +1,17 @@
-/**
- * Task 7b — service-level coverage for `moveScene`'s no-write no-op path.
- *
- * `songEdits.test.ts` already pins the pure helper's identity-return
- * behaviour (`moveSceneInSong` returns the exact same `Song` reference when
- * `from`/`to` clamp to the same index). What it can't see is whether
- * `SongService.moveScene` actually honors that signal by skipping the write,
- * since `_patchSong` unconditionally stamps `updatedAt` whenever it runs. A
- * regression that always called `_patchSong` (even on a no-op) would still
- * satisfy every "scene order unchanged" assertion in `SongService.scenes.test.ts`
- * while silently bumping `updatedAt` on every no-op call — this file is the
- * one place that would catch it.
- *
- * Deliberately a separate file: `SongService.crud.test.ts` and
- * `SongService.scenes.test.ts` must stay unmodified as proof the Task 7b
- * refactor changed no behaviour.
- */
-
 import {inMemoryStorage} from '../../../src/store/storage';
 import {createProfilesStore} from '../../../src/store/profilesStore';
 import {SongService} from '../../../src/services/songs/SongService';
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapshot';
 import type {Profile} from '../../../src/types/profile';
 import type {PresetService} from '../../../src/services/presets/PresetService';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 function makeProfile(): Profile {
   const now = new Date().toISOString();
   return {
     id: '1-aaaaaaaa',
     name: 'Workspace',
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],

@@ -8,13 +8,14 @@ import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapsh
 import type {Profile} from '../../../src/types/profile';
 import type {PerformanceSnapshot} from '../../../src/types/performanceSnapshot';
 import type {PresetService} from '../../../src/services/presets/PresetService';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 function makeProfile(): Profile {
   const now = new Date().toISOString();
   return {
     id: '1-aaaaaaaa',
     name: 'Workspace',
-    schemaVersion: 2,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
@@ -82,9 +83,9 @@ describe('SetlistCursorService navigation', () => {
 
   it('R1: nextScene is bounded — it never crosses into the next song', async () => {
     await cursor.enterPerform({setlistId: listId});
-    await cursor.nextScene(); // A2, the last scene
+    await cursor.nextScene();
     const before = applied.length;
-    await cursor.nextScene(); // must do nothing
+    await cursor.nextScene();
     expect(useCursorStore.getState().entryIndex).toBe(0);
     expect(cursor.getCurrentScene()?.label).toBe('A2');
     expect(applied).toHaveLength(before);
@@ -125,15 +126,15 @@ describe('SetlistCursorService navigation', () => {
   it('nextSong skips a dangling entry', async () => {
     const doomed = songs.createSong('Doomed').id;
     songs.captureScene(doomed, 'X');
-    setlists.addSong(listId, doomed); // index 2
+    setlists.addSong(listId, doomed);
     const tail = songs.createSong('Tail').id;
     songs.captureScene(tail, 'T1');
-    setlists.addSong(listId, tail); // index 3
+    setlists.addSong(listId, tail);
     songs.deleteSong(doomed);
 
     await cursor.enterPerform({setlistId: listId});
-    await cursor.nextSong(); // -> 1 (Song B)
-    await cursor.nextSong(); // -> skips 2, lands on 3
+    await cursor.nextSong();
+    await cursor.nextSong();
     expect(useCursorStore.getState().entryIndex).toBe(3);
     expect(cursor.getCurrentSong()?.id).toBe(tail);
   });
@@ -145,20 +146,20 @@ describe('SetlistCursorService navigation', () => {
       scene: expect.objectContaining({label: 'A2'}),
     });
 
-    await cursor.nextScene(); // last scene of Song A
+    await cursor.nextScene();
     expect(cursor.isAtLastScene()).toBe(true);
     expect(cursor.getNextTarget()).toEqual({
       kind: 'song',
       song: expect.objectContaining({name: 'Song B'}),
     });
 
-    await cursor.nextSong(); // Song B, its only scene
+    await cursor.nextSong();
     expect(cursor.getNextTarget()).toEqual({kind: 'end'});
   });
 
   it('single-song mode never offers a next song', async () => {
     await cursor.enterPerform({songId: songA});
-    await cursor.nextScene(); // last scene
+    await cursor.nextScene();
     expect(cursor.hasNextSong()).toBe(false);
     expect(cursor.getNextTarget()).toEqual({kind: 'end'});
 
