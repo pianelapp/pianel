@@ -39,6 +39,19 @@ export {
   PresetGridFullError,
 } from '@pianel/core/store';
 
+export type { CursorState, CursorActions } from '@pianel/core/store';
+export { useCursorStore } from '@pianel/core/store';
+export type { Scene, Song, SetlistEntry, Setlist } from '@pianel/core/store';
+export {
+  SongNotFoundError,
+  SceneNotFoundError,
+  SetlistNotFoundError,
+  EntryNotFoundError,
+  EmptySongError,
+  EmptySetlistError,
+  MissingSongError,
+} from '@pianel/core/store';
+
 let initialized = false;
 
 export function initStores(storage: StateStorage): void {
