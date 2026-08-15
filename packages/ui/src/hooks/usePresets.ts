@@ -8,7 +8,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useProfilesStore, selectActiveProfile } from '../store';
-import type { Preset } from '../store';
+import type { Preset, PerformanceSnapshot } from '../store';
 import { getProfileService } from './useProfiles';
 
 export function usePresets() {
@@ -32,6 +32,15 @@ export function usePresets() {
       const service = getProfileService();
       if (!service) return;
       await service.applyPreset(presetId);
+    },
+    [],
+  );
+
+  const applySnapshot = useCallback(
+    async (snapshot: PerformanceSnapshot): Promise<void> => {
+      const service = getProfileService();
+      if (!service) return;
+      await service.applySnapshot(snapshot);
     },
     [],
   );
@@ -67,6 +76,7 @@ export function usePresets() {
     presets,
     savePresetToTile,
     applyPreset,
+    applySnapshot,
     updatePreset,
     renamePreset,
     deletePreset,

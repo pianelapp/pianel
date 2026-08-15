@@ -125,7 +125,12 @@ export default function App() {
           {/* Tab Content */}
           <div className="flex-1 overflow-x-hidden overflow-y-auto relative">
             {activeTab === 'DISPLAY' && (
-              <DisplayScreen isLightMode={isLightMode} />
+              <DisplayScreen
+                isLightMode={isLightMode}
+                armedSongId={armedSongId}
+                onArm={setArmedSongId}
+                compact={statusBarCompact}
+              />
             )}
             {activeTab === 'PRESETS' && (
               <PresetsScreen isLightMode={isLightMode} />

@@ -46,6 +46,7 @@ export function SceneRow({
   const actions: RowAction[] = [
     { id: 'rename', label: 'Rename' },
     { id: 'notes', label: 'Notes' },
+    { id: 'saveAsPad', label: 'Save scene as pad' },
     ...(allowRecapture ? [{ id: 'recapture', label: 'Re-capture' }] : []),
     ...(index > 0 ? [{ id: 'moveUp', label: 'Move up' }] : []),
     ...(index < total - 1 ? [{ id: 'moveDown', label: 'Move down' }] : []),

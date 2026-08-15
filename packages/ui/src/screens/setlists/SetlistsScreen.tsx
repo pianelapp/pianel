@@ -11,6 +11,7 @@ import type { Song, Setlist } from '../../store';
 import { SongDetail } from './SongDetail';
 import { SetlistDetail } from './SetlistDetail';
 import { sceneCountLabel } from './labels';
+import { confirmArmForCapture } from './armGuard';
 
 type Pane = 'songs' | 'setlists';
 
@@ -115,7 +116,7 @@ export function SetlistsScreen({
   onArm,
 }: SetlistsScreenProps) {
   const { songs, createSong, renameSong, deleteSong } = useSongs();
-  const { setlists, countSetlistsUsing } = useSetlists();
+  const { setlists, countSetlistsUsing, findLibraryUses } = useSetlists();
   const { enterSong, enterSetlist } = usePerformCursor();
   const [pane, setPane] = useState<Pane>('songs');
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
@@ -157,7 +158,16 @@ export function SetlistsScreen({
       if (action === 'rename') {
         setSongDialog({ kind: 'rename', song });
       } else if (action === 'arm') {
-        onArm(armedSongId === song.id ? null : song.id);
+        if (armedSongId === song.id) {
+          onArm(null);
+        } else {
+          const proceed = await confirmArmForCapture(
+            song,
+            findLibraryUses,
+            countSetlistsUsing,
+          );
+          if (proceed) onArm(song.id);
+        }
       } else if (action === 'delete') {
         const used = countSetlistsUsing(song.id);
         const usage =
@@ -176,7 +186,7 @@ export function SetlistsScreen({
         }
       }
     },
-    [songMenu, armedSongId, onArm, countSetlistsUsing, deleteSong],
+    [songMenu, armedSongId, onArm, findLibraryUses, countSetlistsUsing, deleteSong],
   );
 
   const songMenuUsage =

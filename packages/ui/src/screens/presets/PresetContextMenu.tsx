@@ -13,12 +13,13 @@ interface PresetContextMenuProps {
   y: number;
   isLightMode: boolean;
   onClose: () => void;
-  onAction: (action: 'update' | 'rename' | 'delete') => void;
+  onAction: (action: 'update' | 'rename' | 'addAsScene' | 'delete') => void;
 }
 
-const ITEMS: Array<{ id: 'update' | 'rename' | 'delete'; label: string }> = [
+const ITEMS: Array<{ id: 'update' | 'rename' | 'addAsScene' | 'delete'; label: string }> = [
   { id: 'update', label: 'Update' },
   { id: 'rename', label: 'Rename' },
+  { id: 'addAsScene', label: 'Add pad as scene' },
   { id: 'delete', label: 'Delete' },
 ];
 

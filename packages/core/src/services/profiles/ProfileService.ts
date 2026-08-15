@@ -318,6 +318,10 @@ export class ProfileService {
     await this.presetService.applyPreset(preset);
   }
 
+  async applySnapshot(snapshot: PerformanceSnapshot): Promise<void> {
+    await this.presetService.applySnapshot(snapshot);
+  }
+
   async updatePreset(
     presetId: string,
     opts?: {label?: string},

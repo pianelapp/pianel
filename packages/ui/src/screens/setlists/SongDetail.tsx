@@ -6,7 +6,10 @@ import { NamingDialog } from '../../components/NamingDialog';
 import { showAlert } from '../../components/modals/AlertModal';
 import { useSongs } from '../../hooks/useSongs';
 import { useSetlists } from '../../hooks/useSetlists';
+import { usePresets } from '../../hooks/usePresets';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { confirmArmForCapture } from './armGuard';
+import { saveSceneAsPad } from './padBridge';
 
 interface SongDetailProps {
   song: Song;
@@ -30,7 +33,8 @@ export function SongDetail({
 }: SongDetailProps) {
   const { renameScene, setSceneNotes, recaptureScene, moveScene, deleteScene } =
     useSongs();
-  const { setlists, findLibraryUses } = useSetlists();
+  const { setlists, findLibraryUses, countSetlistsUsing } = useSetlists();
+  const { presets, applySnapshot, savePresetToTile } = usePresets();
   const { viewport } = useBreakpoint();
   const compact = viewport === 'mobile';
   const [dialog, setDialog] = useState<SceneDialogState>({ kind: 'closed' });
@@ -103,11 +107,23 @@ export function SongDetail({
           }
           break;
         }
+        case 'saveAsPad':
+          await saveSceneAsPad(scene, presets, applySnapshot, savePresetToTile).catch(() => {});
+          break;
         default:
           break;
       }
     },
-    [song.id, recaptureScene, moveScene, deleteScene, runLibraryEdit],
+    [
+      song.id,
+      recaptureScene,
+      moveScene,
+      deleteScene,
+      runLibraryEdit,
+      presets,
+      applySnapshot,
+      savePresetToTile,
+    ],
   );
 
   const handleRenameScene = useCallback(
@@ -133,6 +149,19 @@ export function SongDetail({
     },
     [dialog, song.id, setSceneNotes, runLibraryEdit],
   );
+
+  const handleArmToggle = useCallback(async () => {
+    if (isArmed) {
+      onArm(null);
+      return;
+    }
+    const proceed = await confirmArmForCapture(
+      song,
+      findLibraryUses,
+      countSetlistsUsing,
+    );
+    if (proceed) onArm(song.id);
+  }, [isArmed, onArm, song, findLibraryUses, countSetlistsUsing]);
 
   return (
     <div className="flex flex-col h-full">
@@ -164,7 +193,7 @@ export function SongDetail({
             PERFORM SONG
           </button>
           <button
-            onClick={() => onArm(isArmed ? null : song.id)}
+            onClick={() => void handleArmToggle()}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold tracking-widest transition-colors ${
               isArmed
                 ? isLightMode

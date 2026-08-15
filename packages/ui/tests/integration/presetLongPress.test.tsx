@@ -110,7 +110,7 @@ describe('preset tile long-press', () => {
     const items = Array.from(
       menu()!.querySelectorAll('[role="menuitem"]'),
     ).map(b => (b.textContent ?? '').trim());
-    expect(items).toEqual(['Update', 'Rename', 'Delete']);
+    expect(items).toEqual(['Update', 'Rename', 'Add pad as scene', 'Delete']);
     const el = menu() as HTMLElement;
     expect(el.style.top).toBe('110px');
     expect(el.style.left).toBe('90px');

@@ -3,6 +3,8 @@ import {render, type RenderResult} from '../utils/render';
 import {SetlistsScreen} from '../../src/screens/setlists/SetlistsScreen';
 import {SongDetail} from '../../src/screens/setlists/SongDetail';
 import {SetlistDetail} from '../../src/screens/setlists/SetlistDetail';
+import {DisplayScreen} from '../../src/screens/display/DisplayScreen';
+import {PresetsScreen} from '../../src/screens/presets/PresetsScreen';
 import {AlertModal} from '../../src/components/modals/AlertModal';
 import {useSongs} from '../../src/hooks/useSongs';
 import {useSetlists} from '../../src/hooks/useSetlists';
@@ -47,10 +49,19 @@ afterEach(() => {
   lastRendered = null;
 });
 
-export function renderScreen(): RenderResult {
+interface RenderScreenOptions {
+  armedSongId?: string | null;
+  onArm?: (songId: string | null) => void;
+}
+
+export function renderScreen(opts: RenderScreenOptions = {}): RenderResult {
   lastRendered = render(
     <>
-      <SetlistsScreen isLightMode={false} armedSongId={null} onArm={() => {}} />
+      <SetlistsScreen
+        isLightMode={false}
+        armedSongId={opts.armedSongId ?? null}
+        onArm={opts.onArm ?? (() => {})}
+      />
       <AlertModal isLightMode={false} />
     </>,
   );
@@ -123,6 +134,34 @@ export function renderList(
   lastRendered = render(
     <>
       <ListHarness setlistId={setlistId} {...opts} />
+      <AlertModal isLightMode={false} />
+    </>,
+  );
+  return lastRendered;
+}
+
+interface RenderDisplayOptions {
+  armedSongId?: string | null;
+  onArm?: (songId: string | null) => void;
+  compact?: boolean;
+}
+
+export function renderDisplay(opts: RenderDisplayOptions = {}): RenderResult {
+  lastRendered = render(
+    <DisplayScreen
+      isLightMode={false}
+      armedSongId={opts.armedSongId ?? null}
+      onArm={opts.onArm ?? (() => {})}
+      compact={opts.compact ?? false}
+    />,
+  );
+  return lastRendered;
+}
+
+export function renderPresets(): RenderResult {
+  lastRendered = render(
+    <>
+      <PresetsScreen isLightMode={false} />
       <AlertModal isLightMode={false} />
     </>,
   );

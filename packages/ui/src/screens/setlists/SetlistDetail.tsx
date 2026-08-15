@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import { useSetlists } from '../../hooks/useSetlists';
 import { useSongs } from '../../hooks/useSongs';
+import { usePresets } from '../../hooks/usePresets';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { showAlert } from '../../components/modals/AlertModal';
 import { NamingDialog } from '../../components/NamingDialog';
@@ -9,6 +10,7 @@ import { EntryRow, type EntryAction } from './EntryRow';
 import type { SceneAction } from './SceneRow';
 import { LibraryEditDialog, type LibraryEditChoice } from './LibraryEditDialog';
 import { sceneCountLabel } from './labels';
+import { saveSceneAsPad } from './padBridge';
 import { patchScene, moveSceneInSong, removeScene } from '@pianel/core/helpers/songEdits';
 import type { Scene, Setlist, Song } from '../../store';
 
@@ -129,6 +131,7 @@ export function SetlistDetail({
     editOverride,
   } = useSetlists();
   const { songs, editSong } = useSongs();
+  const { presets, applySnapshot, savePresetToTile } = usePresets();
   const { viewport } = useBreakpoint();
   const compact = viewport === 'mobile';
   const [addOpen, setAddOpen] = useState(false);
@@ -256,11 +259,14 @@ export function SetlistDetail({
           }
           break;
         }
+        case 'saveAsPad':
+          await saveSceneAsPad(scene, presets, applySnapshot, savePresetToTile).catch(() => {});
+          break;
         default:
           break;
       }
     },
-    [editEntrySong],
+    [editEntrySong, presets, applySnapshot, savePresetToTile],
   );
 
   const handleRenameScene = useCallback(
