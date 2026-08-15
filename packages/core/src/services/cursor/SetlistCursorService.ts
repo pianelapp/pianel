@@ -132,6 +132,10 @@ export class SetlistCursorService {
     return this._findPlayableEntry(1) !== null;
   }
 
+  hasPrevSong(): boolean {
+    return this._findPlayableEntry(-1) !== null;
+  }
+
   getNextTarget():
     | {kind: 'scene'; scene: Scene}
     | {kind: 'song'; song: Song}

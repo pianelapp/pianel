@@ -153,6 +153,11 @@ declare module 'lucide-react/dist/esm/icons/chevron-down' {
   const Icon: LucideIcon;
   export default Icon;
 }
+declare module 'lucide-react/dist/esm/icons/chevron-left' {
+  import type { LucideIcon } from 'lucide-react';
+  const Icon: LucideIcon;
+  export default Icon;
+}
 declare module 'lucide-react/dist/esm/icons/upload' {
   import type { LucideIcon } from 'lucide-react';
   const Icon: LucideIcon;

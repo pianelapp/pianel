@@ -2,18 +2,15 @@ import {act} from 'react';
 import {click, render} from '../utils/render';
 import {initTestStores} from '../utils/stores';
 import {wire, resetSetlistWorld} from '../fixtures/setlists';
-import {byText, openContextMenu, renderDetail, typeInto} from '../fixtures/setlistsUi';
+import {
+  byText,
+  openContextMenu,
+  renderDetail,
+  stubPianoWithTones,
+  typeInto,
+} from '../fixtures/setlistsUi';
 import {SceneRow} from '../../src/screens/setlists/SceneRow';
-import {setPianoService} from '../../src/hooks/usePiano';
 import {DEFAULT_PERFORMANCE_SNAPSHOT, type Scene} from '../../src/store';
-import type {PianoService} from '@pianel/core/services/PianoService';
-
-function stubPianoWithTone(toneId: string, name: string): void {
-  const catalog = {
-    findById: (id: string) => (id === toneId ? {id: toneId, name} : undefined),
-  };
-  setPianoService({getToneCatalog: () => catalog} as unknown as PianoService);
-}
 
 beforeAll(() => {
   initTestStores();
@@ -142,7 +139,7 @@ describe('SceneRow compact width', () => {
   }
 
   it('shows the tone name when not compact', () => {
-    stubPianoWithTone('rhodes', 'Rhodes');
+    stubPianoWithTones([{id: 'rhodes', name: 'Rhodes'}]);
     const {container, unmount} = render(
       <SceneRow
         scene={makeScene()}
@@ -160,7 +157,7 @@ describe('SceneRow compact width', () => {
   });
 
   it('hides the tone name but keeps the badge when compact', () => {
-    stubPianoWithTone('rhodes', 'Rhodes');
+    stubPianoWithTones([{id: 'rhodes', name: 'Rhodes'}]);
     const {container, unmount} = render(
       <SceneRow
         scene={makeScene()}

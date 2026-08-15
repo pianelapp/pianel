@@ -12,6 +12,7 @@ import { AlertModal } from './components/modals/AlertModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { DisplayScreen } from './screens/display/DisplayScreen';
 import { StatusBar } from './screens/display/StatusBar';
+import { PerformMode } from './screens/perform/PerformMode';
 import { PresetsScreen } from './screens/presets/PresetsScreen';
 import { ProfilesScreen } from './screens/profiles/ProfilesScreen';
 import { SetlistsScreen } from './screens/setlists/SetlistsScreen';
@@ -193,6 +194,7 @@ export default function App() {
       />
       <MIDIDeviceChooser isLightMode={isLightMode} />
       <AlertModal isLightMode={isLightMode} />
+      <PerformMode isLightMode={isLightMode} />
     </div>
   );
 }

@@ -167,4 +167,31 @@ describe('SetlistCursorService navigation', () => {
     await cursor.nextSong();
     expect(applied).toHaveLength(before);
   });
+
+  it('hasPrevSong is false at the first entry', async () => {
+    await cursor.enterPerform({setlistId: listId});
+    expect(cursor.hasPrevSong()).toBe(false);
+  });
+
+  it('hasPrevSong is true once past the first playable song', async () => {
+    await cursor.enterPerform({setlistId: listId});
+    await cursor.nextSong();
+    expect(cursor.hasPrevSong()).toBe(true);
+  });
+
+  it('single-song mode never offers a prev song', async () => {
+    await cursor.enterPerform({songId: songA});
+    expect(cursor.hasPrevSong()).toBe(false);
+  });
+
+  it('hasPrevSong is false when the only earlier entry is scene-less', async () => {
+    const empty = songs.createSong('Empty').id;
+    const list2 = setlists.createSetlist('Gig 2').id;
+    setlists.addSong(list2, empty);
+    setlists.addSong(list2, songA);
+
+    await cursor.enterPerform({setlistId: list2});
+    expect(useCursorStore.getState().entryIndex).toBe(1);
+    expect(cursor.hasPrevSong()).toBe(false);
+  });
 });

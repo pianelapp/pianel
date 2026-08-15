@@ -3,6 +3,7 @@ import { RowContextMenu, type RowAction } from '../../components/RowContextMenu'
 import { useLongPress } from '../../hooks/useLongPress';
 import { useTones } from '../../hooks/useTones';
 import { summariseScene } from '../../helpers/sceneSummary';
+import { sceneBadgeClass } from '../../helpers/sceneBadge';
 import type { Scene } from '../../store';
 
 export type SceneAction =
@@ -53,16 +54,7 @@ export function SceneRow({
     { id: 'delete', label: 'Delete', destructive: true },
   ];
 
-  const isPlainBadge = summary.modeLabel === 'SINGLE';
-  const badgeClass = `text-[10px] font-mono font-bold tracking-widest px-1.5 py-0.5 rounded border shrink-0 ${
-    isPlainBadge
-      ? isLightMode
-        ? 'text-zinc-400 border-zinc-300 bg-transparent'
-        : 'text-zinc-600 border-zinc-700 bg-transparent'
-      : isLightMode
-        ? 'text-cyan-700 border-cyan-200 bg-cyan-50'
-        : 'text-cyan-400 border-cyan-700 bg-cyan-950'
-  }`;
+  const badgeClass = `${sceneBadgeClass(summary.modeLabel, isLightMode)} shrink-0`;
 
   const tonesText = summary.tones.map(t => `${t.glyph}${t.name}`).join(' · ');
 

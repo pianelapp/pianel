@@ -3,8 +3,10 @@ import {
   useCursorStore,
   DEFAULT_PERFORMANCE_SNAPSHOT,
   type Profile,
+  type Scene,
 } from '../../src/store';
 import {CURRENT_SCHEMA_VERSION} from '@pianel/core/store';
+import type {QuickToneSlot} from '@pianel/core/types/quickToneSlot';
 import {SongService} from '@pianel/core/services/songs/SongService';
 import {SetlistService} from '@pianel/core/services/setlists/SetlistService';
 import {SetlistCursorService} from '@pianel/core/services/cursor/SetlistCursorService';
@@ -68,6 +70,32 @@ export function wire(): Wired {
   setCursorService(cursor);
   setProfileService(profile);
   return {songs, setlists, cursor, preset, profile};
+}
+
+export const BASE_SCENE: Scene = {
+  id: 'scene-1',
+  label: 'Chorus',
+  notes: '',
+  snapshot: DEFAULT_PERFORMANCE_SNAPSHOT,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
+export function sceneWith(
+  voiceModeSnapshot: Partial<QuickToneSlot>,
+  overrides: Partial<Pick<Scene, 'id' | 'label'>> = {},
+): Scene {
+  return {
+    ...BASE_SCENE,
+    ...overrides,
+    snapshot: {
+      ...DEFAULT_PERFORMANCE_SNAPSHOT,
+      voiceModeSnapshot: {
+        ...DEFAULT_PERFORMANCE_SNAPSHOT.voiceModeSnapshot,
+        ...voiceModeSnapshot,
+      },
+    },
+  };
 }
 
 export function resetSetlistWorld(profile: Profile = makeProfile()): void {

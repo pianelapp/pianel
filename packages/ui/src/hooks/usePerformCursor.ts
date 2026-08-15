@@ -47,6 +47,7 @@ export function usePerformCursor() {
   const nextTarget = ready
     ? safely(() => service.getNextTarget() as NextTarget, END)
     : END;
+  const hasPrevSong = ready ? safely(() => service.hasPrevSong(), false) : false;
 
   const enterSetlist = useCallback(async (id: string): Promise<void> => {
     await getCursorService()?.enterPerform({ setlistId: id });
@@ -92,6 +93,7 @@ export function usePerformCursor() {
     song,
     scene,
     nextTarget,
+    hasPrevSong,
     enterSetlist,
     enterSong,
     exit,
