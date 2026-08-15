@@ -14,10 +14,12 @@ import { DisplayScreen } from './screens/display/DisplayScreen';
 import { StatusBar } from './screens/display/StatusBar';
 import { PresetsScreen } from './screens/presets/PresetsScreen';
 import { ProfilesScreen } from './screens/profiles/ProfilesScreen';
+import { SetlistsScreen } from './screens/setlists/SetlistsScreen';
 
 const TABS = [
   'PRESETS',
   'DISPLAY',
+  'SETLISTS',
   'PROFILES',
 ] as const satisfies readonly Tab[];
 
@@ -25,6 +27,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('DISPLAY');
   const [showSettings, setShowSettings] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [armedSongId, setArmedSongId] = useState<string | null>(null);
 
   const tier = useBreakpoint();
   const isMobile = tier.viewport === 'mobile';
@@ -126,6 +129,13 @@ export default function App() {
             )}
             {activeTab === 'PRESETS' && (
               <PresetsScreen isLightMode={isLightMode} />
+            )}
+            {activeTab === 'SETLISTS' && (
+              <SetlistsScreen
+                isLightMode={isLightMode}
+                armedSongId={armedSongId}
+                onArm={setArmedSongId}
+              />
             )}
             {activeTab === 'PROFILES' && (
               <ProfilesScreen isLightMode={isLightMode} />

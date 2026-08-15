@@ -3,7 +3,7 @@ import { useState } from 'react';
 import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down';
 import type { Breakpoint } from '../constants/breakpoints';
 
-export type Tab = 'PRESETS' | 'DISPLAY' | 'PROFILES';
+export type Tab = 'PRESETS' | 'DISPLAY' | 'SETLISTS' | 'PROFILES';
 
 interface TopTabsProps {
   isLightMode: boolean;

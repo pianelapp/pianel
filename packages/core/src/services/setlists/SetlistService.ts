@@ -250,6 +250,18 @@ export class SetlistService {
     ).length;
   }
 
+  findLibraryUses(songId: string): Array<{setlistId: string; entryIndex: number}> {
+    const uses: Array<{setlistId: string; entryIndex: number}> = [];
+    for (const list of requireActiveProfile().setlists) {
+      list.entries.forEach((entry, entryIndex) => {
+        if (entry.songId === songId && !entry.override) {
+          uses.push({setlistId: list.id, entryIndex});
+        }
+      });
+    }
+    return uses;
+  }
+
   // ─── Internals ───────────────────────────────────────────────
 
   protected _patchSetlist(

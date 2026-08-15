@@ -80,6 +80,12 @@ export function useSongs() {
     [],
   );
 
+  const editSong = useCallback(
+    (songId: string, transform: (song: Song) => Song): Song | null =>
+      getSongService()?.editSong(songId, transform) ?? null,
+    [],
+  );
+
   return {
     songs,
     createSong,
@@ -93,5 +99,6 @@ export function useSongs() {
     moveScene,
     deleteScene,
     addPadAsScene,
+    editSong,
   };
 }

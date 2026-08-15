@@ -149,4 +149,18 @@ describe('TopTabs', () => {
     expect(onChange).not.toHaveBeenCalled();
     unmount();
   });
+
+  it('renders all four tabs when not collapsed', () => {
+    const {container} = render(
+      <TopTabs
+        isLightMode={false}
+        tabs={['PRESETS', 'DISPLAY', 'SETLISTS', 'PROFILES']}
+        activeTab="DISPLAY"
+        onChange={() => {}}
+        tier={{viewport: 'desktop', sidebar: 'desktop'}}
+      />,
+    );
+    const labels = [...container.querySelectorAll('button')].map(b => b.textContent);
+    expect(labels).toEqual(['PRESETS', 'DISPLAY', 'SETLISTS', 'PROFILES']);
+  });
 });

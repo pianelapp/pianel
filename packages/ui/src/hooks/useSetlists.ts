@@ -74,9 +74,22 @@ export function useSetlists() {
     getSetlistService()?.promoteEntry(setlistId, entryIndex);
   }, []);
 
+  const editOverride = useCallback(
+    (setlistId: string, entryIndex: number, transform: (song: Song) => Song): void => {
+      getSetlistService()?.editOverride(setlistId, entryIndex, transform);
+    },
+    [],
+  );
+
   const countSetlistsUsing = useCallback(
     (songId: string): number =>
       getSetlistService()?.countSetlistsUsing(songId) ?? 0,
+    [],
+  );
+
+  const findLibraryUses = useCallback(
+    (songId: string): Array<{setlistId: string; entryIndex: number}> =>
+      getSetlistService()?.findLibraryUses(songId) ?? [],
     [],
   );
 
@@ -93,6 +106,8 @@ export function useSetlists() {
     customizeEntry,
     revertEntry,
     promoteEntry,
+    editOverride,
     countSetlistsUsing,
+    findLibraryUses,
   };
 }

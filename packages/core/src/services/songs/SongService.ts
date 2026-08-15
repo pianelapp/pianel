@@ -78,6 +78,10 @@ export class SongService {
     }));
   }
 
+  editSong(songId: string, transform: (song: Song) => Song): Song {
+    return this._patchSong(songId, song => ({...transform(song), id: song.id}));
+  }
+
   // ─── Scenes ──────────────────────────────────────────────────
 
   /**

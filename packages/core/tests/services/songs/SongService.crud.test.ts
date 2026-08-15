@@ -96,6 +96,26 @@ describe('SongService CRUD', () => {
     expect(() => service.deleteSong('nope')).toThrow(SongNotFoundError);
   });
 
+  it('editSong applies a pure transform and bumps updatedAt', () => {
+    const song = service.createSong('Transform Me');
+    const edited = service.editSong(song.id, s => ({...s, notes: 'via transform'}));
+    expect(edited.notes).toBe('via transform');
+    expect(edited.updatedAt >= song.updatedAt).toBe(true);
+    expect(service.getSong(song.id)?.notes).toBe('via transform');
+  });
+
+  it('editSong throws SongNotFoundError for an unknown id', () => {
+    expect(() => service.editSong('nope', s => s)).toThrow(SongNotFoundError);
+  });
+
+  it('editSong ignores an id-rewriting transform', () => {
+    const song = service.createSong('Keep My Id');
+    const edited = service.editSong(song.id, s => ({...s, id: 'hijacked', notes: 'x'}));
+    expect(edited.id).toBe(song.id);
+    expect(service.getSong(song.id)?.notes).toBe('x');
+    expect(service.getSong('hijacked')).toBeNull();
+  });
+
   it('persists songs onto the active profile', () => {
     service.createSong('Persisted');
     const active = useProfilesStore

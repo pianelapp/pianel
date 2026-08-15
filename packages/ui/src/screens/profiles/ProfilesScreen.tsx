@@ -11,9 +11,11 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { useAppSettingsStore } from '../../store';
 import type { Profile, ProfileExportFile } from '../../store';
 import { ProfileRow } from './ProfileRow';
-import { ProfileContextMenu, type ProfileMenuAction } from './ProfileContextMenu';
-import { ProfileNamingDialog } from './ProfileNamingDialog';
+import { RowContextMenu, type RowAction } from '../../components/RowContextMenu';
+import { NamingDialog } from '../../components/NamingDialog';
 import { showAlert } from '../../components/modals/AlertModal';
+
+type ProfileMenuAction = 'setDefault' | 'update' | 'rename' | 'export' | 'delete';
 
 interface ProfilesScreenProps {
   isLightMode: boolean;
@@ -236,32 +238,49 @@ export function ProfilesScreen({ isLightMode }: ProfilesScreenProps) {
       </div>
 
       {dialog.kind === 'create' && (
-        <ProfileNamingDialog
+        <NamingDialog
           title="New profile"
           confirmLabel="Save Profile"
+          placeholder="Profile name"
           isLightMode={isLightMode}
           onConfirm={handleCreate}
           onCancel={() => setDialog({ kind: 'closed' })}
         />
       )}
       {dialog.kind === 'rename' && (
-        <ProfileNamingDialog
+        <NamingDialog
           title="Rename profile"
           confirmLabel="Save"
           initialValue={dialog.profile.name}
+          placeholder="Profile name"
           isLightMode={isLightMode}
           onConfirm={handleRename}
           onCancel={() => setDialog({ kind: 'closed' })}
         />
       )}
       {menu.kind === 'open' && (
-        <ProfileContextMenu
+        <RowContextMenu
           x={menu.x}
           y={menu.y}
           isLightMode={isLightMode}
-          isDefault={menu.profile.id === bootProfileId}
+          actions={
+            [
+              {
+                id: 'setDefault',
+                label:
+                  menu.profile.id === bootProfileId
+                    ? '✓ Default at boot'
+                    : 'Set as Default',
+                disabled: menu.profile.id === bootProfileId,
+              },
+              { id: 'update', label: 'Update' },
+              { id: 'rename', label: 'Rename' },
+              { id: 'export', label: 'Export' },
+              { id: 'delete', label: 'Delete', destructive: true },
+            ] satisfies RowAction[]
+          }
           onClose={() => setMenu({ kind: 'closed' })}
-          onAction={handleMenuAction}
+          onAction={(id: string) => handleMenuAction(id as ProfileMenuAction)}
         />
       )}
       {conflict.kind === 'open' && (
