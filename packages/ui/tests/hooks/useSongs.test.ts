@@ -17,6 +17,7 @@ describe('useSongs', () => {
     expect(hook.current.songs).toEqual([]);
     expect(hook.current.createSong('Anything')).toBeNull();
     expect(() => hook.current.deleteSong('nope')).not.toThrow();
+    hook.unmount();
   });
 
   it('re-renders when a song is created through the service', () => {
@@ -30,6 +31,7 @@ describe('useSongs', () => {
 
     expect(hook.current.songs).toHaveLength(1);
     expect(hook.current.songs[0].name).toBe('Isn’t She Lovely');
+    hook.unmount();
   });
 
   it('re-renders when a scene is captured into an existing song', () => {
@@ -43,6 +45,7 @@ describe('useSongs', () => {
       hook.current.captureScene(songId, 'Intro');
     });
     expect(hook.current.songs[0].scenes.map(s => s.label)).toEqual(['Intro']);
+    hook.unmount();
   });
 
   it('returns the same library array identity when nothing changed', () => {
@@ -51,5 +54,6 @@ describe('useSongs', () => {
     const first = hook.current.songs;
     hook.rerender();
     expect(hook.current.songs).toBe(first);
+    hook.unmount();
   });
 });

@@ -24,12 +24,14 @@ describe('usePerformCursor', () => {
     expect(hook.current.scene).toBeNull();
     expect(hook.current.nextTarget).toEqual({kind: 'end'});
     expect(hook.current.isPerforming).toBe(false);
+    hook.unmount();
   });
 
   it('does not throw when no service is registered', () => {
     const hook = renderHook(() => usePerformCursor());
     expect(hook.current.song).toBeNull();
     expect(hook.current.nextTarget).toEqual({kind: 'end'});
+    hook.unmount();
   });
 
   it('does not throw when the active profile disappears mid-performance', async () => {
@@ -52,6 +54,7 @@ describe('usePerformCursor', () => {
     expect(hook.current.song).toBeNull();
     expect(hook.current.scene).toBeNull();
     expect(hook.current.nextTarget).toEqual({kind: 'end'});
+    hook.unmount();
   });
 
   it('reflects a scene rename made through SongService without an explicit rerender', async () => {
@@ -70,6 +73,7 @@ describe('usePerformCursor', () => {
     });
 
     expect(hook.current.scene?.label).toBe('Bridge');
+    hook.unmount();
   });
 
   it('re-renders on every cursor move and reports the next target', async () => {
@@ -98,6 +102,7 @@ describe('usePerformCursor', () => {
     expect(hook.current.sceneIndex).toBe(1);
     expect(hook.current.scene?.label).toBe('Verse');
     expect(hook.current.nextTarget).toEqual({kind: 'end'});
+    hook.unmount();
   });
 
   it('reports a song target at a song boundary', async () => {
@@ -119,6 +124,7 @@ describe('usePerformCursor', () => {
       kind: 'song',
       song: expect.objectContaining({name: 'Closer'}),
     });
+    hook.unmount();
   });
 
   it('exit clears isPerforming', async () => {
@@ -137,5 +143,6 @@ describe('usePerformCursor', () => {
     });
     expect(hook.current.isPerforming).toBe(false);
     expect(hook.current.song).toBeNull();
+    hook.unmount();
   });
 });
