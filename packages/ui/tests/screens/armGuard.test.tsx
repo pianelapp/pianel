@@ -36,7 +36,8 @@ describe('arm-time warning from SongDetail', () => {
 
     click(byText(container, 'ARM FOR CAPTURE'));
 
-    expect(container.textContent).toContain('This song is in 1 setlists');
+    expect(container.textContent).toContain('This song is in 1 setlist');
+    expect(container.textContent).not.toContain('This song is in 1 setlists');
     expect(onArm).not.toHaveBeenCalled();
   });
 
@@ -127,7 +128,8 @@ describe('arm-time warning from the SetlistsScreen song menu', () => {
     openContextMenu(container, 'Shared');
     click(byText(container, 'Arm for capture'));
 
-    expect(container.textContent).toContain('This song is in 1 setlists');
+    expect(container.textContent).toContain('This song is in 1 setlist');
+    expect(container.textContent).not.toContain('This song is in 1 setlists');
     expect(onArm).not.toHaveBeenCalled();
   });
 

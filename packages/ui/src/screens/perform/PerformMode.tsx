@@ -3,6 +3,7 @@ import Unplug from 'lucide-react/dist/esm/icons/unplug';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { usePerformCursor } from '../../hooks/usePerformCursor';
 import { useSetlists } from '../../hooks/useSetlists';
+import { useSongs } from '../../hooks/useSongs';
 import { useConnection } from '../../hooks/useConnection';
 import { usePerformanceStore } from '../../store';
 import { StatusBar } from '../display/StatusBar';
@@ -20,6 +21,7 @@ interface PerformModeProps {
 export function PerformMode({ isLightMode }: PerformModeProps) {
   const cursor = usePerformCursor();
   const { isCustomized, setlists, resolveEntry } = useSetlists();
+  const { songs } = useSongs();
   const tier = useBreakpoint();
   const connection = useConnection();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -80,7 +82,8 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
         isCustomized: isCustomized(setlist.id, index),
       };
     });
-  }, [setlist, resolveEntry, isCustomized]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setlist, resolveEntry, isCustomized, songs]);
 
   if (!cursor.isPerforming || !cursor.song) return null;
 
@@ -133,6 +136,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
       )}
 
       <div
+        data-perform-header
         className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${
           isLightMode
             ? 'bg-white border-zinc-200'
@@ -195,6 +199,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
         <div data-layout="stacked" className="flex-1 min-h-0 flex flex-col">
           {cursor.scene && (
             <div
+              data-scrolls
               className={`min-h-0 overflow-y-auto custom-scrollbar border-b ${
                 isLightMode ? 'border-zinc-200' : 'border-zinc-800'
               }`}>
@@ -237,7 +242,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
               />
             </div>
             <div className="flex-1 min-w-0 flex flex-col">
-              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+              <div data-scrolls className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                 {cursor.scene && (
                   <CurrentScene
                     scene={cursor.scene}

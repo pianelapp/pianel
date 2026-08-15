@@ -146,6 +146,31 @@ describe('PerformMode', () => {
     expect(title!.tagName).toBe('BUTTON');
   });
 
+  it('shows a library rename in the song picker without leaving perform mode', async () => {
+    const {songs, setlists} = wire();
+    const first = songs.createSong('Sir Duke').id;
+    songs.captureScene(first, 'Intro');
+    const second = songs.createSong('Old Title').id;
+    songs.captureScene(second, 'Riff');
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, first);
+    setlists.addSong(listId, second);
+
+    const {container} = renderPerform({isLightMode: false});
+    await act(async () => {
+      await getCursorService()!.enterPerform({setlistId: listId});
+    });
+
+    act(() => {
+      songs.renameSong(second, 'New Title');
+    });
+    click(container.querySelector('[data-song-title]')!);
+
+    const picker = container.querySelector('[data-picker-panel]')!;
+    expect(picker.textContent).toContain('New Title');
+    expect(picker.textContent).not.toContain('Old Title');
+  });
+
   it('shows an amber edited marker when the current entry is customized', async () => {
     const {songs, setlists} = wire();
     const songId = songs.createSong('Overjoyed').id;

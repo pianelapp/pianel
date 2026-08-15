@@ -86,6 +86,44 @@ describe('SetlistDetail', () => {
     expect(container.textContent).toContain('missing');
   });
 
+  it('expands an entry through a real button that carries its expanded state', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Opener').id;
+    songs.captureScene(a, 'Intro');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+
+    const {container} = renderList(listId);
+    const expander = container.querySelector('[data-entry-expander]')!;
+    expect(expander.tagName).toBe('BUTTON');
+    expect(expander.getAttribute('aria-expanded')).toBe('false');
+    expect(container.textContent).not.toContain('Intro');
+
+    click(expander);
+    expect(expander.getAttribute('aria-expanded')).toBe('true');
+    expect(container.textContent).toContain('Intro');
+
+    click(expander);
+    expect(expander.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('does not expand an entry whose library song has been deleted', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Ghost').id;
+    songs.captureScene(a, 'Vanished Scene');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+    songs.deleteSong(a);
+
+    const {container} = renderList(listId);
+    const expander = container.querySelector('[data-entry-expander]')!;
+    expect(expander.getAttribute('aria-disabled')).toBe('true');
+
+    click(expander);
+    expect(expander.getAttribute('aria-expanded')).toBeNull();
+    expect(container.textContent).not.toContain('Vanished Scene');
+  });
+
   it('disables PERFORM on a setlist with no playable entry', () => {
     const {setlists} = wire();
     const listId = setlists.createSetlist('Empty').id;

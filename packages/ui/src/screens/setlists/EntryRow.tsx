@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { RowContextMenu, type RowAction } from '../../components/RowContextMenu';
 import { useLongPress } from '../../hooks/useLongPress';
 import { SceneRow, type SceneAction } from './SceneRow';
-import { sceneCountLabel } from './labels';
+import { sceneCountLabel, setlistCountLabel } from './labels';
 import type { Scene, Song } from '../../store';
 
 export type EntryAction = 'moveUp' | 'moveDown' | 'remove' | 'customize' | 'revert' | 'promote';
@@ -18,6 +18,7 @@ interface EntryRowProps {
   isLightMode: boolean;
   compact: boolean;
   customized: boolean;
+  libraryMissing: boolean;
   sharedCount: number;
   onAction: (action: EntryAction, index: number) => void;
   onSceneAction: (
@@ -35,6 +36,7 @@ export function EntryRow({
   isLightMode,
   compact,
   customized,
+  libraryMissing,
   sharedCount,
   onAction,
   onSceneAction,
@@ -51,10 +53,12 @@ export function EntryRow({
         ...(index > 0 ? [{ id: 'moveUp', label: 'Move up' }] : []),
         ...(index < total - 1 ? [{ id: 'moveDown', label: 'Move down' }] : []),
         ...(customized
-          ? [
-              { id: 'revert', label: 'Revert to library version', destructive: true },
-              { id: 'promote', label: 'Push changes to library', destructive: true },
-            ]
+          ? libraryMissing
+            ? []
+            : [
+                { id: 'revert', label: 'Revert to library version', destructive: true },
+                { id: 'promote', label: 'Push changes to library', destructive: true },
+              ]
           : [{ id: 'customize', label: 'Customize for this gig' }]),
         { id: 'remove', label: 'Remove from setlist', destructive: true },
       ]
@@ -72,9 +76,15 @@ export function EntryRow({
           isLightMode ? 'border-zinc-100' : 'border-zinc-800/60'
         } ${resolved ? '' : 'opacity-60'}`}
       >
-        <div
+        <button
+          type="button"
+          data-entry-expander
+          aria-expanded={resolved ? expanded : undefined}
+          aria-disabled={resolved ? undefined : true}
           onClick={() => resolved && setExpanded(prev => !prev)}
-          className={`flex items-center gap-3 flex-1 min-w-0 ${resolved ? 'cursor-pointer' : ''}`}
+          className={`flex items-center gap-3 flex-1 min-w-0 text-left ${
+            resolved ? 'cursor-pointer' : ''
+          }`}
         >
           <span
             className={`text-xs font-mono w-5 shrink-0 ${
@@ -104,7 +114,7 @@ export function EntryRow({
                 >
                   {sceneCountLabel(resolved.scenes.length)}
                   {!customized && sharedCount > 1
-                    ? ` · ${sharedCount} setlists follow this`
+                    ? ` · ${setlistCountLabel(sharedCount)} follow this`
                     : ''}
                 </span>
                 {customized && (
@@ -131,7 +141,7 @@ export function EntryRow({
               </span>
             )}
           </span>
-        </div>
+        </button>
         {menu.kind === 'open' && (
           <RowContextMenu
             x={menu.x}

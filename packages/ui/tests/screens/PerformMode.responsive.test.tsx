@@ -50,20 +50,27 @@ describe('PerformMode layouts', () => {
     }
   });
 
-  it('pins the advance button outside the scrolling region when stacked', async () => {
-    setViewport('mobile');
-    const {container} = await renderPerforming(['A', 'B', 'C']);
-    const primary = container.querySelector('[data-perform-primary]')!;
-    expect(primary.closest('[data-scrolls]')).toBeNull();
-  });
+  it.each(['tablet', 'mobile'] as const)(
+    'pins the advance button outside every scrolling region on %s',
+    async tier => {
+      setViewport(tier);
+      const {container} = await renderPerforming(['A', 'B', 'C']);
+      expect(container.querySelectorAll('[data-scrolls]').length).toBeGreaterThan(0);
+      const primary = container.querySelector('[data-perform-primary]')!;
+      expect(primary.closest('[data-scrolls]')).toBeNull();
+    },
+  );
 
   it.each(['tablet', 'mobile'] as const)(
-    'has no song arrows and a tappable title on %s',
-    async viewport => {
-      setViewport(viewport);
+    'gives the header exactly a tappable title and EXIT on %s',
+    async tier => {
+      setViewport(tier);
       const {container} = await renderPerformingSetlist(['One', 'Two']);
-      expect(container.querySelector('[data-song-next]')).toBeNull();
-      expect(container.querySelector('[data-song-prev]')).toBeNull();
+      const header = container.querySelector('[data-perform-header]')!;
+      const labels = [...header.querySelectorAll('button')].map(b =>
+        b.textContent?.trim(),
+      );
+      expect(labels).toEqual(['One', 'EXIT']);
       expect(container.querySelector('[data-song-title]')!.tagName).toBe('BUTTON');
     },
   );

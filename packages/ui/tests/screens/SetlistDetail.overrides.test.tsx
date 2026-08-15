@@ -89,6 +89,40 @@ describe('per-gig overrides', () => {
     expect(container.textContent).not.toContain('Push changes to library');
   });
 
+  it('offers neither detach verb once the library song behind a customized entry is gone', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Shared').id;
+    songs.captureScene(a, 'Original');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+    setlists.customizeEntry(listId, 0);
+    songs.deleteSong(a);
+
+    const {container} = renderList(listId);
+    expect(container.textContent).toContain('Shared');
+    expect(container.textContent).not.toContain('Missing song');
+
+    openEntryMenu(container, 'Shared');
+    expect(container.textContent).not.toContain('Revert to library version');
+    expect(container.textContent).not.toContain('Push changes to library');
+    expect(container.textContent).not.toContain('Customize for this gig');
+    expect(container.textContent).toContain('Remove from setlist');
+  });
+
+  it('keeps both detach verbs while the library song still resolves', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Shared').id;
+    songs.captureScene(a, 'Original');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+    setlists.customizeEntry(listId, 0);
+
+    const {container} = renderList(listId);
+    openEntryMenu(container, 'Shared');
+    expect(container.textContent).toContain('Revert to library version');
+    expect(container.textContent).toContain('Push changes to library');
+  });
+
   it('shows how many other setlists share an uncustomized song', () => {
     const {songs, setlists} = wire();
     const a = songs.createSong('Shared').id;

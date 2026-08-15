@@ -10,12 +10,14 @@ import { showAlert } from '../../components/modals/AlertModal';
 import type { Song, Setlist } from '../../store';
 import { SongDetail } from './SongDetail';
 import { SetlistDetail } from './SetlistDetail';
-import { sceneCountLabel } from './labels';
+import { sceneCountLabel, setlistCountLabel } from './labels';
 import { confirmArmForCapture } from './armGuard';
 
 type Pane = 'songs' | 'setlists';
 
 type SongMenuAction = 'rename' | 'arm' | 'delete';
+
+type SetlistMenuAction = 'rename' | 'delete';
 
 type SongDialogState =
   | { kind: 'closed' }
@@ -25,6 +27,15 @@ type SongDialogState =
 type SongMenuState =
   | { kind: 'closed' }
   | { kind: 'open'; song: Song; x: number; y: number };
+
+type SetlistDialogState =
+  | { kind: 'closed' }
+  | { kind: 'create' }
+  | { kind: 'rename'; setlist: Setlist };
+
+type SetlistMenuState =
+  | { kind: 'closed' }
+  | { kind: 'open'; setlist: Setlist; x: number; y: number };
 
 interface SetlistsScreenProps {
   isLightMode: boolean;
@@ -110,13 +121,67 @@ function SongRow({
   );
 }
 
+interface SetlistRowProps {
+  setlist: Setlist;
+  isSelected: boolean;
+  isLightMode: boolean;
+  onClick: () => void;
+  onContextMenu: (event: React.MouseEvent) => void;
+  onLongPress: (point: LongPressPoint) => void;
+}
+
+function SetlistRow({
+  setlist,
+  isSelected,
+  isLightMode,
+  onClick,
+  onContextMenu,
+  onLongPress,
+}: SetlistRowProps) {
+  const longPress = useLongPress({ onLongPress });
+  return (
+    <button
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+      {...longPress}
+      aria-pressed={isSelected}
+      className={rowClass(isSelected, isLightMode)}
+    >
+      <div className="flex-1 min-w-0">
+        <div
+          className={`text-base font-bold truncate ${
+            isLightMode ? 'text-zinc-800' : 'text-zinc-200'
+          }`}
+        >
+          {setlist.name}
+        </div>
+        <div
+          className={`text-xs font-mono mt-0.5 ${
+            isLightMode ? 'text-zinc-400' : 'text-zinc-600'
+          }`}
+        >
+          {setlist.entries.length} song
+          {setlist.entries.length === 1 ? '' : 's'}
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export function SetlistsScreen({
   isLightMode,
   armedSongId,
   onArm,
 }: SetlistsScreenProps) {
   const { songs, createSong, renameSong, deleteSong } = useSongs();
-  const { setlists, countSetlistsUsing, findLibraryUses } = useSetlists();
+  const {
+    setlists,
+    createSetlist,
+    renameSetlist,
+    deleteSetlist,
+    countSetlistsUsing,
+    findLibraryUses,
+  } = useSetlists();
   const { enterSong, enterSetlist } = usePerformCursor();
   const [pane, setPane] = useState<Pane>('songs');
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
@@ -127,6 +192,12 @@ export function SetlistsScreen({
     kind: 'closed',
   });
   const [songMenu, setSongMenu] = useState<SongMenuState>({ kind: 'closed' });
+  const [setlistDialog, setSetlistDialog] = useState<SetlistDialogState>({
+    kind: 'closed',
+  });
+  const [setlistMenu, setSetlistMenu] = useState<SetlistMenuState>({
+    kind: 'closed',
+  });
 
   const selectedSong: Song | null =
     songs.find(s => s.id === selectedSongId) ?? null;
@@ -170,10 +241,7 @@ export function SetlistsScreen({
         }
       } else if (action === 'delete') {
         const used = countSetlistsUsing(song.id);
-        const usage =
-          used === 0
-            ? ''
-            : ` It is used in ${used === 1 ? '1 setlist' : `${used} setlists`}.`;
+        const usage = used === 0 ? '' : ` It is used in ${setlistCountLabel(used)}.`;
         const confirmed = await showAlert({
           variant: 'warning',
           title: 'Delete song?',
@@ -189,6 +257,51 @@ export function SetlistsScreen({
     [songMenu, armedSongId, onArm, findLibraryUses, countSetlistsUsing, deleteSong],
   );
 
+  const handleCreateSetlist = useCallback(
+    (name: string) => {
+      createSetlist(name);
+      setSetlistDialog({ kind: 'closed' });
+    },
+    [createSetlist],
+  );
+
+  const handleRenameSetlist = useCallback(
+    (name: string) => {
+      if (setlistDialog.kind !== 'rename') return;
+      renameSetlist(setlistDialog.setlist.id, name);
+      setSetlistDialog({ kind: 'closed' });
+    },
+    [setlistDialog, renameSetlist],
+  );
+
+  const handleSetlistMenuAction = useCallback(
+    async (action: SetlistMenuAction) => {
+      if (setlistMenu.kind !== 'open') return;
+      const setlist = setlistMenu.setlist;
+      setSetlistMenu({ kind: 'closed' });
+      if (action === 'rename') {
+        setSetlistDialog({ kind: 'rename', setlist });
+      } else if (action === 'delete') {
+        const confirmed = await showAlert({
+          variant: 'warning',
+          title: 'Delete setlist?',
+          message: `Delete "${setlist.name}"? This cannot be undone.`,
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+        });
+        if (confirmed) {
+          deleteSetlist(setlist.id);
+        }
+      }
+    },
+    [setlistMenu, deleteSetlist],
+  );
+
+  const setlistMenuActions: RowAction[] = [
+    { id: 'rename', label: 'Rename' },
+    { id: 'delete', label: 'Delete', destructive: true },
+  ];
+
   const songMenuUsage =
     songMenu.kind === 'open' ? countSetlistsUsing(songMenu.song.id) : 0;
 
@@ -200,7 +313,7 @@ export function SetlistsScreen({
             ? [
                 {
                   id: 'usage',
-                  label: `Used in ${songMenuUsage === 1 ? '1 setlist' : `${songMenuUsage} setlists`}`,
+                  label: `Used in ${setlistCountLabel(songMenuUsage)}`,
                   disabled: true,
                 },
               ]
@@ -233,19 +346,21 @@ export function SetlistsScreen({
             Setlists
           </button>
         </div>
-        {pane === 'songs' && (
-          <button
-            onClick={() => setSongDialog({ kind: 'create' })}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              isLightMode
-                ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
-                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
-            }`}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New Song
-          </button>
-        )}
+        <button
+          onClick={() =>
+            pane === 'songs'
+              ? setSongDialog({ kind: 'create' })
+              : setSetlistDialog({ kind: 'create' })
+          }
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+            isLightMode
+              ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
+              : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
+          }`}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          {pane === 'songs' ? 'New Song' : 'New Setlist'}
+        </button>
       </div>
 
       <div className="flex-1 flex gap-4 min-h-0">
@@ -287,33 +402,25 @@ export function SetlistsScreen({
             </div>
           ) : (
             setlists.map(setlist => (
-              <button
+              <SetlistRow
                 key={setlist.id}
+                setlist={setlist}
+                isSelected={setlist.id === selectedSetlistId}
+                isLightMode={isLightMode}
                 onClick={() => setSelectedSetlistId(setlist.id)}
-                aria-pressed={setlist.id === selectedSetlistId}
-                className={rowClass(
-                  setlist.id === selectedSetlistId,
-                  isLightMode,
-                )}
-              >
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`text-base font-bold truncate ${
-                      isLightMode ? 'text-zinc-800' : 'text-zinc-200'
-                    }`}
-                  >
-                    {setlist.name}
-                  </div>
-                  <div
-                    className={`text-xs font-mono mt-0.5 ${
-                      isLightMode ? 'text-zinc-400' : 'text-zinc-600'
-                    }`}
-                  >
-                    {setlist.entries.length} song
-                    {setlist.entries.length === 1 ? '' : 's'}
-                  </div>
-                </div>
-              </button>
+                onContextMenu={evt => {
+                  evt.preventDefault();
+                  setSetlistMenu({
+                    kind: 'open',
+                    setlist,
+                    x: evt.clientX,
+                    y: evt.clientY,
+                  });
+                }}
+                onLongPress={point =>
+                  setSetlistMenu({ kind: 'open', setlist, x: point.x, y: point.y })
+                }
+              />
             ))
           )}
         </div>
@@ -384,6 +491,39 @@ export function SetlistsScreen({
           actions={songMenuActions}
           onClose={() => setSongMenu({ kind: 'closed' })}
           onAction={(id: string) => handleSongMenuAction(id as SongMenuAction)}
+        />
+      )}
+      {setlistDialog.kind === 'create' && (
+        <NamingDialog
+          title="New setlist"
+          confirmLabel="Save"
+          placeholder="Setlist name"
+          isLightMode={isLightMode}
+          onConfirm={handleCreateSetlist}
+          onCancel={() => setSetlistDialog({ kind: 'closed' })}
+        />
+      )}
+      {setlistDialog.kind === 'rename' && (
+        <NamingDialog
+          title="Rename setlist"
+          confirmLabel="Save"
+          initialValue={setlistDialog.setlist.name}
+          placeholder="Setlist name"
+          isLightMode={isLightMode}
+          onConfirm={handleRenameSetlist}
+          onCancel={() => setSetlistDialog({ kind: 'closed' })}
+        />
+      )}
+      {setlistMenu.kind === 'open' && (
+        <RowContextMenu
+          x={setlistMenu.x}
+          y={setlistMenu.y}
+          isLightMode={isLightMode}
+          actions={setlistMenuActions}
+          onClose={() => setSetlistMenu({ kind: 'closed' })}
+          onAction={(id: string) =>
+            handleSetlistMenuAction(id as SetlistMenuAction)
+          }
         />
       )}
     </div>

@@ -424,6 +424,7 @@ export function SetlistDetail({
                 isLightMode={isLightMode}
                 compact={compact}
                 customized={customized}
+                libraryMissing={!songs.some(s => s.id === entry.songId)}
                 sharedCount={song && !customized ? countSetlistsUsing(song.id) : 0}
                 onAction={handleEntryAction}
                 onSceneAction={handleSceneAction}

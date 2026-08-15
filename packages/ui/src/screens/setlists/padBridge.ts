@@ -35,6 +35,15 @@ export async function saveSceneAsPad(
   });
   if (!confirmed) return;
 
-  await applySnapshot(scene.snapshot);
-  await savePresetToTile(free, scene.label);
+  await applySnapshot(scene.snapshot).catch(() => {});
+
+  try {
+    await savePresetToTile(free, scene.label);
+  } catch (err) {
+    await showAlert({
+      variant: 'error',
+      title: 'Could not save pad',
+      message: err instanceof Error ? err.message : 'Unknown error.',
+    });
+  }
 }

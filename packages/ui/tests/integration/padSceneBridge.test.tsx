@@ -106,6 +106,45 @@ describe('pad <-> scene bridge', () => {
     expect(presets.some(p => p.label === 'Clav')).toBe(true);
   });
 
+  it('surfaces an error when the pad could not be persisted', async () => {
+    const {songs, profile} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'Clav');
+    jest
+      .spyOn(profile, 'savePresetToTile')
+      .mockRejectedValue(new Error('Storage is full.'));
+    const {container} = renderDetail(songId);
+
+    openContextMenu(container, 'Clav');
+    click(byText(container, 'Save scene as pad'));
+    await act(async () => {});
+    click(byText(container, 'Save'));
+    await act(async () => {});
+
+    expect(container.textContent).toContain('Could not save pad');
+    expect(container.textContent).toContain('Storage is full.');
+  });
+
+  it('still saves the pad when loading the scene onto the piano fails', async () => {
+    const {songs, profile} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'Clav');
+    jest
+      .spyOn(profile, 'applySnapshot')
+      .mockRejectedValue(new Error('Piano disconnected.'));
+    const {container} = renderDetail(songId);
+
+    openContextMenu(container, 'Clav');
+    click(byText(container, 'Save scene as pad'));
+    await act(async () => {});
+    click(byText(container, 'Save'));
+    await act(async () => {});
+
+    const presets = useProfilesStore.getState().profiles[0].presets;
+    expect(presets.some(p => p.label === 'Clav')).toBe(true);
+    expect(container.textContent).not.toContain('Could not save pad');
+  });
+
   it('warns and does not save when every pad tile is full', async () => {
     const fullPresets: Preset[] = Array.from({length: 8}, (_, i) => ({
       ...GRAND_PIANO_PRESET,
