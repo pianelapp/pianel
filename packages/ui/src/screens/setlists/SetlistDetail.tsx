@@ -28,7 +28,7 @@ type SceneDialogState =
 
 type LibraryEditDialogState =
   | { kind: 'closed' }
-  | { kind: 'open'; songName: string; actionLabel: string };
+  | { kind: 'open'; songName: string; actionLabel: string; followedElsewhere: boolean };
 
 interface AddSongDialogProps {
   songs: Song[];
@@ -167,10 +167,14 @@ export function SetlistDetail({
   );
 
   const askLibraryEdit = useCallback(
-    (songName: string, actionLabel: string): Promise<LibraryEditChoice> =>
+    (
+      songName: string,
+      actionLabel: string,
+      followedElsewhere: boolean,
+    ): Promise<LibraryEditChoice> =>
       new Promise(resolve => {
         libraryEditResolveRef.current = resolve;
-        setLibraryEditDialog({ kind: 'open', songName, actionLabel });
+        setLibraryEditDialog({ kind: 'open', songName, actionLabel, followedElsewhere });
       }),
     [],
   );
@@ -195,17 +199,12 @@ export function SetlistDetail({
       const songId = setlist.entries[entryIndex]?.songId;
       if (!songId) return;
 
-      const uses = findLibraryUses(songId);
-      const reachesElsewhere = uses.some(
+      const followedElsewhere = findLibraryUses(songId).some(
         use => !(use.setlistId === setlist.id && use.entryIndex === entryIndex),
       );
-      if (!reachesElsewhere) {
-        editSong(songId, transform);
-        return;
-      }
 
       const songName = resolved[entryIndex]?.name ?? 'this song';
-      const choice = await askLibraryEdit(songName, actionLabel);
+      const choice = await askLibraryEdit(songName, actionLabel, followedElsewhere);
       if (choice === 'cancel') return;
       if (choice === 'thisGig') {
         customizeEntry(setlist.id, entryIndex);
@@ -469,6 +468,7 @@ export function SetlistDetail({
           initialValue={sceneDialog.scene.notes}
           placeholder="Notes"
           multiline
+          allowEmpty
           isLightMode={isLightMode}
           onConfirm={handleSaveNotes}
           onCancel={() => setSceneDialog({ kind: 'closed' })}
@@ -479,6 +479,7 @@ export function SetlistDetail({
           songName={libraryEditDialog.songName}
           setlistName={setlist.name}
           actionLabel={libraryEditDialog.actionLabel}
+          followedElsewhere={libraryEditDialog.followedElsewhere}
           isLightMode={isLightMode}
           onChoose={handleLibraryEditChoice}
         />

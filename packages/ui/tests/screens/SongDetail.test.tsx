@@ -152,6 +152,38 @@ describe('SongDetail scene actions', () => {
     expect(songs.getSong(songId)!.scenes.map(s => s.label)).toEqual(['B']);
   });
 
+  it('clears scene notes when the field is emptied', () => {
+    const {songs} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'A');
+    const sceneId = songs.getSong(songId)!.scenes[0].id;
+    songs.setSceneNotes(songId, sceneId, 'capo 2');
+    const {container} = renderDetail(songId);
+
+    openContextMenu(container, 'A');
+    click(byText(container, 'Notes'));
+    typeInto(container, '');
+    click(byText(container, 'Save'));
+
+    expect(container.textContent).not.toContain('Name cannot be empty');
+    expect(songs.getSong(songId)!.scenes[0].notes).toBe('');
+  });
+
+  it('still refuses an empty scene name', () => {
+    const {songs} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'A');
+    const {container} = renderDetail(songId);
+
+    openContextMenu(container, 'A');
+    click(byText(container, 'Rename'));
+    typeInto(container, '');
+    click(byText(container, 'Save'));
+
+    expect(container.textContent).toContain('Name cannot be empty');
+    expect(songs.getSong(songId)!.scenes[0].label).toBe('A');
+  });
+
   it('stores scene notes', () => {
     const {songs} = wire();
     const songId = songs.createSong('S').id;

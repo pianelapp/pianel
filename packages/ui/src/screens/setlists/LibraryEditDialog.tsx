@@ -7,6 +7,7 @@ interface LibraryEditDialogProps {
   songName: string;
   setlistName: string;
   actionLabel: string;
+  followedElsewhere: boolean;
   isLightMode: boolean;
   onChoose: (choice: LibraryEditChoice) => void;
 }
@@ -15,6 +16,7 @@ export function LibraryEditDialog({
   songName,
   setlistName,
   actionLabel,
+  followedElsewhere,
   isLightMode,
   onChoose,
 }: LibraryEditDialogProps) {
@@ -66,8 +68,11 @@ export function LibraryEditDialog({
             isLightMode ? 'text-zinc-600' : 'text-zinc-400'
           }`}
         >
-          {actionLabel} in "{songName}" changes it in every setlist that follows it, not
-          just {setlistName}.
+          {actionLabel} in "{songName}"{' '}
+          {followedElsewhere
+            ? 'changes it in every setlist that follows it'
+            : 'changes the song in your library'}
+          , not just {setlistName}.
         </p>
         <div className="flex gap-2">
           <button

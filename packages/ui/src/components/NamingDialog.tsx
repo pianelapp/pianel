@@ -6,6 +6,7 @@ interface NamingDialogProps {
   initialValue?: string;
   placeholder?: string;
   multiline?: boolean;
+  allowEmpty?: boolean;
   isLightMode: boolean;
   onConfirm: (value: string) => void;
   onCancel: () => void;
@@ -17,6 +18,7 @@ export function NamingDialog({
   initialValue = '',
   placeholder = 'Name',
   multiline = false,
+  allowEmpty = false,
   isLightMode,
   onConfirm,
   onCancel,
@@ -35,7 +37,7 @@ export function NamingDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = value.trim();
-    if (!trimmed) {
+    if (!trimmed && !allowEmpty) {
       setError('Name cannot be empty.');
       return;
     }

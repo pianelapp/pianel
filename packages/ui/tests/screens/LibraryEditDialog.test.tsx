@@ -9,6 +9,7 @@ function renderDialog(
     songName: string;
     setlistName: string;
     actionLabel: string;
+    followedElsewhere: boolean;
   }> = {},
   onChoose: (choice: LibraryEditChoice) => void = () => {},
 ): RenderResult {
@@ -17,6 +18,7 @@ function renderDialog(
       songName={overrides.songName ?? 'Isn’t She Lovely'}
       setlistName={overrides.setlistName ?? 'Bar Gig'}
       actionLabel={overrides.actionLabel ?? 'Reordering this scene'}
+      followedElsewhere={overrides.followedElsewhere ?? true}
       isLightMode={false}
       onChoose={onChoose}
     />,
@@ -74,5 +76,16 @@ describe('LibraryEditDialog', () => {
     const {container} = renderDialog({}, onChoose);
     click(container.querySelector('[data-dialog-panel]')!);
     expect(onChoose).not.toHaveBeenCalled();
+  });
+  it('names the library rather than other setlists when nothing else follows the song', () => {
+    const {container} = renderDialog({followedElsewhere: false});
+    expect(container.textContent).toContain('changes the song in your library');
+    expect(container.textContent).not.toContain('every setlist that follows it');
+  });
+
+  it('names the following setlists when the song is shared', () => {
+    const {container} = renderDialog({followedElsewhere: true});
+    expect(container.textContent).toContain('every setlist that follows it');
+    expect(container.textContent).not.toContain('changes the song in your library');
   });
 });

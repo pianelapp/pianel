@@ -242,6 +242,7 @@ export function SongDetail({
           initialValue={dialog.scene.notes}
           placeholder="Notes"
           multiline
+          allowEmpty
           isLightMode={isLightMode}
           onConfirm={handleSaveNotes}
           onCancel={() => setDialog({ kind: 'closed' })}

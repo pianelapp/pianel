@@ -126,7 +126,7 @@ describe('editing a song from inside a setlist', () => {
     expect(songs.getSong(songId)!.scenes.map(s => s.label)).toEqual(['A', 'B']);
   });
 
-  it('does not ask when the song is only used in this one entry', async () => {
+  it('still asks before reaching the library when no other setlist follows the song', async () => {
     const {songs, setlists} = wire();
     const songId = songs.createSong('Solo').id;
     songs.captureScene(songId, 'A');
@@ -140,7 +140,48 @@ describe('editing a song from inside a setlist', () => {
     click(byText(container, 'Move down'));
     await act(async () => {});
 
-    expect(container.querySelector('[data-dialog-panel]')).toBeNull();
+    expect(container.querySelector('[data-dialog-panel]')).not.toBeNull();
+    expect(container.textContent).toContain('changes the song in your library');
+    expect(songs.getSong(songId)!.scenes.map(s => s.label)).toEqual(['A', 'B']);
+  });
+
+  it('keeps a single-use library song untouched when only this gig is chosen', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Solo').id;
+    songs.captureScene(songId, 'A');
+    songs.captureScene(songId, 'B');
+    const bar = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(bar, songId);
+
+    const {container} = renderList(bar);
+    click(byText(container, 'Solo'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Move down'));
+    await act(async () => {});
+    click(container.querySelector('[data-dialog-action="thisGig"]') as HTMLElement);
+    await act(async () => {});
+
+    expect(setlists.isCustomized(bar, 0)).toBe(true);
+    expect(setlists.resolveEntry(bar, 0)!.scenes.map(s => s.label)).toEqual(['B', 'A']);
+    expect(songs.getSong(songId)!.scenes.map(s => s.label)).toEqual(['A', 'B']);
+  });
+
+  it('edits a single-use library song when update everywhere is chosen', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Solo').id;
+    songs.captureScene(songId, 'A');
+    songs.captureScene(songId, 'B');
+    const bar = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(bar, songId);
+
+    const {container} = renderList(bar);
+    click(byText(container, 'Solo'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Move down'));
+    await act(async () => {});
+    click(container.querySelector('[data-dialog-action="everywhere"]') as HTMLElement);
+    await act(async () => {});
+
     expect(setlists.isCustomized(bar, 0)).toBe(false);
     expect(songs.getSong(songId)!.scenes.map(s => s.label)).toEqual(['B', 'A']);
   });
@@ -199,8 +240,32 @@ describe('editing a song from inside a setlist', () => {
     click(byText(container, 'Re-capture'));
     click(byText(container, 'Re-capture'));
     await act(async () => {});
+    click(container.querySelector('[data-dialog-action="everywhere"]') as HTMLElement);
+    await act(async () => {});
 
     expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).not.toBe(before);
+  });
+
+  it('re-captures a single-use song onto a detached copy without touching the library', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Solo').id;
+    songs.captureScene(songId, 'A');
+    const before = songs.getSong(songId)!.scenes[0].snapshot.tempo;
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, songId);
+
+    const {container} = renderList(listId);
+    click(byText(container, 'Solo'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
+    click(container.querySelector('[data-dialog-action="thisGig"]') as HTMLElement);
+    await act(async () => {});
+
+    expect(setlists.isCustomized(listId, 0)).toBe(true);
+    expect(setlists.resolveEntry(listId, 0)!.scenes[0].snapshot.tempo).not.toBe(before);
+    expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).toBe(before);
   });
 
   it('re-captures onto the detached copy only, leaving the library untouched', async () => {
@@ -271,6 +336,28 @@ describe('editing a song from inside a setlist', () => {
 
     expect(container.textContent).toContain('Piano not connected');
     expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).toBe(before);
+  });
+
+  it('clears notes on a detached setlist scene when the field is emptied', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Solo').id;
+    songs.captureScene(songId, 'A');
+    const sceneId = songs.getSong(songId)!.scenes[0].id;
+    songs.setSceneNotes(songId, sceneId, 'capo 2');
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, songId);
+    setlists.customizeEntry(listId, 0);
+
+    const {container} = renderList(listId);
+    click(byText(container, 'Solo'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Notes'));
+    typeInto(container, '');
+    click(byText(container, 'Save'));
+    await act(async () => {});
+
+    expect(container.textContent).not.toContain('Name cannot be empty');
+    expect(setlists.resolveEntry(listId, 0)!.scenes[0].notes).toBe('');
   });
 
   it('does not expand a dangling entry', () => {
