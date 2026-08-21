@@ -360,6 +360,73 @@ describe('editing a song from inside a setlist', () => {
     expect(setlists.resolveEntry(listId, 0)!.scenes[0].notes).toBe('');
   });
 
+  function twoSongGig() {
+    const {songs, setlists} = wire();
+    const soloId = songs.createSong('Solo').id;
+    songs.captureScene(soloId, 'A');
+    songs.captureScene(soloId, 'B');
+    const otherId = songs.createSong('Other').id;
+    songs.captureScene(otherId, 'C');
+    songs.captureScene(otherId, 'D');
+    const bar = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(bar, soloId);
+    setlists.addSong(bar, otherId);
+    return {songs, setlists, soloId, otherId, bar};
+  }
+
+  async function editSolo(container: HTMLElement, remember: boolean) {
+    click(byText(container, 'Solo'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Move down'));
+    await act(async () => {});
+    if (remember) click(container.querySelector('[data-dialog-remember]') as HTMLElement);
+    click(container.querySelector('[data-dialog-action="thisGig"]') as HTMLElement);
+    await act(async () => {});
+  }
+
+  async function editOther(container: HTMLElement) {
+    click(byText(container, 'Other'));
+    openSceneMenu(container, 'C');
+    click(byText(container, 'Move down'));
+    await act(async () => {});
+  }
+
+  it('stops asking for the rest of the session once remember is ticked', async () => {
+    const {songs, setlists, otherId, bar} = twoSongGig();
+    const {container} = renderList(bar);
+
+    await editSolo(container, true);
+    await editOther(container);
+
+    expect(container.querySelector('[data-dialog-panel]')).toBeNull();
+    expect(setlists.isCustomized(bar, 1)).toBe(true);
+    expect(setlists.resolveEntry(bar, 1)!.scenes.map(s => s.label)).toEqual(['D', 'C']);
+    expect(songs.getSong(otherId)!.scenes.map(s => s.label)).toEqual(['C', 'D']);
+  });
+
+  it('keeps asking when remember is left unticked', async () => {
+    const {bar} = twoSongGig();
+    const {container} = renderList(bar);
+
+    await editSolo(container, false);
+    await editOther(container);
+
+    expect(container.querySelector('[data-dialog-panel]')).not.toBeNull();
+  });
+
+  it('carries the remembered choice across leaving and returning to the screen', async () => {
+    const {setlists, bar} = twoSongGig();
+    const first = renderList(bar);
+
+    await editSolo(first.container, true);
+
+    const second = renderList(bar);
+    await editOther(second.container);
+
+    expect(second.container.querySelector('[data-dialog-panel]')).toBeNull();
+    expect(setlists.isCustomized(bar, 1)).toBe(true);
+  });
+
   it('does not expand a dangling entry', () => {
     const {songs, setlists} = wire();
     const songId = songs.createSong('Gone').id;

@@ -12,6 +12,10 @@ import { LibraryEditDialog, type LibraryEditChoice } from './LibraryEditDialog';
 import { sceneCountLabel } from './labels';
 import { saveSceneAsPad } from './padBridge';
 import { confirmRecapture } from './recaptureGuard';
+import {
+  readLibraryEditPreference,
+  writeLibraryEditPreference,
+} from './libraryEditPreference';
 import { patchScene, moveSceneInSong, removeScene } from '@pianel/core/helpers/songEdits';
 import type { Scene, Setlist, Song } from '../../store';
 
@@ -179,12 +183,16 @@ export function SetlistDetail({
     [],
   );
 
-  const handleLibraryEditChoice = useCallback((choice: LibraryEditChoice) => {
-    const resolve = libraryEditResolveRef.current;
-    libraryEditResolveRef.current = null;
-    setLibraryEditDialog({ kind: 'closed' });
-    resolve?.(choice);
-  }, []);
+  const handleLibraryEditChoice = useCallback(
+    (choice: LibraryEditChoice, remember: boolean) => {
+      const resolve = libraryEditResolveRef.current;
+      libraryEditResolveRef.current = null;
+      setLibraryEditDialog({ kind: 'closed' });
+      if (remember && choice !== 'cancel') writeLibraryEditPreference(choice);
+      resolve?.(choice);
+    },
+    [],
+  );
 
   const editEntrySong = useCallback(
     async (
@@ -204,7 +212,9 @@ export function SetlistDetail({
       );
 
       const songName = resolved[entryIndex]?.name ?? 'this song';
-      const choice = await askLibraryEdit(songName, actionLabel, followedElsewhere);
+      const choice =
+        readLibraryEditPreference() ??
+        (await askLibraryEdit(songName, actionLabel, followedElsewhere));
       if (choice === 'cancel') return;
       if (choice === 'thisGig') {
         customizeEntry(setlist.id, entryIndex);

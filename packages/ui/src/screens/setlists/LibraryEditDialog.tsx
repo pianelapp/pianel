@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import X from 'lucide-react/dist/esm/icons/x';
 
 export type LibraryEditChoice = 'everywhere' | 'thisGig' | 'cancel';
@@ -9,7 +9,7 @@ interface LibraryEditDialogProps {
   actionLabel: string;
   followedElsewhere: boolean;
   isLightMode: boolean;
-  onChoose: (choice: LibraryEditChoice) => void;
+  onChoose: (choice: LibraryEditChoice, remember: boolean) => void;
 }
 
 export function LibraryEditDialog({
@@ -20,9 +20,11 @@ export function LibraryEditDialog({
   isLightMode,
   onChoose,
 }: LibraryEditDialogProps) {
+  const [remember, setRemember] = useState(false);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onChoose('cancel');
+      if (e.key === 'Escape') onChoose('cancel', false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -32,7 +34,7 @@ export function LibraryEditDialog({
     <div
       data-dialog-scrim
       onClick={e => {
-        if (e.target === e.currentTarget) onChoose('cancel');
+        if (e.target === e.currentTarget) onChoose('cancel', false);
       }}
       role="dialog"
       aria-modal="true"
@@ -56,7 +58,7 @@ export function LibraryEditDialog({
           </h2>
           <button
             data-dialog-close
-            onClick={() => onChoose('cancel')}
+            onClick={() => onChoose('cancel', false)}
             aria-label="Close"
             className="p-1.5 rounded-full hover:bg-zinc-500/20 transition-colors shrink-0"
           >
@@ -74,10 +76,24 @@ export function LibraryEditDialog({
             : 'changes the song in your library'}
           , not just {setlistName}.
         </p>
+        <label
+          className={`flex items-center gap-2 mb-4 text-xs select-none cursor-pointer ${
+            isLightMode ? 'text-zinc-600' : 'text-zinc-400'
+          }`}
+        >
+          <input
+            type="checkbox"
+            data-dialog-remember
+            checked={remember}
+            onChange={e => setRemember(e.target.checked)}
+            className="w-4 h-4 accent-cyan-600"
+          />
+          Remember for the rest of this session
+        </label>
         <div className="flex gap-2">
           <button
             data-dialog-action="everywhere"
-            onClick={() => onChoose('everywhere')}
+            onClick={() => onChoose('everywhere', remember)}
             className={`flex-1 text-sm font-bold tracking-widest py-2.5 rounded-xl transition-colors ${
               isLightMode
                 ? 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
@@ -88,7 +104,7 @@ export function LibraryEditDialog({
           </button>
           <button
             data-dialog-action="thisGig"
-            onClick={() => onChoose('thisGig')}
+            onClick={() => onChoose('thisGig', remember)}
             autoFocus
             className={`flex-1 text-sm font-bold tracking-widest py-2.5 rounded-xl transition-colors ${
               isLightMode

@@ -11,7 +11,7 @@ function renderDialog(
     actionLabel: string;
     followedElsewhere: boolean;
   }> = {},
-  onChoose: (choice: LibraryEditChoice) => void = () => {},
+  onChoose: (choice: LibraryEditChoice, remember: boolean) => void = () => {},
 ): RenderResult {
   return render(
     <LibraryEditDialog
@@ -46,12 +46,12 @@ describe('LibraryEditDialog', () => {
     const a = jest.fn();
     const first = renderDialog({}, a);
     click(first.container.querySelector('[data-dialog-action="thisGig"]')!);
-    expect(a).toHaveBeenCalledWith('thisGig');
+    expect(a).toHaveBeenCalledWith('thisGig', false);
 
     const b = jest.fn();
     const second = renderDialog({}, b);
     click(second.container.querySelector('[data-dialog-action="everywhere"]')!);
-    expect(b).toHaveBeenCalledWith('everywhere');
+    expect(b).toHaveBeenCalledWith('everywhere', false);
   });
 
   it.each([
@@ -61,14 +61,14 @@ describe('LibraryEditDialog', () => {
     const onChoose = jest.fn();
     const {container} = renderDialog({}, onChoose);
     click(container.querySelector(selector)!);
-    expect(onChoose).toHaveBeenCalledWith('cancel');
+    expect(onChoose).toHaveBeenCalledWith('cancel', false);
   });
 
   it('cancels on Escape', () => {
     const onChoose = jest.fn();
     renderDialog({}, onChoose);
     keydown('Escape');
-    expect(onChoose).toHaveBeenCalledWith('cancel');
+    expect(onChoose).toHaveBeenCalledWith('cancel', false);
   });
 
   it('does not cancel when the click lands inside the panel', () => {
@@ -87,5 +87,24 @@ describe('LibraryEditDialog', () => {
     const {container} = renderDialog({followedElsewhere: true});
     expect(container.textContent).toContain('every setlist that follows it');
     expect(container.textContent).not.toContain('changes the song in your library');
+  });
+  it('passes the remember flag with the chosen action once ticked', () => {
+    const onChoose = jest.fn();
+    const {container} = renderDialog({}, onChoose);
+
+    click(container.querySelector('[data-dialog-remember]')!);
+    click(container.querySelector('[data-dialog-action="thisGig"]')!);
+
+    expect(onChoose).toHaveBeenCalledWith('thisGig', true);
+  });
+
+  it('never remembers a cancel, even when the box is ticked', () => {
+    const onChoose = jest.fn();
+    const {container} = renderDialog({}, onChoose);
+
+    click(container.querySelector('[data-dialog-remember]')!);
+    click(container.querySelector('[data-dialog-close]')!);
+
+    expect(onChoose).toHaveBeenCalledWith('cancel', false);
   });
 });

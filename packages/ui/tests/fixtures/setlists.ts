@@ -20,6 +20,7 @@ import {setSongService, resetSongService} from '../../src/hooks/useSongs';
 import {setSetlistService, resetSetlistService} from '../../src/hooks/useSetlists';
 import {setCursorService, resetCursorService} from '../../src/hooks/usePerformCursor';
 import {setProfileService, resetProfileService} from '../../src/hooks/useProfiles';
+import {clearLibraryEditPreference} from '../../src/screens/setlists/libraryEditPreference';
 
 export const PROFILE_ID = 'p1';
 
@@ -114,6 +115,7 @@ export function resetSetlistWorld(profile: Profile = makeProfile()): void {
   resetCursorService();
   resetProfileService();
   useCursorStore.getState().exit();
+  clearLibraryEditPreference();
   setPianoConnected(true);
   useProfilesStore.setState({profiles: [profile], activeProfileId: profile.id});
 }
