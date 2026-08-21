@@ -5,6 +5,13 @@ automatically by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/); see
 [docs/VERSIONING.md](docs/VERSIONING.md) for the versioning rules.
 
+## [0.1.3](https://github.com/pianelapp/pianel/compare/v0.1.2...v0.1.3) (2026-08-21)
+
+
+### Features
+
+* song setlists, scenes and performance mode ([8e8aa64](https://github.com/pianelapp/pianel/commit/8e8aa641a99ce18dff601d77b4f284e220c422ea))
+
 ## [0.1.2](https://github.com/pianelapp/pianel/compare/v0.1.1...v0.1.2) (2026-07-20)
 
 
