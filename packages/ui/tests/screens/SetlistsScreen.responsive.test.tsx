@@ -105,6 +105,22 @@ describe('SetlistsScreen drill-down on mobile', () => {
     },
   );
 
+  it('clears a stale selection in the pane being opened on mobile', () => {
+    seedSetlist();
+    setViewport('desktop');
+    const {container} = renderScreen();
+
+    click(byText(container, 'Setlists'));
+    click(byText(container, 'Ensaio da Poli'));
+    click(byText(container, 'Songs'));
+
+    setViewport('mobile');
+    click(byText(container, 'Setlists'));
+
+    expect(container.querySelector('[data-detail-back]')).toBeNull();
+    expect(container.textContent).toContain('Ensaio da Poli');
+  });
+
   it('lands on the list, not a stale detail, when switching panes', () => {
     seedSetlist();
     setViewport('mobile');
