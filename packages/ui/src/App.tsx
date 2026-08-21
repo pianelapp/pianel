@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import Menu from 'lucide-react/dist/esm/icons/menu';
 import { useBreakpoint } from './hooks/useBreakpoint';
@@ -29,6 +29,11 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [armedSongId, setArmedSongId] = useState<string | null>(null);
+
+  const handleArm = useCallback((songId: string | null) => {
+    setArmedSongId(songId);
+    if (songId) setActiveTab('DISPLAY');
+  }, []);
 
   const tier = useBreakpoint();
   const isMobile = tier.viewport === 'mobile';
@@ -129,7 +134,7 @@ export default function App() {
               <DisplayScreen
                 isLightMode={isLightMode}
                 armedSongId={armedSongId}
-                onArm={setArmedSongId}
+                onArm={handleArm}
                 compact={statusBarCompact}
               />
             )}
@@ -140,7 +145,7 @@ export default function App() {
               <SetlistsScreen
                 isLightMode={isLightMode}
                 armedSongId={armedSongId}
-                onArm={setArmedSongId}
+                onArm={handleArm}
               />
             )}
             {activeTab === 'PROFILES' && (

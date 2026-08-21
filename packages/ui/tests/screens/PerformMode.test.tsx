@@ -2,7 +2,7 @@ import {act} from 'react';
 import {click} from '../utils/render';
 import {initTestStores} from '../utils/stores';
 import {wire, resetSetlistWorld} from '../fixtures/setlists';
-import {byText, renderPerform} from '../fixtures/setlistsUi';
+import {byText, renderPerform, renderPerforming} from '../fixtures/setlistsUi';
 import {useCursorStore, usePerformanceStore} from '../../src/store';
 import {getCursorService} from '../../src/hooks/usePerformCursor';
 
@@ -169,6 +169,15 @@ describe('PerformMode', () => {
     const picker = container.querySelector('[data-picker-panel]')!;
     expect(picker.textContent).toContain('New Title');
     expect(picker.textContent).not.toContain('Old Title');
+  });
+
+  it('reserves the titlebar inset so the top row stays reachable in a fullscreen browser', async () => {
+    const {container} = await renderPerforming(['Intro']);
+
+    const inset = container.querySelector('[data-titlebar-inset]');
+    expect(inset).not.toBeNull();
+    expect(inset!.className).toContain('h-9');
+    expect(inset!.parentElement!.firstElementChild).toBe(inset);
   });
 
   it('shows an amber detached marker when the current entry is customized', async () => {

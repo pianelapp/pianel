@@ -125,6 +125,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
       className={`fixed inset-0 z-50 flex flex-col ${
         isLightMode ? 'bg-slate-100' : 'bg-zinc-950'
       }`}>
+      <div data-titlebar-inset className="h-9 shrink-0 titlebar-drag" />
       {showDisconnectedBanner && (
         <div
           data-connection-banner
