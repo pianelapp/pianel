@@ -13,17 +13,17 @@ interface TopTabsProps {
   tier: Breakpoint;
 }
 
-function containerClass(isLightMode: boolean): string {
-  return `flex gap-1.5 p-1 rounded-lg border transition-colors ${
+function containerClass(isLightMode: boolean, dense: boolean): string {
+  return `flex ${dense ? 'gap-1 p-0.5' : 'gap-1.5 p-1'} rounded-lg border transition-colors ${
     isLightMode
       ? 'bg-zinc-300/50 border-zinc-200'
       : 'bg-zinc-900/50 border-zinc-800/50'
   }`;
 }
 
-function tabButtonClass(active: boolean, isLightMode: boolean): string {
+function tabButtonClass(active: boolean, isLightMode: boolean, dense = false): string {
   return `
-                      px-5 py-2 rounded-md font-bold tracking-widest text-sm uppercase transition-all
+                      ${dense ? 'px-2.5 py-1.5 text-xs tracking-wider' : 'px-5 py-2 text-sm tracking-widest'} rounded-md font-bold uppercase transition-all whitespace-nowrap
                       ${
                         active
                           ? isLightMode
@@ -41,6 +41,7 @@ export function TopTabs(props: TopTabsProps) {
   const [open, setOpen] = useState(false);
 
   const collapsed = tier.viewport === 'mobile';
+  const dense = tier.viewport === 'tablet';
 
   const handleSelect = (tab: Tab) => {
     onChange(tab);
@@ -88,12 +89,12 @@ export function TopTabs(props: TopTabsProps) {
           </Popover.Portal>
         </Popover.Root>
       ) : (
-        <div className={containerClass(isLightMode)}>
+        <div className={containerClass(isLightMode, dense)}>
           {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => onChange(tab)}
-              className={tabButtonClass(activeTab === tab, isLightMode)}>
+              className={tabButtonClass(activeTab === tab, isLightMode, dense)}>
               {tab}
             </button>
           ))}

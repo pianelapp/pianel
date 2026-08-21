@@ -73,6 +73,7 @@ interface RenderScreenOptions {
 }
 
 export function renderScreen(opts: RenderScreenOptions = {}): RenderResult {
+  unmountLastRendered();
   lastRendered = render(
     <>
       <SetlistsScreen

@@ -6,6 +6,7 @@ import { useSetlists } from '../../hooks/useSetlists';
 import { useSongs } from '../../hooks/useSongs';
 import { useConnection } from '../../hooks/useConnection';
 import { usePerformanceStore } from '../../store';
+import { statusBadgeClass } from '../../helpers/sceneBadge';
 import { StatusBar } from '../display/StatusBar';
 import { AdvanceButton } from './AdvanceButton';
 import { CurrentScene } from './CurrentScene';
@@ -148,14 +149,14 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
               type="button"
               data-song-title
               onClick={() => setPickerOpen(true)}
-              className={`truncate text-sm font-extrabold uppercase tracking-widest transition-opacity hover:opacity-80 ${
+              className={`truncate text-base font-extrabold uppercase tracking-widest transition-opacity hover:opacity-80 ${
                 isLightMode ? 'text-zinc-800' : 'text-zinc-200'
               }`}>
               {cursor.song.name}
             </button>
           ) : (
             <span
-              className={`truncate text-sm font-extrabold uppercase tracking-widest ${
+              className={`truncate text-base font-extrabold uppercase tracking-widest ${
                 isLightMode ? 'text-zinc-800' : 'text-zinc-200'
               }`}>
               {cursor.song.name}
@@ -164,18 +165,14 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
           {customized && (
             <span
               data-song-edited
-              className={`shrink-0 text-[10px] font-mono font-bold tracking-widest px-1.5 py-0.5 rounded border ${
-                isLightMode
-                  ? 'text-amber-600 border-amber-200 bg-amber-50'
-                  : 'text-amber-400 border-amber-900/50 bg-amber-950/40'
-              }`}>
+              className={`shrink-0 ${statusBadgeClass('amber', isLightMode, true)}`}>
               edited
             </span>
           )}
         </div>
 
         <span
-          className={`shrink-0 font-mono text-xs font-bold tracking-wider ${
+          className={`shrink-0 font-mono text-sm font-bold tracking-wider ${
             isLightMode ? 'text-zinc-400' : 'text-zinc-600'
           }`}>
           {stacked
@@ -186,7 +183,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
         <button
           type="button"
           onClick={cursor.exit}
-          className={`shrink-0 text-[10px] font-bold tracking-widest border rounded-md px-2.5 py-1 transition-colors ${
+          className={`shrink-0 text-xs font-bold tracking-widest border rounded-md px-2.5 py-1 transition-colors ${
             isLightMode
               ? 'text-zinc-500 border-zinc-300 hover:text-zinc-800 hover:bg-zinc-100'
               : 'text-zinc-500 border-zinc-700 hover:text-zinc-100 hover:bg-zinc-800'

@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down';
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import { RowContextMenu, type RowAction } from '../../components/RowContextMenu';
 import { useLongPress } from '../../hooks/useLongPress';
+import { statusBadgeClass } from '../../helpers/sceneBadge';
 import { SceneRow, type SceneAction } from './SceneRow';
 import { sceneCountLabel, setlistCountLabel } from './labels';
 import type { Scene, Song } from '../../store';
@@ -67,12 +70,7 @@ export function EntryRow({
   return (
     <div>
       <div
-        onContextMenu={e => {
-          e.preventDefault();
-          setMenu({ kind: 'open', index, x: e.clientX, y: e.clientY });
-        }}
-        {...longPress}
-        className={`relative flex items-center gap-3 px-4 py-2.5 border-b ${
+        className={`relative border-b ${
           isLightMode ? 'border-zinc-100' : 'border-zinc-800/60'
         } ${resolved ? '' : 'opacity-60'}`}
       >
@@ -82,10 +80,38 @@ export function EntryRow({
           aria-expanded={resolved ? expanded : undefined}
           aria-disabled={resolved ? undefined : true}
           onClick={() => resolved && setExpanded(prev => !prev)}
-          className={`flex items-center gap-3 flex-1 min-w-0 text-left ${
+          onContextMenu={e => {
+            e.preventDefault();
+            setMenu({ kind: 'open', index, x: e.clientX, y: e.clientY });
+          }}
+          {...longPress}
+          className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
             resolved ? 'cursor-pointer' : ''
+          } ${
+            isLightMode
+              ? 'hover:bg-zinc-100 active:bg-zinc-200'
+              : 'hover:bg-zinc-800/50 active:bg-zinc-800/80'
           }`}
         >
+          {resolved ? (
+            expanded ? (
+              <ChevronDown
+                aria-hidden
+                className={`w-4 h-4 shrink-0 ${
+                  isLightMode ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              />
+            ) : (
+              <ChevronRight
+                aria-hidden
+                className={`w-4 h-4 shrink-0 ${
+                  isLightMode ? 'text-zinc-500' : 'text-zinc-400'
+                }`}
+              />
+            )
+          ) : (
+            <span aria-hidden className="w-4 shrink-0" />
+          )}
           <span
             className={`text-xs font-mono w-5 shrink-0 ${
               isLightMode ? 'text-zinc-400' : 'text-zinc-600'
@@ -119,11 +145,7 @@ export function EntryRow({
                 </span>
                 {customized && (
                   <span
-                    className={`text-[10px] font-mono font-bold tracking-widest px-1.5 py-0.5 rounded border ${
-                      isLightMode
-                        ? 'text-amber-600 border-amber-200 bg-amber-50'
-                        : 'text-amber-400 border-amber-900/50 bg-amber-950/40'
-                    }`}
+                    className={statusBadgeClass('amber', isLightMode)}
                   >
                     edited
                   </span>
@@ -131,11 +153,7 @@ export function EntryRow({
               </>
             ) : (
               <span
-                className={`text-[10px] font-mono font-bold tracking-widest px-1.5 py-0.5 rounded border ${
-                  isLightMode
-                    ? 'text-red-600 border-red-200 bg-red-50'
-                    : 'text-red-400 border-red-900/50 bg-red-950/40'
-                }`}
+                className={statusBadgeClass('red', isLightMode)}
               >
                 missing
               </span>
@@ -157,7 +175,13 @@ export function EntryRow({
         )}
       </div>
       {expanded && resolved && (
-        <div className={isLightMode ? 'bg-zinc-50' : 'bg-zinc-950/40'}>
+        <div
+          className={`border-l-2 ${
+            isLightMode
+              ? 'bg-zinc-50 border-zinc-300'
+              : 'bg-black/40 border-zinc-700'
+          }`}
+        >
           {resolved.scenes.map((scene, sceneIndex) => (
             <SceneRow
               key={scene.id}
@@ -166,6 +190,7 @@ export function EntryRow({
               total={resolved.scenes.length}
               compact={compact}
               isLightMode={isLightMode}
+              nested
               allowRecapture={false}
               onAction={(action, actionScene, actionIndex) => {
                 onSceneAction(index, action, actionScene, actionIndex).catch(() => {});

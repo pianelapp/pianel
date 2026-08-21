@@ -174,3 +174,71 @@ describe('SceneRow compact width', () => {
     unmount();
   });
 });
+
+describe('SceneRow dual tones', () => {
+  function dualScene(): Scene {
+    return {
+      id: 'sc-dual',
+      label: 'Intro',
+      notes: '',
+      snapshot: {
+        ...DEFAULT_PERFORMANCE_SNAPSHOT,
+        voiceModeSnapshot: {
+          voiceMode: 'dual',
+          rightToneId: 'pad',
+          leftToneId: null,
+          dualTone2Id: 'mellow',
+        },
+      },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+  }
+
+  it('puts each tone on its own line instead of one overflowing line', () => {
+    stubPianoWithTones([
+      {id: 'pad', name: 'Soft Pad'},
+      {id: 'mellow', name: 'Mellow Piano'},
+    ]);
+    const {container, unmount} = render(
+      <SceneRow
+        scene={dualScene()}
+        index={0}
+        total={1}
+        compact={false}
+        isLightMode={false}
+        onAction={() => {}}
+      />,
+    );
+
+    const lines = [...container.querySelectorAll('span')].filter(el =>
+      /^[^A-Za-z]*(Soft Pad|Mellow Piano)$/.test((el.textContent ?? '').trim()),
+    );
+    expect(lines).toHaveLength(2);
+    expect(lines[0].parentElement).toBe(lines[1].parentElement);
+    expect(lines[0].parentElement!.className).toContain('flex-col');
+    unmount();
+  });
+
+  it('still hides both tone names when compact', () => {
+    stubPianoWithTones([
+      {id: 'pad', name: 'Soft Pad'},
+      {id: 'mellow', name: 'Mellow Piano'},
+    ]);
+    const {container, unmount} = render(
+      <SceneRow
+        scene={dualScene()}
+        index={0}
+        total={1}
+        compact
+        isLightMode={false}
+        onAction={() => {}}
+      />,
+    );
+
+    expect(container.textContent).not.toContain('Soft Pad');
+    expect(container.textContent).not.toContain('Mellow Piano');
+    expect(container.textContent).toContain('DUAL');
+    unmount();
+  });
+});

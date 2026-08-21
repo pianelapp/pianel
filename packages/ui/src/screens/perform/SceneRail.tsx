@@ -35,14 +35,14 @@ export function SceneRail({scenes, currentIndex, isLightMode, onJump}: SceneRail
             data-current={isCurrent ? 'true' : 'false'}
             ref={isCurrent ? currentRef : undefined}
             onClick={() => onJump(index)}
-            className={`tap-target w-full flex items-center gap-2.5 px-3.5 py-3 text-sm border-b text-left transition-colors ${
+            className={`tap-target w-full flex items-center gap-2.5 px-3.5 py-3 text-base border-b text-left transition-colors ${
               isLightMode ? 'border-zinc-200' : 'border-zinc-800'
             } ${rowStateClass(isCurrent, isLightMode)}`}>
-            <span className={`shrink-0 w-[13px] font-mono text-[11px] ${numberClass(isCurrent, isLightMode)}`}>
+            <span className={`shrink-0 w-4 font-mono text-xs ${numberClass(isCurrent, isLightMode)}`}>
               {index + 1}
             </span>
             <span className="min-w-0 truncate">{scene.label}</span>
-            <span className={`ml-auto shrink-0 text-[11px] font-medium ${soundClass(isLightMode)}`}>
+            <span className={`ml-auto shrink-0 text-xs font-medium ${soundClass(isLightMode)}`}>
               {soundLabel(summary)}
             </span>
           </button>

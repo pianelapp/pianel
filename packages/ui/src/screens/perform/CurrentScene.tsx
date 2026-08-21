@@ -1,6 +1,6 @@
 import {useTones} from '../../hooks/useTones';
 import {summariseScene} from '../../helpers/sceneSummary';
-import {sceneBadgeClass} from '../../helpers/sceneBadge';
+import {sceneBadgeClass, statusBadgeClass} from '../../helpers/sceneBadge';
 import type {Scene} from '../../store';
 
 interface CurrentSceneProps {
@@ -19,27 +19,23 @@ export function CurrentScene({
   const {findToneById} = useTones();
   const summary = summariseScene(scene.snapshot, id => findToneById(id)?.name);
 
-  const modifiedClass = `text-[10px] font-mono font-bold tracking-widest px-1.5 py-0.5 rounded border ${
-    isLightMode
-      ? 'text-amber-600 border-amber-200 bg-amber-50'
-      : 'text-amber-400 border-amber-900/50 bg-amber-950/40'
-  }`;
-
   return (
     <div className={stacked ? 'p-3.5' : 'p-5'}>
       <div
-        className={`${stacked ? 'text-2xl' : 'text-4xl'} font-extrabold uppercase tracking-wider ${
+        className={`${stacked ? 'text-3xl' : 'text-5xl'} font-extrabold uppercase tracking-wider ${
           isLightMode ? 'text-cyan-700' : 'text-cyan-400'
         }`}>
         {scene.label}
       </div>
 
       <div className={`flex items-center gap-2 ${stacked ? 'mt-2' : 'mt-3.5'}`}>
-        <span className={sceneBadgeClass(summary.modeLabel, isLightMode)}>
+        <span className={sceneBadgeClass(summary.modeLabel, isLightMode, true)}>
           {summary.modeLabel}
         </span>
         {isModified && (
-          <span data-scene-modified className={modifiedClass}>
+          <span
+            data-scene-modified
+            className={statusBadgeClass('amber', isLightMode, true)}>
             MODIFIED
           </span>
         )}
@@ -50,7 +46,7 @@ export function CurrentScene({
           <div
             key={i}
             className={`flex items-baseline gap-1.5 font-semibold ${
-              stacked ? 'text-sm' : 'text-lg'
+              stacked ? 'text-base' : 'text-xl'
             } ${isLightMode ? 'text-zinc-800' : 'text-zinc-200'}`}>
             {tone.glyph && (
               <span
@@ -62,7 +58,7 @@ export function CurrentScene({
             )}
             <span>{tone.name}</span>
             {tone.role === 'lower' && summary.splitPoint && (
-              <span className="text-xs font-mono text-zinc-500">
+              <span className="text-sm font-mono text-zinc-500">
                 · split {summary.splitPoint}
               </span>
             )}
@@ -73,7 +69,7 @@ export function CurrentScene({
       {scene.notes && (
         <div
           data-scene-notes
-          className={`${stacked ? 'mt-2.5 text-xs' : 'mt-4 text-sm'} italic ${
+          className={`${stacked ? 'mt-2.5 text-sm' : 'mt-4 text-base'} italic ${
             isLightMode ? 'text-amber-700' : 'text-amber-400'
           }`}>
           {scene.notes}

@@ -44,13 +44,13 @@ export function SongPicker({
             isLightMode ? 'bg-white border-zinc-200' : 'bg-zinc-900 border-zinc-800'
           }`}>
           <span
-            className={`truncate text-xs font-extrabold uppercase tracking-widest ${
+            className={`truncate text-sm font-extrabold uppercase tracking-widest ${
               isLightMode ? 'text-zinc-800' : 'text-zinc-200'
             }`}>
             {setlistName}
           </span>
           <span
-            className={`shrink-0 font-mono text-[11px] font-bold tracking-wider ${
+            className={`shrink-0 font-mono text-xs font-bold tracking-wider ${
               isLightMode ? 'text-zinc-400' : 'text-zinc-600'
             }`}>
             {entryIndex + 1} / {entries.length}
@@ -97,12 +97,12 @@ function PickerRow({entry, index, entryIndex, sceneIndex, isLightMode, onJump}: 
       className={`tap-target w-full flex items-center gap-3 px-4 py-3.5 text-left border-b transition-colors ${
         isLightMode ? 'border-zinc-200' : 'border-zinc-800'
       } ${rowClass(isCurrent, isPlayed, isLightMode)}`}>
-      <span className={`shrink-0 w-4 font-mono text-[11px] ${numberClass(isLightMode)}`}>
+      <span className={`shrink-0 w-4 font-mono text-xs ${numberClass(isLightMode)}`}>
         {index + 1}
       </span>
       <span className="min-w-0 truncate">{entry.name}</span>
       <span
-        className={`ml-auto shrink-0 text-[11px] font-medium ${metaClass(isCurrent, isLightMode)}`}>
+        className={`ml-auto shrink-0 text-xs font-medium ${metaClass(isCurrent, isLightMode)}`}>
         {metaText(entry, index, entryIndex, sceneIndex)}
         {entry.isCustomized && (
           <>

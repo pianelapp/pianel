@@ -19,7 +19,7 @@ export function AdvanceButton({
   onPrev,
   canGoBack,
 }: AdvanceButtonProps) {
-  const height = stacked ? 'h-[66px]' : 'h-[84px]';
+  const height = stacked ? 'h-[78px]' : 'h-[84px]';
   const prevWidth = stacked ? 'w-[54px]' : 'w-[74px]';
 
   return (
@@ -28,7 +28,7 @@ export function AdvanceButton({
         type="button"
         onClick={onPrev}
         disabled={!canGoBack}
-        className={`${prevWidth} ${height} shrink-0 flex flex-col items-center justify-center gap-1 rounded-[11px] border text-[10px] font-bold tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+        className={`${prevWidth} ${height} shrink-0 flex flex-col items-center justify-center gap-1 rounded-[11px] border text-xs font-bold tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
           isLightMode
             ? 'bg-zinc-100 border-zinc-200 text-zinc-400'
             : 'bg-zinc-900 border-zinc-700 text-zinc-600'
@@ -41,8 +41,12 @@ export function AdvanceButton({
         data-perform-primary
         onClick={onAdvance}
         disabled={target.kind === 'end'}
-        className={`flex-1 min-w-0 ${height} flex items-center justify-center gap-3.5 rounded-[11px] border-2 transition-colors disabled:cursor-not-allowed ${primaryTreatment(target, isLightMode)}`}>
-        {primaryContent(target, isLightMode)}
+        className={`flex-1 min-w-0 ${height} flex justify-center rounded-[11px] border-2 transition-colors disabled:cursor-not-allowed ${
+          stacked
+            ? 'flex-col items-stretch px-4 py-2'
+            : 'items-center gap-3.5'
+        } ${primaryTreatment(target, isLightMode)}`}>
+        {primaryContent(target, isLightMode, stacked)}
       </button>
     </div>
   );
@@ -62,11 +66,11 @@ function primaryTreatment(target: NextTarget, isLightMode: boolean): string {
     : 'bg-zinc-900 border-zinc-800';
 }
 
-function primaryContent(target: NextTarget, isLightMode: boolean) {
+function primaryContent(target: NextTarget, isLightMode: boolean, stacked: boolean) {
   if (target.kind === 'end') {
     return (
       <span
-        className={`text-[20px] font-extrabold tracking-[0.04em] ${
+        className={`${stacked ? 'text-xl' : 'text-2xl'} font-extrabold tracking-[0.04em] text-center ${
           isLightMode ? 'text-zinc-400' : 'text-zinc-700'
         }`}>
         END OF SET
@@ -85,9 +89,27 @@ function primaryContent(target: NextTarget, isLightMode: boolean) {
       : 'text-cyan-400';
   const subtitleClass = isLightMode ? 'text-cyan-600' : 'text-cyan-700';
 
+  const countText = isSong ? sceneCountLabel(target.song.scenes.length) : null;
+
+  if (stacked) {
+    return (
+      <>
+        <span
+          className={`shrink-0 truncate text-xs font-extrabold tracking-[0.2em] ${keyClass}`}>
+          {keyText}
+          {countText ? ` · ${countText}` : ''}
+        </span>
+        <span
+          className={`min-w-0 truncate text-xl font-extrabold tracking-[0.02em] uppercase leading-tight ${valueClass}`}>
+          {valueText}
+        </span>
+      </>
+    );
+  }
+
   return (
     <>
-      <span className={`shrink-0 text-[11px] font-extrabold tracking-[0.24em] ${keyClass}`}>
+      <span className={`shrink-0 text-xs font-extrabold tracking-[0.24em] ${keyClass}`}>
         {keyText}
       </span>
       <span className="min-w-0 flex items-baseline gap-1.5">
@@ -95,9 +117,9 @@ function primaryContent(target: NextTarget, isLightMode: boolean) {
           className={`min-w-0 truncate text-[26px] font-extrabold tracking-[0.04em] uppercase ${valueClass}`}>
           {valueText}
         </span>
-        {isSong && (
-          <span className={`shrink-0 text-[12px] font-semibold ${subtitleClass}`}>
-            · {sceneCountLabel(target.song.scenes.length)}
+        {countText && (
+          <span className={`shrink-0 text-sm font-semibold ${subtitleClass}`}>
+            · {countText}
           </span>
         )}
       </span>

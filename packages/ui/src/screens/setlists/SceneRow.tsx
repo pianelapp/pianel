@@ -22,6 +22,7 @@ interface SceneRowProps {
   compact: boolean;
   isLightMode: boolean;
   allowRecapture?: boolean;
+  nested?: boolean;
   onAction: (id: SceneAction, scene: Scene, index: number) => void;
 }
 
@@ -34,6 +35,7 @@ export function SceneRow({
   compact,
   isLightMode,
   allowRecapture = true,
+  nested = false,
   onAction,
 }: SceneRowProps) {
   const { findToneById } = useTones();
@@ -56,7 +58,6 @@ export function SceneRow({
 
   const badgeClass = `${sceneBadgeClass(summary.modeLabel, isLightMode)} shrink-0`;
 
-  const tonesText = summary.tones.map(t => `${t.glyph}${t.name}`).join(' · ');
 
   return (
     <div
@@ -65,20 +66,30 @@ export function SceneRow({
         setMenu({ kind: 'open', x: e.clientX, y: e.clientY });
       }}
       {...longPress}
-      className={`flex items-center gap-3 px-4 py-2.5 border-b ${
-        isLightMode ? 'border-zinc-100' : 'border-zinc-800/60'
+      className={`flex items-center gap-3 border-b transition-colors ${
+        nested ? 'pl-11 pr-4 py-2.5' : 'px-4 py-3'
+      } ${
+        isLightMode
+          ? 'border-zinc-100 hover:bg-zinc-100 active:bg-zinc-200'
+          : 'border-zinc-800/60 hover:bg-zinc-800/40 active:bg-zinc-800/70'
       }`}
     >
       <span
-        className={`text-xs font-mono w-5 shrink-0 ${
+        className={`font-mono w-5 shrink-0 ${nested ? 'text-[10px]' : 'text-xs'} ${
           isLightMode ? 'text-zinc-400' : 'text-zinc-600'
         }`}
       >
         {index + 1}
       </span>
       <span
-        className={`text-sm font-semibold truncate ${
-          isLightMode ? 'text-zinc-700' : 'text-zinc-300'
+        className={`min-w-0 truncate ${nested ? 'text-xs font-normal' : 'text-sm font-semibold'} ${
+          nested
+            ? isLightMode
+              ? 'text-zinc-500'
+              : 'text-zinc-400'
+            : isLightMode
+              ? 'text-zinc-700'
+              : 'text-zinc-300'
         }`}
       >
         {scene.label}
@@ -95,8 +106,16 @@ export function SceneRow({
       )}
       <span className="ml-auto flex items-center gap-2 shrink-0">
         {!compact && (
-          <span className="text-xs text-zinc-500 truncate max-w-[160px]">
-            {tonesText}
+          <span className="flex flex-col items-end leading-tight">
+            {summary.tones.map((tone, toneIndex) => (
+              <span
+                key={toneIndex}
+                className="text-xs text-zinc-500 truncate max-w-[150px]"
+              >
+                {tone.glyph}
+                {tone.name}
+              </span>
+            ))}
           </span>
         )}
         {!compact && summary.splitPoint && (

@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react';
 import Plus from 'lucide-react/dist/esm/icons/plus';
+import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import { useSongs } from '../../hooks/useSongs';
 import { useSetlists } from '../../hooks/useSetlists';
 import { usePerformCursor } from '../../hooks/usePerformCursor';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { useLongPress, type LongPressPoint } from '../../hooks/useLongPress';
 import { NamingDialog } from '../../components/NamingDialog';
 import {
@@ -55,10 +57,10 @@ function paneButtonClass(active: boolean, isLightMode: boolean): string {
 }
 
 function rowClass(selected: boolean, isLightMode: boolean): string {
-  return `flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors text-left w-full ${
+  return `flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors text-left w-full cursor-pointer ${
     isLightMode
-      ? 'bg-white border-zinc-200 hover:border-zinc-300'
-      : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'
+      ? 'bg-white border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 active:bg-zinc-100'
+      : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60 active:bg-zinc-800/90'
   } ${selected ? (isLightMode ? 'border-cyan-300' : 'border-cyan-700/60') : ''}`;
 }
 
@@ -197,6 +199,27 @@ export function SetlistsScreen({
   const selectedSetlist: Setlist | null =
     setlists.find(l => l.id === selectedSetlistId) ?? null;
 
+  const { viewport } = useBreakpoint();
+  const compact = viewport === 'mobile';
+  const hasSelection =
+    pane === 'songs' ? selectedSong !== null : selectedSetlist !== null;
+  const showDetailOnly = compact && hasSelection;
+
+  const selectPane = useCallback(
+    (next: Pane) => {
+      setPane(next);
+      if (!compact) return;
+      if (next === 'songs') setSelectedSongId(null);
+      else setSelectedSetlistId(null);
+    },
+    [compact],
+  );
+
+  const handleBack = useCallback(() => {
+    if (pane === 'songs') setSelectedSongId(null);
+    else setSelectedSetlistId(null);
+  }, [pane]);
+
   const handleCreateSong = useCallback(
     (name: string) => {
       createSong(name);
@@ -331,142 +354,171 @@ export function SetlistsScreen({
       : [];
 
   return (
-    <div className="w-full h-full flex flex-col px-8 py-4">
+    <div
+      className={`w-full h-full flex flex-col py-4 ${compact ? 'px-4' : 'px-8'}`}>
       <div className="flex items-center justify-between mb-4 shrink-0">
-        <div className="flex items-center gap-2">
+        {showDetailOnly ? (
           <button
-            onClick={() => setPane('songs')}
-            className={paneButtonClass(pane === 'songs', isLightMode)}>
-            Songs
+            data-detail-back
+            onClick={handleBack}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+              isLightMode
+                ? 'bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-700'
+                : 'bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-200'
+            }`}>
+            <ChevronLeft className="w-3.5 h-3.5" />
+            {pane === 'songs' ? 'Songs' : 'Setlists'}
           </button>
-          <button
-            onClick={() => setPane('setlists')}
-            className={paneButtonClass(pane === 'setlists', isLightMode)}>
-            Setlists
-          </button>
-        </div>
-        <button
-          onClick={() =>
-            pane === 'songs'
-              ? setSongDialog({ kind: 'create' })
-              : setSetlistDialog({ kind: 'create' })
-          }
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-            isLightMode
-              ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
-              : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
-          }`}>
-          <Plus className="w-3.5 h-3.5" />
-          {pane === 'songs' ? 'New Song' : 'New Setlist'}
-        </button>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => selectPane('songs')}
+                className={paneButtonClass(pane === 'songs', isLightMode)}>
+                Songs
+              </button>
+              <button
+                onClick={() => selectPane('setlists')}
+                className={paneButtonClass(pane === 'setlists', isLightMode)}>
+                Setlists
+              </button>
+            </div>
+            <button
+              onClick={() =>
+                pane === 'songs'
+                  ? setSongDialog({ kind: 'create' })
+                  : setSetlistDialog({ kind: 'create' })
+              }
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                isLightMode
+                  ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
+                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
+              }`}>
+              <Plus className="w-3.5 h-3.5" />
+              {pane === 'songs' ? 'New Song' : 'New Setlist'}
+            </button>
+          </>
+        )}
       </div>
 
-      <div className="flex-1 flex gap-4 min-h-0">
-        <div className="w-[38%] shrink-0 flex flex-col gap-2 overflow-y-auto custom-scrollbar pb-4">
-          {pane === 'songs' ? (
-            songs.length === 0 ? (
+      <div className={`flex-1 min-h-0 flex ${compact ? '' : 'gap-4'}`}>
+        {!showDetailOnly && (
+          <div
+            className={`flex flex-col gap-2 overflow-y-auto custom-scrollbar pb-4 ${
+              compact ? 'w-full' : 'w-[38%] shrink-0'
+            }`}>
+            {pane === 'songs' ? (
+              songs.length === 0 ? (
+                <div className={emptyStateClass(isLightMode)}>
+                  <div className="text-sm font-mono mb-2">No songs yet</div>
+                  <div className="text-xs">
+                    Create a song, then arm it and capture each sound from
+                    DISPLAY as you play.
+                  </div>
+                </div>
+              ) : (
+                songs.map(song => (
+                  <SongRow
+                    key={song.id}
+                    song={song}
+                    isSelected={song.id === selectedSongId}
+                    isArmed={song.id === armedSongId}
+                    isLightMode={isLightMode}
+                    onClick={() => setSelectedSongId(song.id)}
+                    onContextMenu={evt => {
+                      evt.preventDefault();
+                      setSongMenu({
+                        kind: 'open',
+                        song,
+                        x: evt.clientX,
+                        y: evt.clientY,
+                      });
+                    }}
+                    onLongPress={point =>
+                      setSongMenu({
+                        kind: 'open',
+                        song,
+                        x: point.x,
+                        y: point.y,
+                      })
+                    }
+                  />
+                ))
+              )
+            ) : setlists.length === 0 ? (
               <div className={emptyStateClass(isLightMode)}>
-                <div className="text-sm font-mono mb-2">No songs yet</div>
+                <div className="text-sm font-mono mb-2">No setlists yet</div>
                 <div className="text-xs">
-                  Create a song, then arm it and capture each sound from DISPLAY
-                  as you play.
+                  Group your songs into a setlist for the gig.
                 </div>
               </div>
             ) : (
-              songs.map(song => (
-                <SongRow
-                  key={song.id}
-                  song={song}
-                  isSelected={song.id === selectedSongId}
-                  isArmed={song.id === armedSongId}
+              setlists.map(setlist => (
+                <SetlistRow
+                  key={setlist.id}
+                  setlist={setlist}
+                  isSelected={setlist.id === selectedSetlistId}
                   isLightMode={isLightMode}
-                  onClick={() => setSelectedSongId(song.id)}
+                  onClick={() => setSelectedSetlistId(setlist.id)}
                   onContextMenu={evt => {
                     evt.preventDefault();
-                    setSongMenu({
+                    setSetlistMenu({
                       kind: 'open',
-                      song,
+                      setlist,
                       x: evt.clientX,
                       y: evt.clientY,
                     });
                   }}
                   onLongPress={point =>
-                    setSongMenu({ kind: 'open', song, x: point.x, y: point.y })
+                    setSetlistMenu({
+                      kind: 'open',
+                      setlist,
+                      x: point.x,
+                      y: point.y,
+                    })
                   }
                 />
               ))
-            )
-          ) : setlists.length === 0 ? (
-            <div className={emptyStateClass(isLightMode)}>
-              <div className="text-sm font-mono mb-2">No setlists yet</div>
-              <div className="text-xs">
-                Group your songs into a setlist for the gig.
-              </div>
-            </div>
-          ) : (
-            setlists.map(setlist => (
-              <SetlistRow
-                key={setlist.id}
-                setlist={setlist}
-                isSelected={setlist.id === selectedSetlistId}
-                isLightMode={isLightMode}
-                onClick={() => setSelectedSetlistId(setlist.id)}
-                onContextMenu={evt => {
-                  evt.preventDefault();
-                  setSetlistMenu({
-                    kind: 'open',
-                    setlist,
-                    x: evt.clientX,
-                    y: evt.clientY,
-                  });
-                }}
-                onLongPress={point =>
-                  setSetlistMenu({
-                    kind: 'open',
-                    setlist,
-                    x: point.x,
-                    y: point.y,
-                  })
-                }
-              />
-            ))
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        <div
-          className={`flex-1 min-w-0 rounded-xl border overflow-hidden ${
-            isLightMode ? 'border-zinc-200' : 'border-zinc-800'
-          }`}>
-          {pane === 'songs' ? (
-            selectedSong ? (
-              <SongDetail
-                song={selectedSong}
+        {(!compact || showDetailOnly) && (
+          <div
+            className={`flex-1 min-w-0 rounded-xl border overflow-hidden ${
+              isLightMode ? 'border-zinc-200' : 'border-zinc-800'
+            }`}>
+            {pane === 'songs' ? (
+              selectedSong ? (
+                <SongDetail
+                  song={selectedSong}
+                  isLightMode={isLightMode}
+                  isArmed={armedSongId === selectedSong.id}
+                  onArm={onArm}
+                  onPerform={songId => {
+                    void enterSong(songId).catch(() => {});
+                  }}
+                />
+              ) : (
+                <div className={emptyStateClass(isLightMode)}>
+                  Select a song to see its scenes.
+                </div>
+              )
+            ) : selectedSetlist ? (
+              <SetlistDetail
+                setlist={selectedSetlist}
                 isLightMode={isLightMode}
-                isArmed={armedSongId === selectedSong.id}
-                onArm={onArm}
-                onPerform={songId => {
-                  void enterSong(songId).catch(() => {});
+                onPerform={setlistId => {
+                  void enterSetlist(setlistId).catch(() => {});
                 }}
               />
             ) : (
               <div className={emptyStateClass(isLightMode)}>
-                Select a song to see its scenes.
+                Select a setlist to see its songs.
               </div>
-            )
-          ) : selectedSetlist ? (
-            <SetlistDetail
-              setlist={selectedSetlist}
-              isLightMode={isLightMode}
-              onPerform={setlistId => {
-                void enterSetlist(setlistId).catch(() => {});
-              }}
-            />
-          ) : (
-            <div className={emptyStateClass(isLightMode)}>
-              Select a setlist to see its songs.
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {songDialog.kind === 'create' && (

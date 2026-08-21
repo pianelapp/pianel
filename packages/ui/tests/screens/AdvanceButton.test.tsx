@@ -33,6 +33,19 @@ function renderButton(target: NextTarget, onAdvance = jest.fn()) {
   return {...r, onAdvance};
 }
 
+function renderStacked(target: NextTarget) {
+  return render(
+    <AdvanceButton
+      target={target}
+      isLightMode={false}
+      stacked
+      onAdvance={() => {}}
+      onPrev={() => {}}
+      canGoBack
+    />,
+  );
+}
+
 describe('AdvanceButton', () => {
   it('names the next scene mid-song', () => {
     const {container} = renderButton({kind: 'scene', scene: SCENE});
@@ -100,5 +113,39 @@ describe('AdvanceButton', () => {
       />,
     );
     expect((byText(container, 'PREV') as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('AdvanceButton stacked layout', () => {
+  it('lays the label above the name so a long song name keeps the full width', () => {
+    const {container} = renderStacked({kind: 'song', song: SONG});
+    const primary = container.querySelector('[data-perform-primary]') as HTMLElement;
+
+    expect(primary.className).toContain('flex-col');
+    const spans = [...primary.querySelectorAll('span')];
+    const value = spans.find(el => (el.textContent ?? '').trim() === SONG.name);
+    expect(value).toBeDefined();
+    expect(value!.parentElement).toBe(primary);
+  });
+
+  it('folds the scene count onto the label line, off the name line', () => {
+    const {container} = renderStacked({kind: 'song', song: SONG});
+    const primary = container.querySelector('[data-perform-primary]') as HTMLElement;
+    const spans = [...primary.querySelectorAll('span')];
+
+    const key = spans.find(el => (el.textContent ?? '').startsWith('NEXT SONG'));
+    const value = spans.find(el => (el.textContent ?? '').trim() === SONG.name);
+    expect(key!.textContent).toContain('scene');
+    expect(value!.textContent).not.toContain('scene');
+  });
+
+  it('keeps the row layout when not stacked', () => {
+    const {container} = renderButton({kind: 'song', song: SONG});
+    const primary = container.querySelector('[data-perform-primary]') as HTMLElement;
+    expect(primary.className).not.toContain('flex-col');
+    const value = [...primary.querySelectorAll('span')].find(
+      el => (el.textContent ?? '').trim() === SONG.name,
+    );
+    expect(value!.parentElement).not.toBe(primary);
   });
 });
