@@ -5,7 +5,10 @@ import { useSetlists } from '../../hooks/useSetlists';
 import { usePerformCursor } from '../../hooks/usePerformCursor';
 import { useLongPress, type LongPressPoint } from '../../hooks/useLongPress';
 import { NamingDialog } from '../../components/NamingDialog';
-import { RowContextMenu, type RowAction } from '../../components/RowContextMenu';
+import {
+  RowContextMenu,
+  type RowAction,
+} from '../../components/RowContextMenu';
 import { showAlert } from '../../components/modals/AlertModal';
 import type { Song, Setlist } from '../../store';
 import { SongDetail } from './SongDetail';
@@ -20,13 +23,10 @@ type SongMenuAction = 'rename' | 'arm' | 'delete';
 type SetlistMenuAction = 'rename' | 'delete';
 
 type SongDialogState =
-  | { kind: 'closed' }
-  | { kind: 'create' }
-  | { kind: 'rename'; song: Song };
+  { kind: 'closed' } | { kind: 'create' } | { kind: 'rename'; song: Song };
 
 type SongMenuState =
-  | { kind: 'closed' }
-  | { kind: 'open'; song: Song; x: number; y: number };
+  { kind: 'closed' } | { kind: 'open'; song: Song; x: number; y: number };
 
 type SetlistDialogState =
   | { kind: 'closed' }
@@ -34,8 +34,7 @@ type SetlistDialogState =
   | { kind: 'rename'; setlist: Setlist };
 
 type SetlistMenuState =
-  | { kind: 'closed' }
-  | { kind: 'open'; setlist: Setlist; x: number; y: number };
+  { kind: 'closed' } | { kind: 'open'; setlist: Setlist; x: number; y: number };
 
 interface SetlistsScreenProps {
   isLightMode: boolean;
@@ -93,21 +92,18 @@ function SongRow({
       onContextMenu={onContextMenu}
       {...longPress}
       aria-pressed={isSelected}
-      className={rowClass(isSelected, isLightMode)}
-    >
+      className={rowClass(isSelected, isLightMode)}>
       <div className="flex-1 min-w-0">
         <div
           className={`text-base font-bold truncate ${
             isLightMode ? 'text-zinc-800' : 'text-zinc-200'
-          }`}
-        >
+          }`}>
           {song.name}
         </div>
         <div
           className={`text-xs font-mono mt-0.5 ${
             isLightMode ? 'text-zinc-400' : 'text-zinc-600'
-          }`}
-        >
+          }`}>
           {sceneCountLabel(song.scenes.length)}
         </div>
       </div>
@@ -145,21 +141,18 @@ function SetlistRow({
       onContextMenu={onContextMenu}
       {...longPress}
       aria-pressed={isSelected}
-      className={rowClass(isSelected, isLightMode)}
-    >
+      className={rowClass(isSelected, isLightMode)}>
       <div className="flex-1 min-w-0">
         <div
           className={`text-base font-bold truncate ${
             isLightMode ? 'text-zinc-800' : 'text-zinc-200'
-          }`}
-        >
+          }`}>
           {setlist.name}
         </div>
         <div
           className={`text-xs font-mono mt-0.5 ${
             isLightMode ? 'text-zinc-400' : 'text-zinc-600'
-          }`}
-        >
+          }`}>
           {setlist.entries.length} song
           {setlist.entries.length === 1 ? '' : 's'}
         </div>
@@ -241,7 +234,8 @@ export function SetlistsScreen({
         }
       } else if (action === 'delete') {
         const used = countSetlistsUsing(song.id);
-        const usage = used === 0 ? '' : ` It is used in ${setlistCountLabel(used)}.`;
+        const usage =
+          used === 0 ? '' : ` It is used in ${setlistCountLabel(used)}.`;
         const confirmed = await showAlert({
           variant: 'warning',
           title: 'Delete song?',
@@ -254,7 +248,14 @@ export function SetlistsScreen({
         }
       }
     },
-    [songMenu, armedSongId, onArm, findLibraryUses, countSetlistsUsing, deleteSong],
+    [
+      songMenu,
+      armedSongId,
+      onArm,
+      findLibraryUses,
+      countSetlistsUsing,
+      deleteSong,
+    ],
   );
 
   const handleCreateSetlist = useCallback(
@@ -335,14 +336,12 @@ export function SetlistsScreen({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPane('songs')}
-            className={paneButtonClass(pane === 'songs', isLightMode)}
-          >
+            className={paneButtonClass(pane === 'songs', isLightMode)}>
             Songs
           </button>
           <button
             onClick={() => setPane('setlists')}
-            className={paneButtonClass(pane === 'setlists', isLightMode)}
-          >
+            className={paneButtonClass(pane === 'setlists', isLightMode)}>
             Setlists
           </button>
         </div>
@@ -356,8 +355,7 @@ export function SetlistsScreen({
             isLightMode
               ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
               : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
-          }`}
-        >
+          }`}>
           <Plus className="w-3.5 h-3.5" />
           {pane === 'songs' ? 'New Song' : 'New Setlist'}
         </button>
@@ -370,8 +368,8 @@ export function SetlistsScreen({
               <div className={emptyStateClass(isLightMode)}>
                 <div className="text-sm font-mono mb-2">No songs yet</div>
                 <div className="text-xs">
-                  Create a song, then arm it and capture each sound from
-                  DISPLAY as you play.
+                  Create a song, then arm it and capture each sound from DISPLAY
+                  as you play.
                 </div>
               </div>
             ) : (
@@ -385,7 +383,12 @@ export function SetlistsScreen({
                   onClick={() => setSelectedSongId(song.id)}
                   onContextMenu={evt => {
                     evt.preventDefault();
-                    setSongMenu({ kind: 'open', song, x: evt.clientX, y: evt.clientY });
+                    setSongMenu({
+                      kind: 'open',
+                      song,
+                      x: evt.clientX,
+                      y: evt.clientY,
+                    });
                   }}
                   onLongPress={point =>
                     setSongMenu({ kind: 'open', song, x: point.x, y: point.y })
@@ -418,7 +421,12 @@ export function SetlistsScreen({
                   });
                 }}
                 onLongPress={point =>
-                  setSetlistMenu({ kind: 'open', setlist, x: point.x, y: point.y })
+                  setSetlistMenu({
+                    kind: 'open',
+                    setlist,
+                    x: point.x,
+                    y: point.y,
+                  })
                 }
               />
             ))
@@ -428,8 +436,7 @@ export function SetlistsScreen({
         <div
           className={`flex-1 min-w-0 rounded-xl border overflow-hidden ${
             isLightMode ? 'border-zinc-200' : 'border-zinc-800'
-          }`}
-        >
+          }`}>
           {pane === 'songs' ? (
             selectedSong ? (
               <SongDetail
