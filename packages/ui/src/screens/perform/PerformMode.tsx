@@ -164,9 +164,9 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
           )}
           {customized && (
             <span
-              data-song-edited
+              data-song-detached
               className={`shrink-0 ${statusBadgeClass('amber', isLightMode, true)}`}>
-              edited
+              detached
             </span>
           )}
         </div>

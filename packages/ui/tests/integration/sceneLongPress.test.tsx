@@ -58,7 +58,7 @@ describe('scene row long-press', () => {
 
     expect(menu()).not.toBeNull();
     expect(menuItems()).toContain('Rename');
-    expect(menuItems()).not.toContain('Re-capture');
+    expect(menuItems()).toContain('Re-capture');
   });
 
   it('does not open the menu when the hold is released early', async () => {

@@ -58,11 +58,11 @@ function primaryTreatment(target: NextTarget, isLightMode: boolean): string {
   }
   if (target.kind === 'scene') {
     return isLightMode
-      ? 'bg-cyan-50 border-cyan-200'
+      ? 'bg-cyan-100 border-cyan-600'
       : 'bg-cyan-950 border-cyan-700 shadow-[0_0_22px_rgba(34,211,238,0.22)]';
   }
   return isLightMode
-    ? 'bg-zinc-100 border-zinc-200'
+    ? 'bg-zinc-100 border-zinc-400'
     : 'bg-zinc-900 border-zinc-800';
 }
 
@@ -71,7 +71,7 @@ function primaryContent(target: NextTarget, isLightMode: boolean, stacked: boole
     return (
       <span
         className={`${stacked ? 'text-xl' : 'text-2xl'} font-extrabold tracking-[0.04em] text-center ${
-          isLightMode ? 'text-zinc-400' : 'text-zinc-700'
+          isLightMode ? 'text-zinc-500' : 'text-zinc-700'
         }`}>
         END OF SET
       </span>
@@ -80,12 +80,12 @@ function primaryContent(target: NextTarget, isLightMode: boolean, stacked: boole
 
   const isSong = target.kind === 'song';
   const keyText = isSong ? 'NEXT SONG' : 'NEXT';
-  const keyClass = isSong ? 'text-cyan-950' : 'text-cyan-600';
+  const keyClass = isSong ? 'text-cyan-950' : isLightMode ? 'text-cyan-800' : 'text-cyan-600';
   const valueText = isSong ? target.song.name : target.scene.label;
   const valueClass = isSong
     ? 'text-teal-950'
     : isLightMode
-      ? 'text-cyan-700'
+      ? 'text-cyan-800'
       : 'text-cyan-400';
   const countText = isSong ? sceneCountLabel(target.song.scenes.length) : null;
 

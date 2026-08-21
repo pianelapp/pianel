@@ -42,7 +42,7 @@ export function SceneRail({scenes, currentIndex, isLightMode, onJump}: SceneRail
               {index + 1}
             </span>
             <span className="min-w-0 truncate">{scene.label}</span>
-            <span className={`ml-auto shrink-0 text-xs font-medium ${soundClass(isLightMode)}`}>
+            <span className={`ml-auto shrink-0 text-xs font-medium ${soundClass(isCurrent, isLightMode)}`}>
               {soundLabel(summary)}
             </span>
           </button>
@@ -55,17 +55,18 @@ export function SceneRail({scenes, currentIndex, isLightMode, onJump}: SceneRail
 function rowStateClass(isCurrent: boolean, isLightMode: boolean): string {
   if (!isCurrent) return 'font-semibold text-zinc-500';
   return `font-extrabold shadow-[inset_3px_0_0] ${
-    isLightMode ? 'bg-cyan-50 text-cyan-700' : 'bg-cyan-950 text-cyan-400'
+    isLightMode ? 'bg-cyan-100 text-cyan-800' : 'bg-cyan-950 text-cyan-400'
   }`;
 }
 
 function numberClass(isCurrent: boolean, isLightMode: boolean): string {
-  if (isCurrent) return 'text-cyan-600';
-  return isLightMode ? 'text-zinc-400' : 'text-zinc-700';
+  if (isCurrent) return isLightMode ? 'text-cyan-800' : 'text-cyan-600';
+  return isLightMode ? 'text-zinc-500' : 'text-zinc-700';
 }
 
-function soundClass(isLightMode: boolean): string {
-  return isLightMode ? 'text-zinc-400' : 'text-zinc-700';
+function soundClass(isCurrent: boolean, isLightMode: boolean): string {
+  if (!isLightMode) return 'text-zinc-700';
+  return isCurrent ? 'text-zinc-600' : 'text-zinc-500';
 }
 
 function soundLabel(summary: SceneSummary): string {

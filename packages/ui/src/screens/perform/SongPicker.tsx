@@ -107,7 +107,7 @@ function PickerRow({entry, index, entryIndex, sceneIndex, isLightMode, onJump}: 
         {entry.isCustomized && (
           <>
             {' · '}
-            <span className="text-yellow-700">edited</span>
+            <span className="text-yellow-700">detached</span>
           </>
         )}
       </span>

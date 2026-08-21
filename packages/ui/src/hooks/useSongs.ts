@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useProfilesStore, selectActiveProfile } from '../store';
 import type { Preset, Scene, Song } from '../store';
 import type { SongService } from '@pianel/core/services/songs/SongService';
+import { requireConnectedPiano } from './captureGuard';
 
 let songServiceInstance: SongService | null = null;
 
@@ -39,14 +40,14 @@ export function useSongs() {
     getSongService()?.setSongNotes(songId, notes);
   }, []);
 
-  const captureScene = useCallback(
-    (songId: string, label?: string): Scene | null =>
-      getSongService()?.captureScene(songId, label) ?? null,
-    [],
-  );
+  const captureScene = useCallback((songId: string, label?: string): Scene | null => {
+    if (!requireConnectedPiano()) return null;
+    return getSongService()?.captureScene(songId, label) ?? null;
+  }, []);
 
-  const recaptureScene = useCallback((songId: string, sceneId: string): void => {
-    getSongService()?.recaptureScene(songId, sceneId);
+  const recaptureScene = useCallback((songId: string, sceneId: string): Scene | null => {
+    if (!requireConnectedPiano()) return null;
+    return getSongService()?.recaptureScene(songId, sceneId) ?? null;
   }, []);
 
   const renameScene = useCallback(

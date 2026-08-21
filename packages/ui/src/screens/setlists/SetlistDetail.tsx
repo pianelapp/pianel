@@ -11,6 +11,7 @@ import type { SceneAction } from './SceneRow';
 import { LibraryEditDialog, type LibraryEditChoice } from './LibraryEditDialog';
 import { sceneCountLabel } from './labels';
 import { saveSceneAsPad } from './padBridge';
+import { confirmRecapture } from './recaptureGuard';
 import { patchScene, moveSceneInSong, removeScene } from '@pianel/core/helpers/songEdits';
 import type { Scene, Setlist, Song } from '../../store';
 
@@ -131,7 +132,7 @@ export function SetlistDetail({
     editOverride,
   } = useSetlists();
   const { songs, editSong } = useSongs();
-  const { presets, applySnapshot, savePresetToTile } = usePresets();
+  const { presets, captureSnapshot, applySnapshot, savePresetToTile } = usePresets();
   const { viewport } = useBreakpoint();
   const compact = viewport === 'mobile';
   const [addOpen, setAddOpen] = useState(false);
@@ -234,6 +235,15 @@ export function SetlistDetail({
         case 'notes':
           setSceneDialog({ kind: 'notes', entryIndex, scene });
           break;
+        case 'recapture': {
+          if (!(await confirmRecapture(scene.label))) break;
+          const snapshot = captureSnapshot();
+          if (!snapshot) break;
+          await editEntrySong(entryIndex, 'Re-capturing this scene', song =>
+            patchScene(song, scene.id, s => ({ ...s, snapshot })),
+          );
+          break;
+        }
         case 'moveUp':
           await editEntrySong(entryIndex, 'Reordering this scene', song =>
             moveSceneInSong(song, sceneIndex, sceneIndex - 1),
@@ -266,7 +276,7 @@ export function SetlistDetail({
           break;
       }
     },
-    [editEntrySong, presets, applySnapshot, savePresetToTile],
+    [editEntrySong, captureSnapshot, presets, applySnapshot, savePresetToTile],
   );
 
   const handleRenameScene = useCallback(

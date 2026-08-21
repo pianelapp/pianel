@@ -126,7 +126,7 @@ describe('PerformMode', () => {
     });
 
     expect(container.querySelector('[data-song-title]')).toBeNull();
-    expect(container.querySelector('[data-song-edited]')).toBeNull();
+    expect(container.querySelector('[data-song-detached]')).toBeNull();
   });
 
   it('renders a tappable title carrying data-song-title in setlist mode', async () => {
@@ -171,7 +171,7 @@ describe('PerformMode', () => {
     expect(picker.textContent).not.toContain('Old Title');
   });
 
-  it('shows an amber edited marker when the current entry is customized', async () => {
+  it('shows an amber detached marker when the current entry is customized', async () => {
     const {songs, setlists} = wire();
     const songId = songs.createSong('Overjoyed').id;
     songs.captureScene(songId, 'Intro');
@@ -184,12 +184,12 @@ describe('PerformMode', () => {
       await getCursorService()!.enterPerform({setlistId: listId});
     });
 
-    const marker = container.querySelector('[data-song-edited]');
+    const marker = container.querySelector('[data-song-detached]');
     expect(marker).not.toBeNull();
-    expect(marker!.textContent).toBe('edited');
+    expect(marker!.textContent).toBe('detached');
   });
 
-  it('hides the edited marker when the current entry is not customized', async () => {
+  it('hides the detached marker when the current entry is not customized', async () => {
     const {songs, setlists} = wire();
     const songId = songs.createSong('Sir Duke').id;
     songs.captureScene(songId, 'Intro');
@@ -201,7 +201,7 @@ describe('PerformMode', () => {
       await getCursorService()!.enterPerform({setlistId: listId});
     });
 
-    expect(container.querySelector('[data-song-edited]')).toBeNull();
+    expect(container.querySelector('[data-song-detached]')).toBeNull();
   });
 
   it('marks the scene modified when live performance state diverges from the captured snapshot', async () => {

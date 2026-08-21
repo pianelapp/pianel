@@ -1,7 +1,7 @@
 import {act} from 'react';
 import {click} from '../utils/render';
 import {initTestStores} from '../utils/stores';
-import {wire, resetSetlistWorld, makeProfile} from '../fixtures/setlists';
+import {wire, resetSetlistWorld, makeProfile, setPianoConnected} from '../fixtures/setlists';
 import {byText, openContextMenu, renderPresets, renderDetail, renderList} from '../fixtures/setlistsUi';
 import {useProfilesStore, DEFAULT_PERFORMANCE_SNAPSHOT, type Preset} from '../../src/store';
 
@@ -85,6 +85,23 @@ describe('pad <-> scene bridge', () => {
 
     const presets = useProfilesStore.getState().profiles[0].presets;
     expect(presets.some(p => p.label === 'Clav')).toBe(true);
+  });
+
+  it('refuses to save a scene as a pad while the piano is disconnected', async () => {
+    const {songs} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'Clav');
+    const {container} = renderDetail(songId);
+    setPianoConnected(false);
+
+    openContextMenu(container, 'Clav');
+    click(byText(container, 'Save scene as pad'));
+    await act(async () => {});
+
+    expect(container.textContent).toContain('Piano not connected');
+    expect(container.textContent).not.toContain('then save it to pad');
+    const presets = useProfilesStore.getState().profiles[0].presets;
+    expect(presets.some(p => p.label === 'Clav')).toBe(false);
   });
 
   it('saves a scene embedded in a setlist entry onto a pad too', async () => {

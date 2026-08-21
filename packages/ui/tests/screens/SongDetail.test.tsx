@@ -1,7 +1,7 @@
 import {act} from 'react';
 import {click, render} from '../utils/render';
 import {initTestStores} from '../utils/stores';
-import {wire, resetSetlistWorld} from '../fixtures/setlists';
+import {wire, resetSetlistWorld, setPianoConnected, setPianoStatus} from '../fixtures/setlists';
 import {
   byText,
   openContextMenu,
@@ -74,7 +74,7 @@ describe('SongDetail scene actions', () => {
     expect(container.textContent).toContain('Move down');
   });
 
-  it('re-captures a scene from the live piano state', () => {
+  it('re-captures a scene from the live piano state after confirmation', async () => {
     const {songs} = wire();
     const songId = songs.createSong('S').id;
     songs.captureScene(songId, 'A');
@@ -83,9 +83,58 @@ describe('SongDetail scene actions', () => {
 
     openContextMenu(container, 'A');
     click(byText(container, 'Re-capture'));
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
 
     expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).not.toBe(before);
     expect(songs.getSong(songId)!.scenes[0].label).toBe('A');
+  });
+
+  it('leaves the scene untouched when the re-capture confirm is cancelled', async () => {
+    const {songs} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'A');
+    const before = songs.getSong(songId)!.scenes[0].snapshot.tempo;
+    const {container} = renderDetail(songId);
+
+    openContextMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    click(byText(container, 'Cancel'));
+    await act(async () => {});
+
+    expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).toBe(before);
+  });
+
+  it('refuses to re-capture while the piano is disconnected', async () => {
+    const {songs} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'A');
+    const before = songs.getSong(songId)!.scenes[0].snapshot.tempo;
+    const {container} = renderDetail(songId);
+    setPianoConnected(false);
+
+    openContextMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
+
+    expect(container.textContent).toContain('Piano not connected');
+    expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).toBe(before);
+  });
+
+  it('tells a stale piano apart from a disconnected one', async () => {
+    const {songs} = wire();
+    const songId = songs.createSong('S').id;
+    songs.captureScene(songId, 'A');
+    const {container} = renderDetail(songId);
+    setPianoStatus('stale');
+
+    openContextMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
+
+    expect(container.textContent).toContain('Piano not responding');
+    expect(container.textContent).not.toContain('Connect it first');
+    expect(container.textContent).not.toContain('This cannot be undone');
   });
 
   it('deletes a scene after confirmation', async () => {

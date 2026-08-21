@@ -28,7 +28,7 @@ describe('per-gig overrides', () => {
     openEntryMenu(container, 'Shared');
     click(byText(container, 'Customize for this gig'));
 
-    expect(container.textContent).toContain('edited');
+    expect(container.textContent).toContain('detached');
     act(() => {
       songs.renameScene(a, songs.getSong(a)!.scenes[0].id, 'Library Only');
     });
@@ -50,7 +50,7 @@ describe('per-gig overrides', () => {
     await act(async () => {});
 
     expect(setlists.isCustomized(listId, 0)).toBe(false);
-    expect(container.textContent).not.toContain('edited');
+    expect(container.textContent).not.toContain('detached');
   });
 
   it('promoting pushes the gig version back to the library', async () => {

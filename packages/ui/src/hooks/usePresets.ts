@@ -10,6 +10,7 @@ import { useCallback, useMemo } from 'react';
 import { useProfilesStore, selectActiveProfile } from '../store';
 import type { Preset, PerformanceSnapshot } from '../store';
 import { getProfileService } from './useProfiles';
+import { requireConnectedPiano } from './captureGuard';
 
 export function usePresets() {
   const activeProfile = useProfilesStore(selectActiveProfile);
@@ -26,6 +27,13 @@ export function usePresets() {
     },
     [],
   );
+
+  const captureSnapshot = useCallback((): PerformanceSnapshot | null => {
+    if (!requireConnectedPiano()) return null;
+    const service = getProfileService();
+    if (!service) return null;
+    return service.captureSnapshot();
+  }, []);
 
   const applyPreset = useCallback(
     async (presetId: string): Promise<void> => {
@@ -75,6 +83,7 @@ export function usePresets() {
   return {
     presets,
     savePresetToTile,
+    captureSnapshot,
     applyPreset,
     applySnapshot,
     updatePreset,

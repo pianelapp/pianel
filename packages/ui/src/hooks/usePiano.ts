@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type { PianoService } from '@pianel/core/services/PianoService';
+import type { QuickToneSlot } from '@pianel/core/types/quickToneSlot';
 import { usePerformanceStore } from '../store';
 
 let pianoServiceInstance: PianoService | null = null;
@@ -59,6 +60,12 @@ export function usePiano() {
     [],
   );
 
+  const applyQuickToneSlot = useCallback(async (slot: QuickToneSlot) => {
+    const service = getPianoService();
+    if (!service) return;
+    await service.applyQuickToneSlot(slot);
+  }, []);
+
   return {
     volume,
     tempo,
@@ -73,5 +80,6 @@ export function usePiano() {
     changeTempo,
     toggleMetronome,
     changeMetronomeParam,
+    applyQuickToneSlot,
   };
 }

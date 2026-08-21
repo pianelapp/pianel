@@ -36,9 +36,9 @@ describe('SongPicker', () => {
       .not.toContain('/');
   });
 
-  it('badges customized entries as edited', () => {
+  it('badges customized entries as detached', () => {
     const {container} = renderPicker(['One'], 0, () => {}, 0, 1, [true]);
-    expect(container.textContent).toContain('edited');
+    expect(container.textContent).toContain('detached');
   });
 
   it('dismisses on an outside tap without jumping', () => {

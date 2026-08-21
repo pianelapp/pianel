@@ -1,7 +1,9 @@
 import {
   useProfilesStore,
   useCursorStore,
+  useConnectionStore,
   DEFAULT_PERFORMANCE_SNAPSHOT,
+  type ConnectionStatus,
   type Profile,
   type Scene,
 } from '../../src/store';
@@ -98,11 +100,20 @@ export function sceneWith(
   };
 }
 
+export function setPianoStatus(status: ConnectionStatus): void {
+  useConnectionStore.setState({status});
+}
+
+export function setPianoConnected(connected: boolean): void {
+  setPianoStatus(connected ? 'connected' : 'disconnected');
+}
+
 export function resetSetlistWorld(profile: Profile = makeProfile()): void {
   resetSongService();
   resetSetlistService();
   resetCursorService();
   resetProfileService();
   useCursorStore.getState().exit();
+  setPianoConnected(true);
   useProfilesStore.setState({profiles: [profile], activeProfileId: profile.id});
 }

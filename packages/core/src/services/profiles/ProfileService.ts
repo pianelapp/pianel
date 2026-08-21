@@ -311,6 +311,10 @@ export class ProfileService {
     return preset;
   }
 
+  captureSnapshot(): PerformanceSnapshot {
+    return this.presetService.captureSnapshot();
+  }
+
   async applyPreset(presetId: string): Promise<void> {
     const active = this._getActiveProfileOrThrow();
     const preset = active.presets.find(p => p.id === presetId);

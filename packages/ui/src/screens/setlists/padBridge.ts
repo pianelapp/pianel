@@ -1,4 +1,5 @@
 import { showAlert } from '../../components/modals/AlertModal';
+import { requireConnectedPiano } from '../../hooks/captureGuard';
 import { PRESET_TILE_COUNT } from '../../store';
 import type { Preset, PerformanceSnapshot, Scene } from '../../store';
 
@@ -16,6 +17,8 @@ export async function saveSceneAsPad(
   applySnapshot: (snapshot: PerformanceSnapshot) => Promise<void>,
   savePresetToTile: (tilePosition: number, label: string) => Promise<Preset | null>,
 ): Promise<void> {
+  if (!requireConnectedPiano()) return;
+
   const free = firstFreeTile(presets);
   if (free === null) {
     await showAlert({

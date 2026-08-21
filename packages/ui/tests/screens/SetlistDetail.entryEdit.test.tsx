@@ -1,7 +1,7 @@
 import {act} from 'react';
 import {click} from '../utils/render';
 import {initTestStores} from '../utils/stores';
-import {wire, resetSetlistWorld} from '../fixtures/setlists';
+import {wire, resetSetlistWorld, setPianoConnected} from '../fixtures/setlists';
 import {
   byText,
   openContextMenu as openSceneMenu,
@@ -171,7 +171,7 @@ describe('editing a song from inside a setlist', () => {
     expect(songs.getSong(songId)!.scenes[0].label).toBe('Old');
   });
 
-  it('does not offer Re-capture on a setlist-embedded scene', () => {
+  it('offers Re-capture on a setlist-embedded scene', () => {
     const {songs, setlists} = wire();
     const songId = songs.createSong('Shared').id;
     songs.captureScene(songId, 'A');
@@ -182,7 +182,95 @@ describe('editing a song from inside a setlist', () => {
     click(byText(container, 'Shared'));
     openSceneMenu(container, 'A');
 
-    expect(container.textContent).not.toContain('Re-capture');
+    expect(container.textContent).toContain('Re-capture');
+  });
+
+  it('re-captures a setlist-embedded scene into the library when nothing else uses it', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Solo').id;
+    songs.captureScene(songId, 'A');
+    const before = songs.getSong(songId)!.scenes[0].snapshot.tempo;
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, songId);
+
+    const {container} = renderList(listId);
+    click(byText(container, 'Solo'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
+
+    expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).not.toBe(before);
+  });
+
+  it('re-captures onto the detached copy only, leaving the library untouched', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Shared').id;
+    songs.captureScene(songId, 'A');
+    const before = songs.getSong(songId)!.scenes[0].snapshot.tempo;
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, songId);
+    setlists.customizeEntry(listId, 0);
+
+    const {container} = renderList(listId);
+    click(byText(container, 'Shared'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
+
+    expect(setlists.resolveEntry(listId, 0)!.scenes[0].snapshot.tempo).not.toBe(before);
+    expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).toBe(before);
+  });
+
+  it('re-captures onto a fresh detached copy when the song is shared and this gig is chosen', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Shared').id;
+    songs.captureScene(songId, 'A');
+    const before = songs.getSong(songId)!.scenes[0].snapshot.tempo;
+    const sceneId = songs.getSong(songId)!.scenes[0].id;
+    const bar = setlists.createSetlist('Bar Gig').id;
+    const club = setlists.createSetlist('Club Gig').id;
+    setlists.addSong(bar, songId);
+    setlists.addSong(club, songId);
+
+    const {container} = renderList(bar);
+    click(byText(container, 'Shared'));
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
+
+    const thisGig = container.querySelector('[data-dialog-action="thisGig"]');
+    expect(thisGig).not.toBeNull();
+    click(thisGig as HTMLElement);
+    await act(async () => {});
+
+    expect(setlists.isCustomized(bar, 0)).toBe(true);
+    const override = setlists.resolveEntry(bar, 0)!;
+    expect(override.scenes[0].id).toBe(sceneId);
+    expect(override.scenes[0].snapshot.tempo).not.toBe(before);
+    expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).toBe(before);
+    expect(setlists.resolveEntry(club, 0)!.scenes[0].snapshot.tempo).toBe(before);
+  });
+
+  it('refuses to re-capture a setlist-embedded scene while disconnected', async () => {
+    const {songs, setlists} = wire();
+    const songId = songs.createSong('Solo').id;
+    songs.captureScene(songId, 'A');
+    const before = songs.getSong(songId)!.scenes[0].snapshot.tempo;
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, songId);
+
+    const {container} = renderList(listId);
+    click(byText(container, 'Solo'));
+    setPianoConnected(false);
+    openSceneMenu(container, 'A');
+    click(byText(container, 'Re-capture'));
+    await act(async () => {});
+
+    expect(container.textContent).toContain('Piano not connected');
+    expect(songs.getSong(songId)!.scenes[0].snapshot.tempo).toBe(before);
   });
 
   it('does not expand a dangling entry', () => {

@@ -139,7 +139,7 @@ export function EntryRow({
                   <span
                     className={statusBadgeClass('amber', isLightMode)}
                   >
-                    edited
+                    detached
                   </span>
                 )}
               </>
@@ -183,7 +183,6 @@ export function EntryRow({
               compact={compact}
               isLightMode={isLightMode}
               nested
-              allowRecapture={false}
               onAction={(action, actionScene, actionIndex) => {
                 onSceneAction(index, action, actionScene, actionIndex).catch(() => {});
               }}

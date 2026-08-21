@@ -9,6 +9,7 @@ import { useSetlists } from '../../hooks/useSetlists';
 import { usePresets } from '../../hooks/usePresets';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { confirmArmForCapture } from './armGuard';
+import { confirmRecapture } from './recaptureGuard';
 import { saveSceneAsPad } from './padBridge';
 
 interface SongDetailProps {
@@ -77,11 +78,13 @@ export function SongDetail({
         case 'notes':
           setDialog({ kind: 'notes', scene });
           break;
-        case 'recapture':
+        case 'recapture': {
+          if (!(await confirmRecapture(scene.label))) break;
           await runLibraryEdit('Re-capturing this scene', () =>
             recaptureScene(song.id, scene.id),
           );
           break;
+        }
         case 'moveUp':
           await runLibraryEdit('Reordering this scene', () =>
             moveScene(song.id, index, index - 1),

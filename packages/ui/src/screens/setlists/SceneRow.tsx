@@ -21,7 +21,6 @@ interface SceneRowProps {
   total: number;
   compact: boolean;
   isLightMode: boolean;
-  allowRecapture?: boolean;
   nested?: boolean;
   onAction: (id: SceneAction, scene: Scene, index: number) => void;
 }
@@ -34,7 +33,6 @@ export function SceneRow({
   total,
   compact,
   isLightMode,
-  allowRecapture = true,
   nested = false,
   onAction,
 }: SceneRowProps) {
@@ -50,7 +48,7 @@ export function SceneRow({
     { id: 'rename', label: 'Rename' },
     { id: 'notes', label: 'Notes' },
     { id: 'saveAsPad', label: 'Save scene as pad' },
-    ...(allowRecapture ? [{ id: 'recapture', label: 'Re-capture' }] : []),
+    { id: 'recapture', label: 'Re-capture' },
     ...(index > 0 ? [{ id: 'moveUp', label: 'Move up' }] : []),
     ...(index < total - 1 ? [{ id: 'moveDown', label: 'Move down' }] : []),
     { id: 'delete', label: 'Delete', destructive: true },
