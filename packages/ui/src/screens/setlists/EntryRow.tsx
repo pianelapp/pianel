@@ -46,6 +46,7 @@ export function EntryRow({
 }: EntryRowProps) {
   const [menu, setMenu] = useState<EntryMenuState>({ kind: 'closed' });
   const [expanded, setExpanded] = useState(false);
+  const Chevron = expanded ? ChevronDown : ChevronRight;
 
   const longPress = useLongPress({
     onLongPress: point => setMenu({ kind: 'open', index, x: point.x, y: point.y }),
@@ -94,21 +95,12 @@ export function EntryRow({
           }`}
         >
           {resolved ? (
-            expanded ? (
-              <ChevronDown
-                aria-hidden
-                className={`w-4 h-4 shrink-0 ${
-                  isLightMode ? 'text-zinc-500' : 'text-zinc-400'
-                }`}
-              />
-            ) : (
-              <ChevronRight
-                aria-hidden
-                className={`w-4 h-4 shrink-0 ${
-                  isLightMode ? 'text-zinc-500' : 'text-zinc-400'
-                }`}
-              />
-            )
+            <Chevron
+              aria-hidden
+              className={`w-4 h-4 shrink-0 ${
+                isLightMode ? 'text-zinc-500' : 'text-zinc-400'
+              }`}
+            />
           ) : (
             <span aria-hidden className="w-4 shrink-0" />
           )}

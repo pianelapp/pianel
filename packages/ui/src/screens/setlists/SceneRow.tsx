@@ -58,7 +58,6 @@ export function SceneRow({
 
   const badgeClass = `${sceneBadgeClass(summary.modeLabel, isLightMode)} shrink-0`;
 
-
   return (
     <div
       onContextMenu={e => {
@@ -82,14 +81,10 @@ export function SceneRow({
         {index + 1}
       </span>
       <span
-        className={`min-w-0 truncate ${nested ? 'text-xs font-normal' : 'text-sm font-semibold'} ${
+        className={`min-w-0 truncate ${
           nested
-            ? isLightMode
-              ? 'text-zinc-500'
-              : 'text-zinc-400'
-            : isLightMode
-              ? 'text-zinc-700'
-              : 'text-zinc-300'
+            ? `text-xs font-normal ${isLightMode ? 'text-zinc-500' : 'text-zinc-400'}`
+            : `text-sm font-semibold ${isLightMode ? 'text-zinc-700' : 'text-zinc-300'}`
         }`}
       >
         {scene.label}

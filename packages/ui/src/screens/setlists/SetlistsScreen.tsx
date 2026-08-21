@@ -56,6 +56,14 @@ function paneButtonClass(active: boolean, isLightMode: boolean): string {
   }`;
 }
 
+function headerButtonClass(isLightMode: boolean): string {
+  return `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+    isLightMode
+      ? 'bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-700'
+      : 'bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-200'
+  }`;
+}
+
 function rowClass(selected: boolean, isLightMode: boolean): string {
   return `flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors text-left w-full cursor-pointer ${
     isLightMode
@@ -205,20 +213,15 @@ export function SetlistsScreen({
     pane === 'songs' ? selectedSong !== null : selectedSetlist !== null;
   const showDetailOnly = compact && hasSelection;
 
-  const selectPane = useCallback(
-    (next: Pane) => {
-      setPane(next);
-      if (!compact) return;
-      if (next === 'songs') setSelectedSongId(null);
-      else setSelectedSetlistId(null);
-    },
-    [compact],
-  );
-
-  const handleBack = useCallback(() => {
-    if (pane === 'songs') setSelectedSongId(null);
+  const clearSelection = (target: Pane) => {
+    if (target === 'songs') setSelectedSongId(null);
     else setSelectedSetlistId(null);
-  }, [pane]);
+  };
+
+  const selectPane = (next: Pane) => {
+    setPane(next);
+    if (compact) clearSelection(next);
+  };
 
   const handleCreateSong = useCallback(
     (name: string) => {
@@ -360,12 +363,8 @@ export function SetlistsScreen({
         {showDetailOnly ? (
           <button
             data-detail-back
-            onClick={handleBack}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              isLightMode
-                ? 'bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-700'
-                : 'bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-200'
-            }`}>
+            onClick={() => clearSelection(pane)}
+            className={headerButtonClass(isLightMode)}>
             <ChevronLeft className="w-3.5 h-3.5" />
             {pane === 'songs' ? 'Songs' : 'Setlists'}
           </button>
@@ -389,11 +388,7 @@ export function SetlistsScreen({
                   ? setSongDialog({ kind: 'create' })
                   : setSetlistDialog({ kind: 'create' })
               }
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                isLightMode
-                  ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'
-                  : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
-              }`}>
+              className={headerButtonClass(isLightMode)}>
               <Plus className="w-3.5 h-3.5" />
               {pane === 'songs' ? 'New Song' : 'New Setlist'}
             </button>

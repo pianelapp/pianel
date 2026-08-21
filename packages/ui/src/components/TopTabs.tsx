@@ -21,7 +21,11 @@ function containerClass(isLightMode: boolean, dense: boolean): string {
   }`;
 }
 
-function tabButtonClass(active: boolean, isLightMode: boolean, dense = false): string {
+function tabButtonClass(
+  active: boolean,
+  isLightMode: boolean,
+  dense: boolean,
+): string {
   return `
                       ${dense ? 'px-2.5 py-1.5 text-xs tracking-wider' : 'px-5 py-2 text-sm tracking-widest'} rounded-md font-bold uppercase transition-all whitespace-nowrap
                       ${
@@ -55,7 +59,7 @@ export function TopTabs(props: TopTabsProps) {
           <Popover.Trigger asChild>
             <button
               aria-label={`${activeTab} tab. Show other tabs`}
-              className={`flex ${tabButtonClass(true, isLightMode)}`}>
+              className={`flex ${tabButtonClass(true, isLightMode, false)}`}>
               <span className="truncate">{activeTab}</span>
               <span className="ml-2 flex items-center justify-center">
                 <ChevronDown className="w-4 h-4 shrink-0" aria-hidden />
@@ -81,7 +85,7 @@ export function TopTabs(props: TopTabsProps) {
                   <button
                     key={tab}
                     onClick={() => handleSelect(tab)}
-                    className={`${tabButtonClass(false, isLightMode)} w-full text-center whitespace-nowrap`}>
+                    className={`${tabButtonClass(false, isLightMode, false)} w-full text-center whitespace-nowrap`}>
                     {tab}
                   </button>
                 ))}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {act} from 'react';
 import {render} from '../utils/render';
+import {menu, touchPointerDown, longPress} from '../utils/longPress';
 import {initTestStores} from '../utils/stores';
 import {resetProfileService} from '../../src/hooks/useProfiles';
 import {
@@ -69,31 +70,6 @@ function emptyTile(container: HTMLElement) {
   const btn = container.querySelector('button[aria-label="Empty preset 2"]');
   if (!btn) throw new Error('empty tile not found');
   return btn as HTMLButtonElement;
-}
-
-function menu() {
-  return document.querySelector('[role="menu"]');
-}
-
-function touchPointerDown(el: Element, x = 40, y = 50) {
-  const e = new MouseEvent('pointerdown', {
-    bubbles: true,
-    cancelable: true,
-    clientX: x,
-    clientY: y,
-  });
-  Object.defineProperty(e, 'pointerType', {value: 'touch'});
-  Object.defineProperty(e, 'pointerId', {value: 1});
-  act(() => {
-    el.dispatchEvent(e);
-  });
-}
-
-async function longPress(el: Element, x = 40, y = 50) {
-  touchPointerDown(el, x, y);
-  await act(async () => {
-    jest.advanceTimersByTime(500);
-  });
 }
 
 describe('preset tile long-press', () => {

@@ -87,8 +87,6 @@ function primaryContent(target: NextTarget, isLightMode: boolean, stacked: boole
     : isLightMode
       ? 'text-cyan-700'
       : 'text-cyan-400';
-  const subtitleClass = isLightMode ? 'text-cyan-600' : 'text-cyan-700';
-
   const countText = isSong ? sceneCountLabel(target.song.scenes.length) : null;
 
   if (stacked) {
@@ -106,6 +104,8 @@ function primaryContent(target: NextTarget, isLightMode: boolean, stacked: boole
       </>
     );
   }
+
+  const subtitleClass = isLightMode ? 'text-cyan-600' : 'text-cyan-700';
 
   return (
     <>

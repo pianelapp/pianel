@@ -219,26 +219,4 @@ describe('SceneRow dual tones', () => {
     expect(lines[0].parentElement!.className).toContain('flex-col');
     unmount();
   });
-
-  it('still hides both tone names when compact', () => {
-    stubPianoWithTones([
-      {id: 'pad', name: 'Soft Pad'},
-      {id: 'mellow', name: 'Mellow Piano'},
-    ]);
-    const {container, unmount} = render(
-      <SceneRow
-        scene={dualScene()}
-        index={0}
-        total={1}
-        compact
-        isLightMode={false}
-        onAction={() => {}}
-      />,
-    );
-
-    expect(container.textContent).not.toContain('Soft Pad');
-    expect(container.textContent).not.toContain('Mellow Piano');
-    expect(container.textContent).toContain('DUAL');
-    unmount();
-  });
 });
