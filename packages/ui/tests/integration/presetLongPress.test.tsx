@@ -1,14 +1,7 @@
-/**
- * Preset tile long-press.
- *
- *  - a long-press on a filled tile opens the actions menu at the touch point
- *  - a long-press on an empty tile does nothing (parity with ignored empty
- *    right-click); the primary apply does not fire
- *  - selecting Delete runs the existing confirm flow
- */
 import * as React from 'react';
 import {act} from 'react';
 import {render} from '../utils/render';
+import {menu, touchPointerDown, longPress} from '../utils/longPress';
 import {initTestStores} from '../utils/stores';
 import {resetProfileService} from '../../src/hooks/useProfiles';
 import {
@@ -19,6 +12,7 @@ import {
 } from '../../src/store';
 import {PresetsScreen} from '../../src/screens/presets/PresetsScreen';
 import {AlertModal} from '../../src/components/modals/AlertModal';
+import {CURRENT_SCHEMA_VERSION} from '@pianel/core/store';
 
 beforeAll(() => {
   initTestStores();
@@ -36,11 +30,13 @@ const PRESET: Preset = {
 const PROFILE: Profile = {
   id: 'p1',
   name: 'Profile',
-  schemaVersion: 1,
+  schemaVersion: CURRENT_SCHEMA_VERSION,
   theme: 'system',
   accidentals: 'sharps',
   favorites: [],
   presets: [PRESET],
+  songs: [],
+  setlists: [],
   defaultState: DEFAULT_PERFORMANCE_SNAPSHOT,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
@@ -76,31 +72,6 @@ function emptyTile(container: HTMLElement) {
   return btn as HTMLButtonElement;
 }
 
-function menu() {
-  return document.querySelector('[role="menu"]');
-}
-
-function touchPointerDown(el: Element, x = 40, y = 50) {
-  const e = new MouseEvent('pointerdown', {
-    bubbles: true,
-    cancelable: true,
-    clientX: x,
-    clientY: y,
-  });
-  Object.defineProperty(e, 'pointerType', {value: 'touch'});
-  Object.defineProperty(e, 'pointerId', {value: 1});
-  act(() => {
-    el.dispatchEvent(e);
-  });
-}
-
-async function longPress(el: Element, x = 40, y = 50) {
-  touchPointerDown(el, x, y);
-  await act(async () => {
-    jest.advanceTimersByTime(500);
-  });
-}
-
 describe('preset tile long-press', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
@@ -115,7 +86,7 @@ describe('preset tile long-press', () => {
     const items = Array.from(
       menu()!.querySelectorAll('[role="menuitem"]'),
     ).map(b => (b.textContent ?? '').trim());
-    expect(items).toEqual(['Update', 'Rename', 'Delete']);
+    expect(items).toEqual(['Update', 'Rename', 'Add pad as scene', 'Delete']);
     const el = menu() as HTMLElement;
     expect(el.style.top).toBe('110px');
     expect(el.style.left).toBe('90px');
@@ -126,7 +97,6 @@ describe('preset tile long-press', () => {
     const {container, unmount} = render(ui());
     await longPress(emptyTile(container));
     expect(menu()).toBeNull();
-    // No naming dialog opened either (primary apply/save not triggered).
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     unmount();
   });
@@ -149,7 +119,7 @@ describe('preset tile long-press', () => {
     await longPress(filledTile(container));
 
     await act(async () => {
-      jest.advanceTimersByTime(1000); // disarm suppression guard
+      jest.advanceTimersByTime(1000);
     });
     const deleteItem = Array.from(
       menu()!.querySelectorAll('[role="menuitem"]'),

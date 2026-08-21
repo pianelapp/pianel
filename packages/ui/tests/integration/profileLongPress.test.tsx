@@ -1,15 +1,13 @@
-/**
- * Profile row long-press.
- *
- *  - a long-press opens the profile actions menu at the touch point with the
- *    full action set
- *  - an outside tap closes it; the primary load does not fire (emulated click
- *    suppressed)
- *  - selecting Delete runs the existing confirm flow
- */
 import * as React from 'react';
 import {act} from 'react';
 import {render} from '../utils/render';
+import {
+  menu,
+  menuItems,
+  menuItem,
+  touchPointerDown,
+  longPress,
+} from '../utils/longPress';
 import {initTestStores} from '../utils/stores';
 import {resetProfileService} from '../../src/hooks/useProfiles';
 import {
@@ -19,6 +17,7 @@ import {
 } from '../../src/store';
 import {ProfilesScreen} from '../../src/screens/profiles/ProfilesScreen';
 import {AlertModal} from '../../src/components/modals/AlertModal';
+import {CURRENT_SCHEMA_VERSION} from '@pianel/core/store';
 
 beforeAll(() => {
   initTestStores();
@@ -27,11 +26,13 @@ beforeAll(() => {
 const PROFILE: Profile = {
   id: 'p1',
   name: 'My Profile',
-  schemaVersion: 1,
+  schemaVersion: CURRENT_SCHEMA_VERSION,
   theme: 'system',
   accidentals: 'sharps',
   favorites: [],
   presets: [],
+  songs: [],
+  setlists: [],
   defaultState: DEFAULT_PERFORMANCE_SNAPSHOT,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
@@ -59,49 +60,6 @@ function profileRow(container: HTMLElement) {
   );
   if (!btn) throw new Error('profile row not found');
   return btn as HTMLButtonElement;
-}
-
-function menu() {
-  return document.querySelector('[role="menu"]');
-}
-
-function menuItems() {
-  const m = menu();
-  if (!m) throw new Error('menu not open');
-  return Array.from(m.querySelectorAll('[role="menuitem"]')).map(
-    b => (b.textContent ?? '').trim(),
-  );
-}
-
-function menuItem(label: string) {
-  const m = menu();
-  if (!m) throw new Error('menu not open');
-  const btn = Array.from(m.querySelectorAll('[role="menuitem"]')).find(
-    b => (b.textContent ?? '').trim().includes(label),
-  );
-  if (!btn) throw new Error(`menu item "${label}" not found`);
-  return btn as HTMLButtonElement;
-}
-
-function touchPointerDown(el: Element, x = 40, y = 50) {
-  const e = new MouseEvent('pointerdown', {
-    bubbles: true,
-    cancelable: true,
-    clientX: x,
-    clientY: y,
-  });
-  Object.defineProperty(e, 'pointerType', {value: 'touch'});
-  Object.defineProperty(e, 'pointerId', {value: 1});
-  act(() => {
-    el.dispatchEvent(e);
-  });
-}
-
-async function longPress(el: Element, x = 40, y = 50) {
-  touchPointerDown(el, x, y);
-  await act(async () => {
-    jest.advanceTimersByTime(500);
-  });
 }
 
 describe('profile row long-press', () => {
@@ -160,7 +118,7 @@ describe('profile row long-press', () => {
     await longPress(profileRow(container));
 
     await act(async () => {
-      jest.advanceTimersByTime(1000); // disarm suppression guard
+      jest.advanceTimersByTime(1000);
     });
     await act(async () => {
       menuItem('Delete').dispatchEvent(

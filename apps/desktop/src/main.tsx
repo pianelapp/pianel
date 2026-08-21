@@ -6,10 +6,16 @@ import { ConnectionService } from '@pianel/core/services/ConnectionService';
 import { PianoService } from '@pianel/core/services/PianoService';
 import { PresetService } from '@pianel/core/services/presets/PresetService';
 import { ProfileService } from '@pianel/core/services/profiles/ProfileService';
+import { SongService } from '@pianel/core/services/songs/SongService';
+import { SetlistService } from '@pianel/core/services/setlists/SetlistService';
+import { SetlistCursorService } from '@pianel/core/services/cursor/SetlistCursorService';
 import { initStores, useAppSettingsStore, useProfilesStore } from '@pianel/ui/store';
 import { setPianoService } from '@pianel/ui/hooks/usePiano';
 import { setConnectionService } from '@pianel/ui/hooks/useConnection';
 import { setProfileService } from '@pianel/ui/hooks/useProfiles';
+import { setSongService } from '@pianel/ui/hooks/useSongs';
+import { setSetlistService } from '@pianel/ui/hooks/useSetlists';
+import { setCursorService } from '@pianel/ui/hooks/usePerformCursor';
 import {
   syncChordAccidentalsFromStore,
   subscribeChordAccidentals,
@@ -33,6 +39,9 @@ const profileService = new ProfileService(
   desktopFilePicker,
   presetService,
 );
+const songService = new SongService(presetService);
+const setlistService = new SetlistService(songService);
+const cursorService = new SetlistCursorService(songService, setlistService, presetService);
 
 connectionService.setPianoService(pianoService);
 connectionService.setNotificationHandler(event => {
@@ -43,6 +52,9 @@ presetService.setConnectionService(connectionService);
 setPianoService(pianoService);
 setConnectionService(connectionService);
 setProfileService(profileService);
+setSongService(songService);
+setSetlistService(setlistService);
+setCursorService(cursorService);
 
 // Bootstrap: ensure a default profile exists, then load the boot profile
 // so UI config (favorites, theme, accidentals, quick-tone slots, active

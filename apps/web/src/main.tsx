@@ -28,9 +28,15 @@ import { requestMIDIDeviceSelection } from '@pianel/ui/components/MIDIDeviceChoo
 import { ConnectionService } from '@pianel/core/services/ConnectionService';
 import { PianoService } from '@pianel/core/services/PianoService';
 import { PresetService } from '@pianel/core/services/presets/PresetService';
+import { SongService } from '@pianel/core/services/songs/SongService';
+import { SetlistService } from '@pianel/core/services/setlists/SetlistService';
+import { SetlistCursorService } from '@pianel/core/services/cursor/SetlistCursorService';
 import { setPianoService } from '@pianel/ui/hooks/usePiano';
 import { setConnectionService } from '@pianel/ui/hooks/useConnection';
 import { setProfileService } from '@pianel/ui/hooks/useProfiles';
+import { setSongService } from '@pianel/ui/hooks/useSongs';
+import { setSetlistService } from '@pianel/ui/hooks/useSetlists';
+import { setCursorService } from '@pianel/ui/hooks/usePerformCursor';
 import {
   syncChordAccidentalsFromStore,
   subscribeChordAccidentals,
@@ -61,6 +67,9 @@ const pianoService = new PianoService(transport);
 const connectionService = new ConnectionService(transport);
 const presetService = new PresetService(pianoService);
 const profileService = createWebProfileService(pianoService, presetService);
+const songService = new SongService(presetService);
+const setlistService = new SetlistService(songService);
+const cursorService = new SetlistCursorService(songService, setlistService, presetService);
 
 connectionService.setPianoService(pianoService);
 connectionService.setNotificationHandler((event) => {
@@ -72,6 +81,9 @@ presetService.setConnectionService(connectionService);
 setPianoService(pianoService);
 setConnectionService(connectionService);
 setProfileService(profileService);
+setSongService(songService);
+setSetlistService(setlistService);
+setCursorService(cursorService);
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 // Await the first async storage read, ensure a default profile exists, then

@@ -53,7 +53,7 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
   const beatLabel = BEAT_LABELS[metronomeBeat] ?? '4/4';
 
   return (
-    <div className={`${compact ? 'px-3' : 'px-8'} pb-5 shrink-0`}>
+    <div data-statusbar className={`${compact ? 'px-3' : 'px-8'} pb-5 shrink-0`}>
       <div
         className={`w-full flex justify-between items-center border-t pt-3 transition-colors ${
           isLightMode ? 'border-zinc-300' : 'border-zinc-800/50'

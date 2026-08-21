@@ -1,13 +1,3 @@
-/**
- * T064 — ProfileService export tests (US3).
- *
- * Covers:
- *  - exportProfile serializes to ProfileExportFile JSON (schemaVersion 1).
- *  - Filename is `<sanitized-name>.pianel-profile.json`.
- *  - Resolves `{saved: true}` when the adapter writes; `{saved: false}` when
- *    the user cancels the dialog.
- */
-
 import {ProfileService} from '../../../src/services/profiles/ProfileService';
 import {PresetService} from '../../../src/services/presets/PresetService';
 import {PianoService} from '../../../src/services/PianoService';
@@ -22,6 +12,7 @@ import {ProfileNotFoundError} from '../../../src/types/profile';
 import type {ProfileExportFile} from '../../../src/types/profile';
 import type {Transport} from '../../../src/transport/types';
 import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerAdapter';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 class FakeTransport implements Transport {
   status: 'idle' | 'connected' | 'disconnected' = 'idle';
@@ -72,7 +63,7 @@ beforeEach(() => {
 });
 
 describe('ProfileService.exportProfile', () => {
-  it('serializes to ProfileExportFile shape with schemaVersion 1', async () => {
+  it('serializes to ProfileExportFile shape with schemaVersion 2', async () => {
     const {picker, saveCalls} = buildPicker(true);
     const service = buildService(picker);
     const profile = await service.createProfile('Alpha');
@@ -82,7 +73,7 @@ describe('ProfileService.exportProfile', () => {
     expect(saveCalls).toHaveLength(1);
 
     const file = JSON.parse(saveCalls[0].contents) as ProfileExportFile;
-    expect(file.schemaVersion).toBe(1);
+    expect(file.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(file.profile.id).toBe(profile.id);
     expect(file.profile.name).toBe('Alpha');
     expect(typeof file.exportedAt).toBe('string');

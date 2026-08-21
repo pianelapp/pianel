@@ -1,17 +1,9 @@
-/**
- * PresetsScreen — 4×2 grid of 8 preset slots scoped to the active profile's
- * `presets[]`.
- *
- * - Empty slots open the naming dialog (pre-filled "Preset N") when clicked.
- * - Filled slots apply the preset when clicked, and open the context menu
- *   (Update / Rename / Delete) on right-click (FR-024 desktop half).
- */
-
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { usePresets } from '../../hooks/usePresets';
+import { useSongs } from '../../hooks/useSongs';
 import { PRESET_TILE_COUNT } from '../../store';
-import type { Preset } from '../../store';
+import type { Preset, Song } from '../../store';
 import { PresetTile } from './PresetTile';
 import { PresetContextMenu } from './PresetContextMenu';
 import { PresetNamingDialog } from './PresetNamingDialog';
@@ -24,15 +16,93 @@ interface PresetsScreenProps {
 type DialogState =
   | { kind: 'closed' }
   | { kind: 'save'; position: number }
-  | { kind: 'rename'; preset: Preset };
+  | { kind: 'rename'; preset: Preset }
+  | { kind: 'addAsScene'; preset: Preset };
 
 type MenuState =
   | { kind: 'closed' }
   | { kind: 'open'; preset: Preset; x: number; y: number };
 
+interface SongPickerDialogProps {
+  songs: Song[];
+  isLightMode: boolean;
+  onSelect: (songId: string) => void;
+  onCancel: () => void;
+}
+
+function SongPickerDialog({ songs, isLightMode, onSelect, onCancel }: SongPickerDialogProps) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onCancel]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-pad-as-scene-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    >
+      <div
+        className={`w-[320px] max-h-[70vh] rounded-3xl p-6 shadow-2xl border flex flex-col ${
+          isLightMode ? 'bg-white border-zinc-200' : 'bg-zinc-900 border-zinc-800'
+        }`}
+      >
+        <h2
+          id="add-pad-as-scene-dialog-title"
+          className={`text-lg font-bold mb-4 shrink-0 ${
+            isLightMode ? 'text-zinc-800' : 'text-zinc-100'
+          }`}
+        >
+          Add pad as scene
+        </h2>
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar -mx-2 px-2">
+          {songs.length === 0 ? (
+            <div
+              className={`text-sm text-center py-6 ${
+                isLightMode ? 'text-zinc-400' : 'text-zinc-600'
+              }`}
+            >
+              No songs yet. Add one from the SETLISTS tab first.
+            </div>
+          ) : (
+            songs.map(song => (
+              <button
+                key={song.id}
+                onClick={() => onSelect(song.id)}
+                className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors ${
+                  isLightMode
+                    ? 'text-zinc-700 hover:bg-zinc-100'
+                    : 'text-zinc-200 hover:bg-zinc-800'
+                }`}
+              >
+                <div className="text-sm font-semibold truncate">{song.name}</div>
+              </button>
+            ))
+          )}
+        </div>
+        <button
+          onClick={onCancel}
+          className={`mt-4 shrink-0 text-sm font-bold tracking-widest py-2.5 rounded-xl transition-colors ${
+            isLightMode
+              ? 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+              : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
+          }`}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
   const { presets, savePresetToTile, applyPreset, updatePreset, renamePreset, deletePreset } =
     usePresets();
+  const { songs, addPadAsScene } = useSongs();
 
   const isMobile = useBreakpoint().viewport === 'mobile';
 
@@ -110,7 +180,7 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
   );
 
   const handleMenuAction = useCallback(
-    async (action: 'update' | 'rename' | 'delete') => {
+    async (action: 'update' | 'rename' | 'addAsScene' | 'delete') => {
       if (menu.kind !== 'open') return;
       const preset = menu.preset;
       setMenu({ kind: 'closed' });
@@ -118,6 +188,8 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
         await updatePreset(preset.id);
       } else if (action === 'rename') {
         setDialog({ kind: 'rename', preset });
+      } else if (action === 'addAsScene') {
+        setDialog({ kind: 'addAsScene', preset });
       } else if (action === 'delete') {
         const confirmed = await showAlert({
           variant: 'warning',
@@ -132,6 +204,15 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
       }
     },
     [menu, updatePreset, deletePreset],
+  );
+
+  const handleAddPadAsScene = useCallback(
+    (songId: string) => {
+      if (dialog.kind !== 'addAsScene') return;
+      addPadAsScene(songId, dialog.preset);
+      setDialog({ kind: 'closed' });
+    },
+    [dialog, addPadAsScene],
   );
 
   return (
@@ -186,6 +267,14 @@ export function PresetsScreen({ isLightMode }: PresetsScreenProps) {
           isLightMode={isLightMode}
           onClose={() => setMenu({ kind: 'closed' })}
           onAction={handleMenuAction}
+        />
+      )}
+      {dialog.kind === 'addAsScene' && (
+        <SongPickerDialog
+          songs={songs}
+          isLightMode={isLightMode}
+          onSelect={handleAddPadAsScene}
+          onCancel={() => setDialog({ kind: 'closed' })}
         />
       )}
     </div>

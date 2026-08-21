@@ -1,19 +1,3 @@
-/**
- * T065 — ProfileService import tests (US3).
- *
- * Covers:
- *  - malformed JSON → MalformedProfileFileError (FR-022).
- *  - schemaVersion > MAX_SUPPORTED → UnsupportedProfileVersionError.
- *  - ID collision → returns `{kind: 'conflict', parsed, existing}` (FR-020).
- *  - `confirmImportOverwrite(parsed)` replaces existing in place (no
- *    duplicate; SC-006).
- *  - No ID collision + no name collision → inserts new profile and returns
- *    `{kind: 'imported', profile}`.
- *  - No ID collision + name collision → auto-suffix `" (Imported)"`, then
- *    `" (Imported 2)"`, etc. (R6).
- *  - Cancelled dialog → `{kind: 'cancelled'}`.
- */
-
 import {ProfileService} from '../../../src/services/profiles/ProfileService';
 import {PresetService} from '../../../src/services/presets/PresetService';
 import {PianoService} from '../../../src/services/PianoService';
@@ -31,6 +15,7 @@ import {
 import type {ProfileExportFile} from '../../../src/types/profile';
 import type {Transport} from '../../../src/transport/types';
 import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerAdapter';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 class FakeTransport implements Transport {
   status: 'idle' | 'connected' | 'disconnected' = 'idle';
@@ -78,21 +63,21 @@ beforeEach(() => {
   useProfilesStore.setState({profiles: [], activeProfileId: ''});
 });
 
-// ─── Helpers ────────────────────────────────────────────────────
-
 function validExportFile(id: string, name: string): ProfileExportFile {
   const now = new Date().toISOString();
   return {
-    schemaVersion: 1,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     exportedAt: now,
     profile: {
       id,
       name,
-      schemaVersion: 1,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       theme: 'system',
       accidentals: 'sharps',
       favorites: [],
       presets: [],
+      songs: [],
+      setlists: [],
       defaultState: {
         volume: 100,
         tempo: 120,
@@ -112,8 +97,6 @@ function validExportFile(id: string, name: string): ProfileExportFile {
   };
 }
 
-// ─── Validation ─────────────────────────────────────────────────
-
 describe('ProfileService.importProfile — validation', () => {
   it('returns cancelled when file picker resolves null', async () => {
     const service = buildService(buildPicker(null));
@@ -128,9 +111,10 @@ describe('ProfileService.importProfile — validation', () => {
     );
   });
 
-  it('throws UnsupportedProfileVersionError when schemaVersion > MAX', async () => {
+  it('throws UnsupportedProfileVersionError when schemaVersion > CURRENT', async () => {
     const file = validExportFile('1234567890-abcdefgh', 'Alpha');
-    (file as unknown as {schemaVersion: number}).schemaVersion = 2;
+    (file as unknown as {schemaVersion: number}).schemaVersion =
+      CURRENT_SCHEMA_VERSION + 1;
     const service = buildService(buildPicker(JSON.stringify(file)));
     await expect(service.importProfile()).rejects.toBeInstanceOf(
       UnsupportedProfileVersionError,
@@ -153,8 +137,6 @@ describe('ProfileService.importProfile — validation', () => {
     );
   });
 });
-
-// ─── Happy paths ────────────────────────────────────────────────
 
 describe('ProfileService.importProfile — happy paths', () => {
   it('inserts a fresh profile when neither id nor name collide', async () => {
@@ -211,8 +193,6 @@ describe('ProfileService.importProfile — happy paths', () => {
     }
   });
 });
-
-// ─── Conflict branch ────────────────────────────────────────────
 
 describe('ProfileService.importProfile — id collision', () => {
   it('returns conflict when id matches an existing profile', async () => {

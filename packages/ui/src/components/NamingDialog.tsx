@@ -1,28 +1,28 @@
-/**
- * ProfileNamingDialog — text-input modal used for "New profile" + "Rename
- * profile" flows. Empty / whitespace input is rejected (Edge Cases —
- * *Empty name input*).
- */
-
 import { useEffect, useState } from 'react';
 
-interface ProfileNamingDialogProps {
+interface NamingDialogProps {
   title: string;
   confirmLabel: string;
   initialValue?: string;
+  placeholder?: string;
+  multiline?: boolean;
+  allowEmpty?: boolean;
   isLightMode: boolean;
   onConfirm: (value: string) => void;
   onCancel: () => void;
 }
 
-export function ProfileNamingDialog({
+export function NamingDialog({
   title,
   confirmLabel,
   initialValue = '',
+  placeholder = 'Name',
+  multiline = false,
+  allowEmpty = false,
   isLightMode,
   onConfirm,
   onCancel,
-}: ProfileNamingDialogProps) {
+}: NamingDialogProps) {
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,18 +37,29 @@ export function ProfileNamingDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = value.trim();
-    if (!trimmed) {
+    if (!trimmed && !allowEmpty) {
       setError('Name cannot be empty.');
       return;
     }
     onConfirm(trimmed);
   };
 
+  const handleChange = (next: string) => {
+    setValue(next);
+    if (error) setError(null);
+  };
+
+  const fieldClassName = `w-full px-3 py-2 rounded-xl border text-base ${
+    isLightMode
+      ? 'bg-slate-50 border-zinc-200 text-zinc-800'
+      : 'bg-zinc-950 border-zinc-800 text-zinc-100'
+  } ${error ? 'border-red-500' : ''}`;
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="profile-naming-title"
+      aria-labelledby="naming-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
     >
       <form
@@ -58,29 +69,34 @@ export function ProfileNamingDialog({
         }`}
       >
         <h2
-          id="profile-naming-title"
+          id="naming-dialog-title"
           className={`text-lg font-bold mb-4 ${
             isLightMode ? 'text-zinc-800' : 'text-zinc-100'
           }`}
         >
           {title}
         </h2>
-        <input
-          autoFocus
-          type="text"
-          value={value}
-          onChange={e => {
-            setValue(e.target.value);
-            if (error) setError(null);
-          }}
-          placeholder="Profile name"
-          aria-invalid={error ? true : false}
-          className={`w-full px-3 py-2 rounded-xl border text-base ${
-            isLightMode
-              ? 'bg-slate-50 border-zinc-200 text-zinc-800'
-              : 'bg-zinc-950 border-zinc-800 text-zinc-100'
-          } ${error ? 'border-red-500' : ''}`}
-        />
+        {multiline ? (
+          <textarea
+            autoFocus
+            rows={4}
+            value={value}
+            onChange={e => handleChange(e.target.value)}
+            placeholder={placeholder}
+            aria-invalid={error ? true : false}
+            className={fieldClassName}
+          />
+        ) : (
+          <input
+            autoFocus
+            type="text"
+            value={value}
+            onChange={e => handleChange(e.target.value)}
+            placeholder={placeholder}
+            aria-invalid={error ? true : false}
+            className={fieldClassName}
+          />
+        )}
         {error && (
           <p
             role="alert"

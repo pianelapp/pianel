@@ -1,47 +1,26 @@
-/**
- * ProfileContextMenu — overlay menu (Set as Default / Update / Rename /
- * Export / Delete) shown when the user right-clicks a profile row.
- */
-
 import { useRef } from 'react';
-import { useClampedMenuPosition } from '../../hooks/useClampedMenuPosition';
-import { useDismissable } from '../../hooks/useDismissable';
+import { useClampedMenuPosition } from '../hooks/useClampedMenuPosition';
+import { useDismissable } from '../hooks/useDismissable';
 
-export type ProfileMenuAction =
-  | 'setDefault'
-  | 'update'
-  | 'rename'
-  | 'export'
-  | 'delete';
+export type RowAction = { id: string; label: string; destructive?: boolean; disabled?: boolean };
 
-interface ProfileContextMenuProps {
+interface RowContextMenuProps {
   x: number;
   y: number;
+  actions: RowAction[];
   isLightMode: boolean;
-  isDefault: boolean;
   onClose: () => void;
-  onAction: (action: ProfileMenuAction) => void;
+  onAction: (id: string) => void;
 }
 
-export function ProfileContextMenu({
+export function RowContextMenu({
   x,
   y,
+  actions,
   isLightMode,
-  isDefault,
   onClose,
   onAction,
-}: ProfileContextMenuProps) {
-  const items: Array<{ id: ProfileMenuAction; label: string; disabled?: boolean }> = [
-    {
-      id: 'setDefault',
-      label: isDefault ? '✓ Default at boot' : 'Set as Default',
-      disabled: isDefault,
-    },
-    { id: 'update', label: 'Update' },
-    { id: 'rename', label: 'Rename' },
-    { id: 'export', label: 'Export' },
-    { id: 'delete', label: 'Delete' },
-  ];
+}: RowContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { top, left } = useClampedMenuPosition(x, y, ref);
   useDismissable(ref, onClose);
@@ -57,14 +36,14 @@ export function ProfileContextMenu({
           : 'bg-zinc-900 border-zinc-800'
       }`}
     >
-      {items.map(item => (
+      {actions.map(action => (
         <button
-          key={item.id}
+          key={action.id}
           role="menuitem"
-          disabled={item.disabled}
-          onClick={() => !item.disabled && onAction(item.id)}
+          disabled={action.disabled}
+          onClick={() => !action.disabled && onAction(action.id)}
           className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-            item.disabled
+            action.disabled
               ? isLightMode
                 ? 'text-zinc-400 cursor-default'
                 : 'text-zinc-600 cursor-default'
@@ -72,14 +51,14 @@ export function ProfileContextMenu({
               ? 'text-zinc-700 hover:bg-zinc-100'
               : 'text-zinc-200 hover:bg-zinc-800'
           } ${
-            !item.disabled && item.id === 'delete'
+            !action.disabled && action.destructive
               ? isLightMode
                 ? 'text-red-600 hover:bg-red-50'
                 : 'text-red-400 hover:bg-red-950/30'
               : ''
           }`}
         >
-          {item.label}
+          {action.label}
         </button>
       ))}
     </div>

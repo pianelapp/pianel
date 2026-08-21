@@ -1,17 +1,3 @@
-/**
- * 009-settings-preferences Task 1 — ProfileService narrow per-field write-back.
- *
- * Covers `syncActiveTheme` / `syncActiveAccidentals`:
- *  - Writing back the theme updates only the active profile's `theme` and
- *    `updatedAt`; accidentals updates only `accidentals` and `updatedAt`.
- *  - `defaultState`, `presets`, and `favorites` are byte-identical (deep-equal)
- *    before and after each write-back — i.e. it does NOT behave like a full
- *    `updateProfile` snapshot capture (Requirements 3.3 / 6.3).
- *  - No-active-profile case is a safe no-op (mirrors `syncActiveFavorites`).
- *  - The write-back reads the value from the live app settings store so store
- *    and profile stay in agreement (Requirements 3.2 / 6.2 / 7.5).
- */
-
 import {ProfileService} from '../../../src/services/profiles/ProfileService';
 import {PresetService} from '../../../src/services/presets/PresetService';
 import {PianoService} from '../../../src/services/PianoService';
@@ -26,6 +12,7 @@ import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../../src/types/performanceSnapsh
 import type {Profile, Preset, FavoriteRef} from '../../../src/types/profile';
 import type {Transport} from '../../../src/transport/types';
 import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerAdapter';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 
 class FakeTransport implements Transport {
   status: 'idle' | 'connected' | 'disconnected' = 'idle';
@@ -82,11 +69,13 @@ function seedActiveProfile(overrides: Partial<Profile> = {}): Profile {
   const profile: Profile = {
     id: 'prof-bbbbbbbbbbbb',
     name: 'Stage',
-    schemaVersion: 1,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'light',
     accidentals: 'sharps',
     favorites: makeFavorites(),
     presets: makePresets(),
+    songs: [],
+    setlists: [],
     defaultState: {...DEFAULT_PERFORMANCE_SNAPSHOT, tempo: 96},
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -144,7 +133,6 @@ describe('ProfileService.syncActiveTheme', () => {
     expect(JSON.stringify(after.defaultState)).toBe(snapDefault);
     expect(JSON.stringify(after.presets)).toBe(snapPresets);
     expect(JSON.stringify(after.favorites)).toBe(snapFavorites);
-    // accidentals untouched on the theme path
     expect(after.accidentals).toBe(before.accidentals);
   });
 
@@ -183,7 +171,6 @@ describe('ProfileService.syncActiveAccidentals', () => {
     expect(JSON.stringify(after.defaultState)).toBe(snapDefault);
     expect(JSON.stringify(after.presets)).toBe(snapPresets);
     expect(JSON.stringify(after.favorites)).toBe(snapFavorites);
-    // theme untouched on the accidentals path
     expect(after.theme).toBe(before.theme);
   });
 

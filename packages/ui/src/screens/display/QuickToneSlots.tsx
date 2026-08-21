@@ -8,7 +8,7 @@ import {
 import type { QuickToneSlot } from "@pianel/core/types/quickToneSlot";
 import type { CaptureSource } from "@pianel/core/helpers/quickToneSlot";
 import { useTones } from "../../hooks/useTones";
-import { getPianoService } from "../../hooks/usePiano";
+import { usePiano } from "../../hooks/usePiano";
 import { HardwareButton } from "../../components/controls/HardwareButton";
 import { useLongPress } from "../../hooks/useLongPress";
 import { showAlert } from "../../components/modals/AlertModal";
@@ -18,6 +18,7 @@ interface QuickToneSlotsProps {
 }
 
 export function QuickToneSlots({ isLightMode }: QuickToneSlotsProps) {
+  const { applyQuickToneSlot } = usePiano();
   const quickToneSlots = useAppSettingsStore((s) => s.quickToneSlots);
   const setQuickToneSlot = useAppSettingsStore((s) => s.setQuickToneSlot);
 
@@ -82,9 +83,9 @@ export function QuickToneSlots({ isLightMode }: QuickToneSlotsProps) {
         return;
       }
       // Apply the captured slot.
-      getPianoService()?.applyQuickToneSlot(slot);
+      void applyQuickToneSlot(slot);
     },
-    [perfSnapshot, setQuickToneSlot],
+    [perfSnapshot, setQuickToneSlot, applyQuickToneSlot],
   );
 
   // Shared clear-confirmation gate for both the mouse right-click and the touch

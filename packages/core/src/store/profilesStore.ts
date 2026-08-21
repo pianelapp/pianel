@@ -1,17 +1,7 @@
-/**
- * Profiles Zustand Store (data-model.md §2 / §7).
- *
- * Top-level container for the new Profiles & Presets pivot. Persists the full
- * list of profiles and the `activeProfileId` invariant (FR-017). Replaces the
- * previous globally-scoped `presetsStore`/`padConfigStore` for state ownership.
- *
- * Constitution I: Offline-First — persisted via the shared `StateStorage`
- * adapter (MMKV on mobile, electron-store on desktop).
- */
-
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
 
+import {normalizeProfile} from '../helpers/profileMigration';
 import type {Profile} from '../types/profile';
 import type {StateStorage} from './storage';
 
@@ -21,17 +11,11 @@ export interface ProfilesState {
 }
 
 export interface ProfilesActions {
-  /** Append a profile to the list. Does not affect `activeProfileId`. */
   addProfile: (profile: Profile) => void;
-  /** Replace a profile's full record in place (`updateProfile`, etc.). */
   updateProfileInList: (profile: Profile) => void;
-  /** Patch a profile's `name` + `updatedAt`; leaves other fields untouched. */
   renameProfileInList: (profileId: string, newName: string) => void;
-  /** Remove a profile from the list. Does not adjust `activeProfileId`. */
   removeProfile: (profileId: string) => void;
-  /** Set the active profile id (FR-017). */
   setActiveProfileId: (profileId: string) => void;
-  /** Overwrite-in-place for import flows that replace an existing id. */
   replaceProfileById: (profile: Profile) => void;
 }
 
@@ -85,6 +69,28 @@ function _build(storage: StateStorage) {
       {
         name: 'pianel:profiles',
         storage: createJSONStorage(() => storage),
+        migrate: (persisted: unknown) => {
+          const state = (persisted ?? {}) as Partial<ProfilesState>;
+          return {
+            ...state,
+            profiles: (Array.isArray(state.profiles) ? state.profiles : []).map(
+              normalizeProfile,
+            ),
+            activeProfileId: state.activeProfileId ?? '',
+          } as ProfilesState;
+        },
+        merge: (persisted, current) => {
+          const state = (persisted ?? {}) as Partial<ProfilesState>;
+          return {
+            ...current,
+            ...state,
+            profiles: (Array.isArray(state.profiles)
+              ? state.profiles
+              : current.profiles
+            ).map(normalizeProfile),
+            activeProfileId: state.activeProfileId ?? current.activeProfileId,
+          };
+        },
       },
     ),
   );
@@ -103,6 +109,15 @@ _proxy.setState = (state: any, replace?: any) =>
 _proxy.subscribe = (...args: Parameters<StoreType['subscribe']>) =>
   _get().subscribe(...args);
 _proxy.getInitialState = () => _get().getInitialState();
+_proxy.persist = {
+  setOptions: options => _get().persist.setOptions(options),
+  clearStorage: () => _get().persist.clearStorage(),
+  rehydrate: () => _get().persist.rehydrate(),
+  hasHydrated: () => _get().persist.hasHydrated(),
+  onHydrate: listener => _get().persist.onHydrate(listener),
+  onFinishHydration: listener => _get().persist.onFinishHydration(listener),
+  getOptions: () => _get().persist.getOptions(),
+};
 
 export const useProfilesStore = _proxy;
 
@@ -111,9 +126,6 @@ export function createProfilesStore({storage}: {storage: StateStorage}) {
   return useProfilesStore;
 }
 
-// ─── Selectors ────────────────────────────────────────────────
-
-/** Active profile (or `null` if `activeProfileId` does not match a profile). */
 export function selectActiveProfile(
   state: ProfilesState,
 ): Profile | null {
@@ -122,7 +134,6 @@ export function selectActiveProfile(
   );
 }
 
-/** Active profile's preset list (empty array when no active profile). */
 export function selectActivePresets(state: ProfilesState) {
   return selectActiveProfile(state)?.presets ?? [];
 }

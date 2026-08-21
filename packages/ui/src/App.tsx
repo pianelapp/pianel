@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import Menu from 'lucide-react/dist/esm/icons/menu';
 import { useBreakpoint } from './hooks/useBreakpoint';
@@ -12,12 +12,15 @@ import { AlertModal } from './components/modals/AlertModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { DisplayScreen } from './screens/display/DisplayScreen';
 import { StatusBar } from './screens/display/StatusBar';
+import { PerformMode } from './screens/perform/PerformMode';
 import { PresetsScreen } from './screens/presets/PresetsScreen';
 import { ProfilesScreen } from './screens/profiles/ProfilesScreen';
+import { SetlistsScreen } from './screens/setlists/SetlistsScreen';
 
 const TABS = [
   'PRESETS',
   'DISPLAY',
+  'SETLISTS',
   'PROFILES',
 ] as const satisfies readonly Tab[];
 
@@ -25,6 +28,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('DISPLAY');
   const [showSettings, setShowSettings] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [armedSongId, setArmedSongId] = useState<string | null>(null);
+
+  const handleArm = useCallback((songId: string | null) => {
+    setArmedSongId(songId);
+    if (songId) setActiveTab('DISPLAY');
+  }, []);
 
   const tier = useBreakpoint();
   const isMobile = tier.viewport === 'mobile';
@@ -122,10 +131,22 @@ export default function App() {
           {/* Tab Content */}
           <div className="flex-1 overflow-x-hidden overflow-y-auto relative">
             {activeTab === 'DISPLAY' && (
-              <DisplayScreen isLightMode={isLightMode} />
+              <DisplayScreen
+                isLightMode={isLightMode}
+                armedSongId={armedSongId}
+                onArm={handleArm}
+                compact={statusBarCompact}
+              />
             )}
             {activeTab === 'PRESETS' && (
               <PresetsScreen isLightMode={isLightMode} />
+            )}
+            {activeTab === 'SETLISTS' && (
+              <SetlistsScreen
+                isLightMode={isLightMode}
+                armedSongId={armedSongId}
+                onArm={handleArm}
+              />
             )}
             {activeTab === 'PROFILES' && (
               <ProfilesScreen isLightMode={isLightMode} />
@@ -178,6 +199,7 @@ export default function App() {
       />
       <MIDIDeviceChooser isLightMode={isLightMode} />
       <AlertModal isLightMode={isLightMode} />
+      <PerformMode isLightMode={isLightMode} />
     </div>
   );
 }

@@ -33,7 +33,6 @@ export type {
 } from '../types/profile';
 export {
   PRESET_TILE_COUNT,
-  MAX_SUPPORTED_SCHEMA_VERSION,
   DuplicateProfileNameError,
   ProfileNotFoundError,
   MalformedProfileFileError,
@@ -46,3 +45,21 @@ export {DEFAULT_PERFORMANCE_SNAPSHOT} from '../types/performanceSnapshot';
 
 export type {ThemePreference, AccidentalPreference, AppSettingsState, AppSettingsActions} from './appSettingsStore';
 export {useAppSettingsStore, createAppSettingsStore} from './appSettingsStore';
+
+export type {CursorState, CursorActions} from './cursorStore';
+export {useCursorStore} from './cursorStore';
+
+export type {Scene, Song, SetlistEntry, Setlist} from '../types/setlist';
+export type {SchemaVersion} from '../types/schemaVersion';
+export {CURRENT_SCHEMA_VERSION} from '../types/schemaVersion';
+export {
+  SongNotFoundError,
+  SceneNotFoundError,
+  SetlistNotFoundError,
+  EntryNotFoundError,
+  EmptySongError,
+  EmptySetlistError,
+  MissingSongError,
+} from '../types/setlist';
+
+export {normalizeProfile} from '../helpers/profileMigration';
