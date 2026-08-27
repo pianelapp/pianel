@@ -25,6 +25,16 @@ describe('detectEdge', () => {
     expect(detectEdge(127, pc)).toBe('press');
   });
 
+  it('treats every sysex as a press, since it carries no release', () => {
+    const sysex: ControlMessage = {
+      type: 'sysex',
+      data: [0xf0, 0x41, 0xf7],
+      value: 127,
+    };
+    expect(detectEdge(null, sysex)).toBe('press');
+    expect(detectEdge(127, sysex)).toBe('press');
+  });
+
   it('treats note-on velocity 0 as a release', () => {
     const on: ControlMessage = {type: 'note', channel: 1, id: 60, value: 100};
     const off: ControlMessage = {type: 'note', channel: 1, id: 60, value: 0};
@@ -74,6 +84,18 @@ describe('EdgeGate', () => {
     expect(gate.admit(cc(127))).toBe('press');
     clock = 1000;
     expect(gate.admit(cc(127))).toBeNull();
+  });
+
+  it('debounces repeats of the same sysex payload but not a different one', () => {
+    const one: ControlMessage = {type: 'sysex', data: [0xf0, 0x01, 0xf7], value: 127};
+    const two: ControlMessage = {type: 'sysex', data: [0xf0, 0x02, 0xf7], value: 127};
+
+    expect(gate.admit(one)).toBe('press');
+    clock = 50;
+    expect(gate.admit(one)).toBeNull();
+    expect(gate.admit(two)).toBe('press');
+    clock = 400;
+    expect(gate.admit(one)).toBe('press');
   });
 
   it('forgets everything on reset', () => {

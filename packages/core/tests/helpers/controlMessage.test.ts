@@ -2,6 +2,8 @@ import {
   parseControlMessage,
   messageKey,
   matchesMessage,
+  sameMatch,
+  toMatch,
 } from '../../src/helpers/controlMessage';
 import type {ControlMessage} from '../../src/types/control';
 
@@ -14,6 +16,16 @@ describe('parseControlMessage', () => {
     ['note off', [0x80, 0x3c, 0x40], {type: 'note', channel: 1, id: 60, value: 0}],
     ['note on velocity 0', [0x90, 0x3c, 0x00], {type: 'note', channel: 1, id: 60, value: 0}],
     ['program change', [0xc0, 0x05], {type: 'pc', channel: 1, id: 5, value: 127}],
+    [
+      'sysex',
+      [0xf0, 0x41, 0x10, 0x42, 0xf7],
+      {type: 'sysex', data: [0xf0, 0x41, 0x10, 0x42, 0xf7], value: 127},
+    ],
+    [
+      'a one-data-byte sysex',
+      [0xf0, 0x7d, 0xf7],
+      {type: 'sysex', data: [0xf0, 0x7d, 0xf7], value: 127},
+    ],
   ])('parses %s', (_label, bytes, expected) => {
     expect(parseControlMessage(bytes as number[])).toEqual(expected);
   });
@@ -25,7 +37,8 @@ describe('parseControlMessage', () => {
     ['stop', [0xfc]],
     ['reset', [0xff]],
     ['song position', [0xf2, 0x00, 0x00]],
-    ['sysex', [0xf0, 0x41, 0x10, 0xf7]],
+    ['an unterminated sysex', [0xf0, 0x41, 0x10]],
+    ['an empty sysex', [0xf0, 0xf7]],
     ['polyphonic aftertouch', [0xa0, 0x3c, 0x40]],
     ['channel pressure', [0xd0, 0x40]],
     ['pitch bend', [0xe0, 0x00, 0x40]],
@@ -35,6 +48,14 @@ describe('parseControlMessage', () => {
     ['a truncated program change', [0xc0]],
   ])('rejects %s', (_label, bytes) => {
     expect(parseControlMessage(bytes as number[])).toBeNull();
+  });
+
+  it('stops a sysex at its terminator and ignores trailing bytes', () => {
+    expect(parseControlMessage([0xf0, 0x41, 0xf7, 0x99, 0x99])).toEqual({
+      type: 'sysex',
+      data: [0xf0, 0x41, 0xf7],
+      value: 127,
+    });
   });
 
   it('masks data bytes to 7 bits rather than trusting the device', () => {
@@ -60,6 +81,68 @@ describe('messageKey', () => {
     expect(a).not.toBe(messageKey({type: 'cc', channel: 2, id: 20}));
     expect(a).not.toBe(messageKey({type: 'cc', channel: 1, id: 21}));
   });
+
+  it('keys a sysex by its whole payload', () => {
+    const a = messageKey({type: 'sysex', data: [0xf0, 0x41, 0x01, 0xf7]});
+    expect(a).toBe(messageKey({type: 'sysex', data: [0xf0, 0x41, 0x01, 0xf7]}));
+    expect(a).not.toBe(messageKey({type: 'sysex', data: [0xf0, 0x41, 0x02, 0xf7]}));
+    expect(a).not.toBe(messageKey({type: 'sysex', data: [0xf0, 0x41, 0xf7]}));
+  });
+
+  it('cannot collide a sysex payload with a channel message', () => {
+    expect(messageKey({type: 'sysex', data: [1, 2, 3]})).not.toBe(
+      messageKey({type: 'cc', channel: 1, id: 20}),
+    );
+  });
+});
+
+describe('toMatch', () => {
+  it('drops the value from a channel message', () => {
+    expect(toMatch({type: 'cc', channel: 1, id: 20, value: 127})).toEqual({
+      type: 'cc',
+      channel: 1,
+      id: 20,
+    });
+  });
+
+  it('copies the sysex payload rather than aliasing it', () => {
+    const message: ControlMessage = {
+      type: 'sysex',
+      data: [0xf0, 0x41, 0xf7],
+      value: 127,
+    };
+    const match = toMatch(message);
+
+    expect(match).toEqual({type: 'sysex', data: [0xf0, 0x41, 0xf7]});
+    message.data[1] = 0x42;
+    expect(match).toEqual({type: 'sysex', data: [0xf0, 0x41, 0xf7]});
+  });
+});
+
+describe('sameMatch', () => {
+  it('compares channel messages by identity, not reference', () => {
+    expect(
+      sameMatch({type: 'cc', channel: 1, id: 20}, {type: 'cc', channel: 1, id: 20}),
+    ).toBe(true);
+    expect(
+      sameMatch({type: 'cc', channel: 1, id: 20}, {type: 'cc', channel: 1, id: 21}),
+    ).toBe(false);
+  });
+
+  it('compares sysex payloads element by element', () => {
+    expect(
+      sameMatch(
+        {type: 'sysex', data: [0xf0, 0x41, 0xf7]},
+        {type: 'sysex', data: [0xf0, 0x41, 0xf7]},
+      ),
+    ).toBe(true);
+    expect(
+      sameMatch(
+        {type: 'sysex', data: [0xf0, 0x41, 0xf7]},
+        {type: 'sysex', data: [0xf0, 0x42, 0xf7]},
+      ),
+    ).toBe(false);
+  });
 });
 
 describe('matchesMessage', () => {
@@ -75,5 +158,16 @@ describe('matchesMessage', () => {
   it('rejects a different switch', () => {
     expect(matchesMessage({type: 'cc', channel: 2, id: 20}, message)).toBe(false);
     expect(matchesMessage({type: 'note', channel: 1, id: 20}, message)).toBe(false);
+  });
+
+  it('matches a sysex binding against its payload', () => {
+    const sysex: ControlMessage = {
+      type: 'sysex',
+      data: [0xf0, 0x41, 0x01, 0xf7],
+      value: 127,
+    };
+    expect(matchesMessage({type: 'sysex', data: [0xf0, 0x41, 0x01, 0xf7]}, sysex)).toBe(true);
+    expect(matchesMessage({type: 'sysex', data: [0xf0, 0x41, 0x02, 0xf7]}, sysex)).toBe(false);
+    expect(matchesMessage({type: 'cc', channel: 1, id: 20}, sysex)).toBe(false);
   });
 });

@@ -8,7 +8,7 @@ export function detectEdge(
   previousValue: number | null,
   message: ControlMessage,
 ): Edge | null {
-  if (message.type === 'pc') return 'press';
+  if (message.type === 'pc' || message.type === 'sysex') return 'press';
 
   const wasHigh = previousValue !== null && previousValue >= EDGE_THRESHOLD;
   const isHigh = message.value >= EDGE_THRESHOLD;

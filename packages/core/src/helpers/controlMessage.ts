@@ -1,6 +1,9 @@
 import type {ControlMatch, ControlMessage} from '../types/control';
 
 const DATA_MASK = 0x7f;
+const SYSEX_START = 0xf0;
+const SYSEX_END = 0xf7;
+const MIN_SYSEX_LENGTH = 3;
 
 export function parseControlMessage(
   bytes: readonly number[],
@@ -8,6 +11,15 @@ export function parseControlMessage(
   if (bytes.length < 2) return null;
 
   const status = bytes[0];
+
+  if (status === SYSEX_START) {
+    const end = bytes.indexOf(SYSEX_END);
+    if (end === -1) return null;
+    const data = bytes.slice(0, end + 1);
+    if (data.length < MIN_SYSEX_LENGTH) return null;
+    return {type: 'sysex', data, value: DATA_MASK};
+  }
+
   if (status < 0x80 || status > 0xef) return null;
 
   const channel = (status & 0x0f) + 1;
@@ -45,17 +57,23 @@ export function parseControlMessage(
   return null;
 }
 
-export function messageKey(match: ControlMatch): string {
-  return `${match.type}:${match.channel}:${match.id}`;
+export function messageKey(target: ControlMatch | ControlMessage): string {
+  if (target.type === 'sysex') return `sysex:${target.data.join(',')}`;
+  return `${target.type}:${target.channel}:${target.id}`;
+}
+
+export function toMatch(message: ControlMessage): ControlMatch {
+  if (message.type === 'sysex') return {type: 'sysex', data: [...message.data]};
+  return {type: message.type, channel: message.channel, id: message.id};
+}
+
+export function sameMatch(a: ControlMatch, b: ControlMatch): boolean {
+  return messageKey(a) === messageKey(b);
 }
 
 export function matchesMessage(
   match: ControlMatch,
   message: ControlMessage,
 ): boolean {
-  return (
-    match.type === message.type &&
-    match.channel === message.channel &&
-    match.id === message.id
-  );
+  return messageKey(match) === messageKey(message);
 }

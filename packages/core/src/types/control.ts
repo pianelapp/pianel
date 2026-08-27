@@ -2,22 +2,39 @@ export type Behaviour = 'press' | 'release' | 'peek';
 
 export const BEHAVIOURS: readonly Behaviour[] = ['press', 'release', 'peek'];
 
-export type ControlMessageType = 'cc' | 'note' | 'pc';
+export type ChannelMessageType = 'cc' | 'note' | 'pc';
+
+export type ControlMessageType = ChannelMessageType | 'sysex';
 
 export type Edge = 'press' | 'release';
 
-export interface ControlMessage {
-  type: ControlMessageType;
+export interface ChannelControlMessage {
+  type: ChannelMessageType;
   channel: number;
   id: number;
   value: number;
 }
 
-export interface ControlMatch {
-  type: ControlMessageType;
+export interface SysexControlMessage {
+  type: 'sysex';
+  data: number[];
+  value: number;
+}
+
+export type ControlMessage = ChannelControlMessage | SysexControlMessage;
+
+export interface ChannelControlMatch {
+  type: ChannelMessageType;
   channel: number;
   id: number;
 }
+
+export interface SysexControlMatch {
+  type: 'sysex';
+  data: number[];
+}
+
+export type ControlMatch = ChannelControlMatch | SysexControlMatch;
 
 export interface PeekHandle {
   end(): Promise<void>;
