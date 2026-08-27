@@ -1,9 +1,20 @@
-import type {ControlMatch, ControlMessage} from '../types/control';
+import type {
+  Behaviour,
+  ControlMatch,
+  ControlMessage,
+} from '../types/control';
 
 const DATA_MASK = 0x7f;
 const SYSEX_START = 0xf0;
 const SYSEX_END = 0xf7;
 const MIN_SYSEX_LENGTH = 3;
+
+const EDGED_BEHAVIOURS: readonly Behaviour[] = ['press', 'release', 'peek'];
+const PRESS_ONLY_BEHAVIOURS: readonly Behaviour[] = ['press'];
+
+function isDataByte(byte: number): boolean {
+  return Number.isInteger(byte) && byte >= 0x00 && byte <= DATA_MASK;
+}
 
 export function parseControlMessage(
   bytes: readonly number[],
@@ -15,9 +26,11 @@ export function parseControlMessage(
   if (status === SYSEX_START) {
     const end = bytes.indexOf(SYSEX_END);
     if (end === -1) return null;
-    const data = bytes.slice(0, end + 1);
-    if (data.length < MIN_SYSEX_LENGTH) return null;
-    return {type: 'sysex', data, value: DATA_MASK};
+    if (end + 1 < MIN_SYSEX_LENGTH) return null;
+    for (let i = 1; i < end; i++) {
+      if (!isDataByte(bytes[i])) return null;
+    }
+    return {type: 'sysex', data: bytes.slice(0, end + 1), value: DATA_MASK};
   }
 
   if (status < 0x80 || status > 0xef) return null;
@@ -76,4 +89,14 @@ export function matchesMessage(
   message: ControlMessage,
 ): boolean {
   return messageKey(match) === messageKey(message);
+}
+
+export function canRelease(target: ControlMatch | ControlMessage): boolean {
+  return target.type !== 'pc' && target.type !== 'sysex';
+}
+
+export function behavioursFor(
+  target: ControlMatch | ControlMessage,
+): readonly Behaviour[] {
+  return canRelease(target) ? EDGED_BEHAVIOURS : PRESS_ONLY_BEHAVIOURS;
 }

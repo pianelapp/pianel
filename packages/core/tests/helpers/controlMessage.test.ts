@@ -4,6 +4,8 @@ import {
   matchesMessage,
   sameMatch,
   toMatch,
+  canRelease,
+  behavioursFor,
 } from '../../src/helpers/controlMessage';
 import type {ControlMessage} from '../../src/types/control';
 
@@ -39,6 +41,12 @@ describe('parseControlMessage', () => {
     ['song position', [0xf2, 0x00, 0x00]],
     ['an unterminated sysex', [0xf0, 0x41, 0x10]],
     ['an empty sysex', [0xf0, 0xf7]],
+    ['a sysex carrying a byte above 0x7f', [0xf0, 0x94, 0xff, 0xf7]],
+    ['a sysex aborted by an embedded status byte', [0xf0, 0x90, 0x40, 0xf7]],
+    ['a sysex containing a nested start', [0xf0, 0xf0, 0x41, 0xf7]],
+    ['a sysex carrying a non-integer', [0xf0, 1.5, 0xf7]],
+    ['a sysex carrying NaN', [0xf0, NaN, 0xf7]],
+    ['a sysex carrying a negative byte', [0xf0, -1, 0xf7]],
     ['polyphonic aftertouch', [0xa0, 0x3c, 0x40]],
     ['channel pressure', [0xd0, 0x40]],
     ['pitch bend', [0xe0, 0x00, 0x40]],
@@ -94,6 +102,46 @@ describe('messageKey', () => {
       messageKey({type: 'cc', channel: 1, id: 20}),
     );
   });
+
+  it('separates payloads that differ only in where the byte boundaries fall', () => {
+    expect(messageKey({type: 'sysex', data: [1, 23]})).not.toBe(
+      messageKey({type: 'sysex', data: [12, 3]}),
+    );
+  });
+
+  it('separates a longer payload from a prefix of itself', () => {
+    expect(messageKey({type: 'sysex', data: [1, 2]})).not.toBe(
+      messageKey({type: 'sysex', data: [1, 2, 0]}),
+    );
+  });
+});
+
+describe('canRelease', () => {
+  it.each([
+    ['cc', {type: 'cc', channel: 1, id: 20}, true],
+    ['note', {type: 'note', channel: 1, id: 60}, true],
+    ['pc', {type: 'pc', channel: 1, id: 5}, false],
+    ['sysex', {type: 'sysex', data: [0xf0, 0x41, 0xf7]}, false],
+  ])('reports %s', (_label, match, expected) => {
+    expect(canRelease(match as never)).toBe(expected);
+  });
+});
+
+describe('behavioursFor', () => {
+  it('offers all three behaviours to a control with a release edge', () => {
+    expect(behavioursFor({type: 'cc', channel: 1, id: 20})).toEqual([
+      'press',
+      'release',
+      'peek',
+    ]);
+  });
+
+  it.each([
+    ['program change', {type: 'pc', channel: 1, id: 5}],
+    ['sysex', {type: 'sysex', data: [0xf0, 0x41, 0xf7]}],
+  ])('offers press only to %s, which has no release edge', (_label, match) => {
+    expect(behavioursFor(match as never)).toEqual(['press']);
+  });
 });
 
 describe('toMatch', () => {
@@ -106,15 +154,12 @@ describe('toMatch', () => {
   });
 
   it('copies the sysex payload rather than aliasing it', () => {
-    const message: ControlMessage = {
-      type: 'sysex',
-      data: [0xf0, 0x41, 0xf7],
-      value: 127,
-    };
+    const data = [0xf0, 0x41, 0xf7];
+    const message: ControlMessage = {type: 'sysex', data, value: 127};
     const match = toMatch(message);
 
     expect(match).toEqual({type: 'sysex', data: [0xf0, 0x41, 0xf7]});
-    message.data[1] = 0x42;
+    data[1] = 0x42;
     expect(match).toEqual({type: 'sysex', data: [0xf0, 0x41, 0xf7]});
   });
 });

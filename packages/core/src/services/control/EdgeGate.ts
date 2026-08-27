@@ -1,14 +1,15 @@
-import {messageKey} from '../../helpers/controlMessage';
+import {canRelease, messageKey} from '../../helpers/controlMessage';
 import type {ControlMessage, Edge} from '../../types/control';
 
 export const EDGE_THRESHOLD = 64;
 export const DEFAULT_DEBOUNCE_MS = 150;
+export const MAX_TRACKED_CONTROLS = 512;
 
 export function detectEdge(
   previousValue: number | null,
   message: ControlMessage,
 ): Edge | null {
-  if (message.type === 'pc' || message.type === 'sysex') return 'press';
+  if (!canRelease(message)) return 'press';
 
   const wasHigh = previousValue !== null && previousValue >= EDGE_THRESHOLD;
   const isHigh = message.value >= EDGE_THRESHOLD;
@@ -37,7 +38,6 @@ export class EdgeGate {
   admit(message: ControlMessage): Edge | null {
     const key = messageKey(message);
     const edge = detectEdge(this.lastValue.get(key) ?? null, message);
-    this.lastValue.set(key, message.value);
     if (!edge) return null;
 
     const gateKey = `${key}:${edge}`;
@@ -45,8 +45,16 @@ export class EdgeGate {
     const previous = this.lastFire.get(gateKey);
     if (previous !== undefined && at - previous < this.debounceMs) return null;
 
-    this.lastFire.set(gateKey, at);
+    this.remember(this.lastValue, key, message.value);
+    this.remember(this.lastFire, gateKey, at);
     return edge;
+  }
+
+  private remember(map: Map<string, number>, key: string, value: number): void {
+    map.set(key, value);
+    if (map.size <= MAX_TRACKED_CONTROLS) return;
+    const oldest = map.keys().next().value;
+    if (oldest !== undefined) map.delete(oldest);
   }
 
   reset(): void {

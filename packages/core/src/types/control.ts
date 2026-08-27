@@ -17,7 +17,7 @@ export interface ChannelControlMessage {
 
 export interface SysexControlMessage {
   type: 'sysex';
-  data: number[];
+  data: readonly number[];
   value: number;
 }
 
@@ -31,7 +31,7 @@ export interface ChannelControlMatch {
 
 export interface SysexControlMatch {
   type: 'sysex';
-  data: number[];
+  data: readonly number[];
 }
 
 export type ControlMatch = ChannelControlMatch | SysexControlMatch;

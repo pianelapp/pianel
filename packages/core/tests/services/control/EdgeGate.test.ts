@@ -1,4 +1,8 @@
-import {detectEdge, EdgeGate} from '../../../src/services/control/EdgeGate';
+import {
+  detectEdge,
+  EdgeGate,
+  MAX_TRACKED_CONTROLS,
+} from '../../../src/services/control/EdgeGate';
 import type {ControlMessage} from '../../../src/types/control';
 
 function cc(value: number, id = 20): ControlMessage {
@@ -96,6 +100,43 @@ describe('EdgeGate', () => {
     expect(gate.admit(two)).toBe('press');
     clock = 400;
     expect(gate.admit(one)).toBe('press');
+  });
+
+  it('does not leave an orphan release when a press was debounced away', () => {
+    const out: Array<string | null> = [];
+    for (const [at, value] of [
+      [0, 127],
+      [3, 0],
+      [6, 127],
+      [3000, 0],
+    ]) {
+      clock = at;
+      out.push(gate.admit(cc(value)));
+    }
+
+    expect(out).toEqual(['press', 'release', null, null]);
+  });
+
+  it('still admits a genuine press long after one was debounced away', () => {
+    clock = 0;
+    expect(gate.admit(cc(127))).toBe('press');
+    clock = 3;
+    expect(gate.admit(cc(0))).toBe('release');
+    clock = 6;
+    expect(gate.admit(cc(127))).toBeNull();
+    clock = 5000;
+    expect(gate.admit(cc(127))).toBe('press');
+    clock = 5100;
+    expect(gate.admit(cc(0))).toBe('release');
+  });
+
+  it('stops tracking the oldest control once the cap is passed', () => {
+    for (let id = 0; id < MAX_TRACKED_CONTROLS + 10; id++) {
+      clock = id;
+      expect(gate.admit(cc(127, id))).toBe('press');
+    }
+    clock = 100000;
+    expect(gate.admit(cc(0, 0))).toBeNull();
   });
 
   it('forgets everything on reset', () => {
