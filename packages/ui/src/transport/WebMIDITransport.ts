@@ -5,6 +5,8 @@ import type {
   Unsubscribe,
   DiscoveredDevice,
 } from '@pianel/core/transport/types';
+import { getMIDIAccess } from './midiAccess';
+import { matchInputPort } from './matchInputPort';
 
 type MIDIDeviceInfo = { id: string; name: string };
 
@@ -17,6 +19,7 @@ export class WebMIDITransport implements Transport {
   private _deviceName: string | null = null;
   private _midiAccess: MIDIAccess | null = null;
   private _statechangeHandler: ((event: Event) => void) | null = null;
+  private _inputPortId: string | null = null;
 
   /** Optional chooser: called when >1 MIDI output is available. Resolves with chosen id or null (→ pick first). */
   static chooser: ((devices: MIDIDeviceInfo[]) => Promise<string | null>) | null = null;
@@ -27,6 +30,10 @@ export class WebMIDITransport implements Transport {
 
   get deviceName(): string | null {
     return this._deviceName;
+  }
+
+  get inputPortId(): string | null {
+    return this._inputPortId;
   }
 
   async scan(
@@ -46,9 +53,8 @@ export class WebMIDITransport implements Transport {
    * already-paired devices through the OS, so we don't need a scan window.
    */
   async listDevices(): Promise<DiscoveredDevice[]> {
-    if (typeof navigator.requestMIDIAccess !== 'function') return [];
     try {
-      const midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+      const midiAccess = await getMIDIAccess();
       const out: DiscoveredDevice[] = [];
       midiAccess.outputs.forEach(output => {
         out.push({ id: output.id, name: output.name ?? output.id });
@@ -63,11 +69,7 @@ export class WebMIDITransport implements Transport {
     this._status = 'connecting';
 
     try {
-      if (typeof navigator.requestMIDIAccess !== 'function') {
-        throw new Error('Web MIDI API not available in this context');
-      }
-
-      const midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+      const midiAccess = await getMIDIAccess();
 
       // Collect all output ports as candidate devices.
       const outputs: MIDIOutput[] = [];
@@ -108,32 +110,29 @@ export class WebMIDITransport implements Transport {
         selectedOutput = found ?? outputs[0];
       }
 
-      // Find matching input port by name.
-      let matchedInput: MIDIInput | null = null;
-      midiAccess.inputs.forEach(input => {
-        if (input.name === selectedOutput.name) {
-          matchedInput = input;
-        }
-      });
+      const inputs: MIDIInput[] = [];
+      midiAccess.inputs.forEach(input => inputs.push(input));
 
-      if (!matchedInput) {
-        // Fallback: pick first available input.
-        midiAccess.inputs.forEach(input => {
-          if (!matchedInput) matchedInput = input;
-        });
-      }
-
-      if (!matchedInput) {
+      const match = matchInputPort(inputs, selectedOutput.name ?? null);
+      if (!match) {
         throw new Error('No matching MIDI input port found for the selected output.');
       }
+      if (match.how === 'fallback') {
+        console.warn(
+          '[MIDI] no input port matched the selected output; using the first available input',
+          { output: selectedOutput.name, input: match.port.name },
+        );
+      }
+      const matchedInput = match.port;
 
       // Open both ports.
       await selectedOutput.open();
-      await (matchedInput as MIDIInput).open();
+      await matchedInput.open();
 
       this._output = selectedOutput;
-      this._input = matchedInput as MIDIInput;
+      this._input = matchedInput;
       this._deviceName = selectedOutput.name ?? null;
+      this._inputPortId = matchedInput.id;
 
       // Register midimessage listener.
       this._midiMessageHandler = (event: Event) => {
@@ -154,7 +153,7 @@ export class WebMIDITransport implements Transport {
       // second of the port disappearing.
       this._midiAccess = midiAccess;
       const selectedOutputId = selectedOutput.id;
-      const matchedInputId = (matchedInput as MIDIInput).id;
+      const matchedInputId = matchedInput.id;
       this._statechangeHandler = (event: Event) => {
         const port = (event as MIDIConnectionEvent).port;
         if (!port) return;
@@ -191,6 +190,7 @@ export class WebMIDITransport implements Transport {
     this._input = null;
     this._output = null;
     this._deviceName = null;
+    this._inputPortId = null;
     this._status = 'disconnected';
   }
 

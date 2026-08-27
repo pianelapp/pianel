@@ -46,6 +46,8 @@ export interface Transport {
    */
   readonly deviceName?: string | null;
 
+  readonly inputPortId?: string | null;
+
   /**
    * Scan for devices advertising the BLE MIDI service.
    * Calls onDiscovered for each found device.

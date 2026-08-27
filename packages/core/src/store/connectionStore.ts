@@ -22,6 +22,7 @@ export interface ConnectionState {
   isFirstConnectionThisSession: boolean;
   /** Epoch ms of the last inbound notification or heartbeat reply. Runtime-only — not persisted. */
   lastSeenAt: number | null;
+  inputPortId: string | null;
   /** Devices yielded by the most recent scan. Runtime-only — NOT persisted. */
   discoveredDevices: DiscoveredDevice[];
 }
@@ -36,6 +37,7 @@ export interface ConnectionActions {
   reset: () => void;
   markFirstConnectionHandled: () => void;
   markSeen: () => void;
+  setInputPort: (portId: string | null) => void;
   setStale: () => void;
   addDiscoveredDevice: (device: DiscoveredDevice) => void;
   clearDiscoveredDevices: () => void;
@@ -48,6 +50,7 @@ const initialState: ConnectionState = {
   lastConnectedAt: null,
   isFirstConnectionThisSession: true,
   lastSeenAt: null,
+  inputPortId: null,
   discoveredDevices: [],
 };
 
@@ -75,6 +78,7 @@ function _build(storage: StateStorage) {
         markFirstConnectionHandled: () =>
           set({isFirstConnectionThisSession: false}),
         markSeen: () => set({lastSeenAt: Date.now()}),
+        setInputPort: (portId) => set({inputPortId: portId}),
         setStale: () => {
           // Only meaningful while currently connected — protects against
           // spurious flips during 'connecting' or after 'disconnected'.
