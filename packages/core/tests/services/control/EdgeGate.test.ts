@@ -1,8 +1,4 @@
-import {
-  detectEdge,
-  EdgeGate,
-  MAX_TRACKED_CONTROLS,
-} from '../../../src/services/control/EdgeGate';
+import {detectEdge, EdgeGate} from '../../../src/services/control/EdgeGate';
 import type {ControlMessage} from '../../../src/types/control';
 
 function cc(value: number, id = 20): ControlMessage {
@@ -130,7 +126,7 @@ describe('EdgeGate', () => {
     expect(gate.admit(cc(0))).toBe('release');
   });
 
-  it('keeps a held switch pairable through enough sysex churn to overflow the cap', () => {
+  it('keeps a held switch pairable through heavy sysex churn on the same port', () => {
     const sysex = (n: number): ControlMessage => ({
       type: 'sysex',
       data: [0xf0, 0x41, n & 0x7f, (n >> 7) & 0x7f, 0xf7],
@@ -138,7 +134,7 @@ describe('EdgeGate', () => {
     });
 
     expect(gate.admit(cc(127))).toBe('press');
-    for (let n = 0; n < MAX_TRACKED_CONTROLS + 5; n++) {
+    for (let n = 0; n < 600; n++) {
       clock = 100 + n;
       gate.admit(sysex(n));
     }
@@ -156,21 +152,6 @@ describe('EdgeGate', () => {
     for (let id = 0; id < 128; id++) {
       expect(gate.admit(cc(0, id))).toBe('release');
     }
-  });
-
-  it('caps the debounce clock, which can only weaken debounce and never lose an edge', () => {
-    const sysex = (n: number): ControlMessage => ({
-      type: 'sysex',
-      data: [0xf0, 0x41, n & 0x7f, (n >> 7) & 0x7f, 0xf7],
-      value: 127,
-    });
-
-    for (let n = 0; n < MAX_TRACKED_CONTROLS + 50; n++) {
-      clock = n;
-      expect(gate.admit(sysex(n))).toBe('press');
-    }
-    clock = 5000;
-    expect(gate.admit(sysex(0))).toBe('press');
   });
 
   it('forgets everything on reset', () => {

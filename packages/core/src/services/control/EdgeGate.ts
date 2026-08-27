@@ -3,7 +3,6 @@ import type {ControlMessage, Edge} from '../../types/control';
 
 export const EDGE_THRESHOLD = 64;
 export const DEFAULT_DEBOUNCE_MS = 150;
-export const MAX_TRACKED_CONTROLS = 512;
 
 export function detectEdge(
   previousValue: number | null,
@@ -46,15 +45,8 @@ export class EdgeGate {
     if (previous !== undefined && at - previous < this.debounceMs) return null;
 
     if (canRelease(message)) this.lastValue.set(key, message.value);
-    this.rememberFire(gateKey, at);
-    return edge;
-  }
-
-  private rememberFire(gateKey: string, at: number): void {
     this.lastFire.set(gateKey, at);
-    if (this.lastFire.size <= MAX_TRACKED_CONTROLS) return;
-    const oldest = this.lastFire.keys().next().value;
-    if (oldest !== undefined) this.lastFire.delete(oldest);
+    return edge;
   }
 
   reset(): void {
