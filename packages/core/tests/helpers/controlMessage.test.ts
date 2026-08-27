@@ -7,7 +7,7 @@ import {
   canRelease,
   behavioursFor,
 } from '../../src/helpers/controlMessage';
-import type {ControlMessage} from '../../src/types/control';
+import type {Behaviour, ControlMessage} from '../../src/types/control';
 
 describe('parseControlMessage', () => {
   it.each([
@@ -47,6 +47,10 @@ describe('parseControlMessage', () => {
     ['a sysex carrying a non-integer', [0xf0, 1.5, 0xf7]],
     ['a sysex carrying NaN', [0xf0, NaN, 0xf7]],
     ['a sysex carrying a negative byte', [0xf0, -1, 0xf7]],
+    [
+      'a sysex longer than a control message plausibly is',
+      [0xf0, ...Array.from({length: 300}, () => 0x01), 0xf7],
+    ],
     ['polyphonic aftertouch', [0xa0, 0x3c, 0x40]],
     ['channel pressure', [0xd0, 0x40]],
     ['pitch bend', [0xe0, 0x00, 0x40]],
@@ -128,6 +132,16 @@ describe('canRelease', () => {
 });
 
 describe('behavioursFor', () => {
+  it('cannot be corrupted for other callers by mutating what it returned', () => {
+    const first = behavioursFor({type: 'note', channel: 1, id: 60});
+    expect(() => (first as Behaviour[]).push('press')).toThrow();
+    expect(behavioursFor({type: 'cc', channel: 1, id: 20})).toEqual([
+      'press',
+      'release',
+      'peek',
+    ]);
+  });
+
   it('offers all three behaviours to a control with a release edge', () => {
     expect(behavioursFor({type: 'cc', channel: 1, id: 20})).toEqual([
       'press',

@@ -130,13 +130,47 @@ describe('EdgeGate', () => {
     expect(gate.admit(cc(0))).toBe('release');
   });
 
-  it('stops tracking the oldest control once the cap is passed', () => {
-    for (let id = 0; id < MAX_TRACKED_CONTROLS + 10; id++) {
+  it('keeps a held switch pairable through enough sysex churn to overflow the cap', () => {
+    const sysex = (n: number): ControlMessage => ({
+      type: 'sysex',
+      data: [0xf0, 0x41, n & 0x7f, (n >> 7) & 0x7f, 0xf7],
+      value: 127,
+    });
+
+    expect(gate.admit(cc(127))).toBe('press');
+    for (let n = 0; n < MAX_TRACKED_CONTROLS + 5; n++) {
+      clock = 100 + n;
+      gate.admit(sysex(n));
+    }
+    clock = 10000;
+
+    expect(gate.admit(cc(0))).toBe('release');
+  });
+
+  it('keeps every channel control pairable, however many are in play', () => {
+    for (let id = 0; id < 128; id++) {
       clock = id;
       expect(gate.admit(cc(127, id))).toBe('press');
     }
     clock = 100000;
-    expect(gate.admit(cc(0, 0))).toBeNull();
+    for (let id = 0; id < 128; id++) {
+      expect(gate.admit(cc(0, id))).toBe('release');
+    }
+  });
+
+  it('caps the debounce clock, which can only weaken debounce and never lose an edge', () => {
+    const sysex = (n: number): ControlMessage => ({
+      type: 'sysex',
+      data: [0xf0, 0x41, n & 0x7f, (n >> 7) & 0x7f, 0xf7],
+      value: 127,
+    });
+
+    for (let n = 0; n < MAX_TRACKED_CONTROLS + 50; n++) {
+      clock = n;
+      expect(gate.admit(sysex(n))).toBe('press');
+    }
+    clock = 5000;
+    expect(gate.admit(sysex(0))).toBe('press');
   });
 
   it('forgets everything on reset', () => {

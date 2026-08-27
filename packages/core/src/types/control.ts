@@ -1,6 +1,10 @@
 export type Behaviour = 'press' | 'release' | 'peek';
 
-export const BEHAVIOURS: readonly Behaviour[] = ['press', 'release', 'peek'];
+export const BEHAVIOURS: readonly Behaviour[] = Object.freeze([
+  'press',
+  'release',
+  'peek',
+] as const);
 
 export type ChannelMessageType = 'cc' | 'note' | 'pc';
 
@@ -44,7 +48,7 @@ export interface ControlAction {
   id: string;
   label: string;
   group: string;
-  behaviours: Behaviour[];
+  behaviours: readonly Behaviour[];
   run(): Promise<void>;
   beginPeek?(): Promise<PeekHandle | null>;
 }

@@ -1,16 +1,15 @@
-import type {
-  Behaviour,
-  ControlMatch,
-  ControlMessage,
-} from '../types/control';
+import {BEHAVIOURS} from '../types/control';
+import type {Behaviour, ControlMatch, ControlMessage} from '../types/control';
 
 const DATA_MASK = 0x7f;
 const SYSEX_START = 0xf0;
 const SYSEX_END = 0xf7;
 const MIN_SYSEX_LENGTH = 3;
+const MAX_SYSEX_LENGTH = 256;
 
-const EDGED_BEHAVIOURS: readonly Behaviour[] = ['press', 'release', 'peek'];
-const PRESS_ONLY_BEHAVIOURS: readonly Behaviour[] = ['press'];
+const PRESS_ONLY_BEHAVIOURS: readonly Behaviour[] = Object.freeze([
+  'press',
+] as const);
 
 function isDataByte(byte: number): boolean {
   return Number.isInteger(byte) && byte >= 0x00 && byte <= DATA_MASK;
@@ -27,6 +26,7 @@ export function parseControlMessage(
     const end = bytes.indexOf(SYSEX_END);
     if (end === -1) return null;
     if (end + 1 < MIN_SYSEX_LENGTH) return null;
+    if (end + 1 > MAX_SYSEX_LENGTH) return null;
     for (let i = 1; i < end; i++) {
       if (!isDataByte(bytes[i])) return null;
     }
@@ -98,5 +98,5 @@ export function canRelease(target: ControlMatch | ControlMessage): boolean {
 export function behavioursFor(
   target: ControlMatch | ControlMessage,
 ): readonly Behaviour[] {
-  return canRelease(target) ? EDGED_BEHAVIOURS : PRESS_ONLY_BEHAVIOURS;
+  return canRelease(target) ? BEHAVIOURS : PRESS_ONLY_BEHAVIOURS;
 }

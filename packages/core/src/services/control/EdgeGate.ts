@@ -45,16 +45,16 @@ export class EdgeGate {
     const previous = this.lastFire.get(gateKey);
     if (previous !== undefined && at - previous < this.debounceMs) return null;
 
-    this.remember(this.lastValue, key, message.value);
-    this.remember(this.lastFire, gateKey, at);
+    if (canRelease(message)) this.lastValue.set(key, message.value);
+    this.rememberFire(gateKey, at);
     return edge;
   }
 
-  private remember(map: Map<string, number>, key: string, value: number): void {
-    map.set(key, value);
-    if (map.size <= MAX_TRACKED_CONTROLS) return;
-    const oldest = map.keys().next().value;
-    if (oldest !== undefined) map.delete(oldest);
+  private rememberFire(gateKey: string, at: number): void {
+    this.lastFire.set(gateKey, at);
+    if (this.lastFire.size <= MAX_TRACKED_CONTROLS) return;
+    const oldest = this.lastFire.keys().next().value;
+    if (oldest !== undefined) this.lastFire.delete(oldest);
   }
 
   reset(): void {
