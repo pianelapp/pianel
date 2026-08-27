@@ -9,6 +9,11 @@
 
 import {create} from 'zustand';
 
+export interface CursorAnchor {
+  entryIndex: number;
+  sceneIndex: number;
+}
+
 export interface CursorState {
   /** Null when performing a single song outside a setlist (rehearsal path). */
   setlistId: string | null;
@@ -19,6 +24,7 @@ export interface CursorState {
   /** Position in the current song's `scenes`. */
   sceneIndex: number;
   isPerforming: boolean;
+  anchor: CursorAnchor | null;
 }
 
 /**
@@ -40,6 +46,8 @@ export interface CursorActions {
   }) => void;
   exit: () => void;
   setPosition: (p: CursorPosition) => void;
+  setAnchor: (anchor: CursorAnchor) => void;
+  clearAnchor: () => void;
 }
 
 const IDLE: CursorState = {
@@ -48,6 +56,7 @@ const IDLE: CursorState = {
   entryIndex: 0,
   sceneIndex: 0,
   isPerforming: false,
+  anchor: null,
 };
 
 export const useCursorStore = create<CursorState & CursorActions>()(set => ({
@@ -62,6 +71,7 @@ export const useCursorStore = create<CursorState & CursorActions>()(set => ({
       entryIndex: setlistId === null ? 0 : entryIndex,
       sceneIndex: 0,
       isPerforming: true,
+      anchor: null,
     }),
 
   exit: () => set({...IDLE}),
@@ -72,4 +82,8 @@ export const useCursorStore = create<CursorState & CursorActions>()(set => ({
       entryIndex: entryIndex ?? state.entryIndex,
       sceneIndex,
     })),
+
+  setAnchor: anchor => set({anchor}),
+
+  clearAnchor: () => set({anchor: null}),
 }));

@@ -16,6 +16,8 @@ import { PerformMode } from './screens/perform/PerformMode';
 import { PresetsScreen } from './screens/presets/PresetsScreen';
 import { ProfilesScreen } from './screens/profiles/ProfilesScreen';
 import { SetlistsScreen } from './screens/setlists/SetlistsScreen';
+import { PerformActions } from './components/control/PerformActions';
+import { PianoActions } from './components/control/PianoActions';
 
 const TABS = [
   'PRESETS',
@@ -200,6 +202,8 @@ export default function App() {
       <MIDIDeviceChooser isLightMode={isLightMode} />
       <AlertModal isLightMode={isLightMode} />
       <PerformMode isLightMode={isLightMode} />
+      <PerformActions />
+      <PianoActions />
     </div>
   );
 }

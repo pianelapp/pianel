@@ -37,6 +37,10 @@ import { setProfileService } from '@pianel/ui/hooks/useProfiles';
 import { setSongService } from '@pianel/ui/hooks/useSongs';
 import { setSetlistService } from '@pianel/ui/hooks/useSetlists';
 import { setCursorService } from '@pianel/ui/hooks/usePerformCursor';
+import { WebMIDIInputTransport } from '@pianel/ui/transport/WebMIDIInputTransport';
+import { ControlSurfaceService } from '@pianel/core/services/control/ControlSurfaceService';
+import { getControlActionRegistry } from '@pianel/core/services/control/registry';
+import { setControlSurfaceService } from '@pianel/ui/hooks/useControlSurface';
 import {
   syncChordAccidentalsFromStore,
   subscribeChordAccidentals,
@@ -85,6 +89,13 @@ setSongService(songService);
 setSetlistService(setlistService);
 setCursorService(cursorService);
 
+const controlInputTransport = new WebMIDIInputTransport();
+const controlSurfaceService = new ControlSurfaceService(
+  controlInputTransport,
+  getControlActionRegistry(),
+);
+setControlSurfaceService(controlSurfaceService);
+
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 // Await the first async storage read, ensure a default profile exists, then
 // load the boot/active profile so UI config hydrates from it. Non-audible —
@@ -102,6 +113,7 @@ void runBootstrap(
     // 009-settings-preferences: restore the live chord spelling from the now
     // restored accidental preference (Req 6.4).
     syncChordAccidentalsFromStore();
+    void controlSurfaceService.restore();
   })
   .catch((err) => {
     // eslint-disable-next-line no-console
