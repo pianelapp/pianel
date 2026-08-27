@@ -7,6 +7,7 @@ import type {
 } from '@pianel/core/transport/types';
 import { getMIDIAccess } from './midiAccess';
 import { matchInputPort } from './matchInputPort';
+import { claimPort, claimedPortIds, releaseRole } from './portClaims';
 
 type MIDIDeviceInfo = { id: string; name: string };
 
@@ -113,7 +114,7 @@ export class WebMIDITransport implements Transport {
       const inputs: MIDIInput[] = [];
       midiAccess.inputs.forEach(input => inputs.push(input));
 
-      const match = matchInputPort(inputs, selectedOutput.name ?? null);
+      const match = matchInputPort(inputs, selectedOutput.name ?? null, claimedPortIds('control'));
       if (!match) {
         throw new Error('No matching MIDI input port found for the selected output.');
       }
@@ -133,6 +134,7 @@ export class WebMIDITransport implements Transport {
       this._input = matchedInput;
       this._deviceName = selectedOutput.name ?? null;
       this._inputPortId = matchedInput.id;
+      claimPort(matchedInput.id, 'piano');
 
       // Register midimessage listener.
       this._midiMessageHandler = (event: Event) => {
@@ -191,6 +193,7 @@ export class WebMIDITransport implements Transport {
     this._output = null;
     this._deviceName = null;
     this._inputPortId = null;
+    releaseRole('piano');
     this._status = 'disconnected';
   }
 

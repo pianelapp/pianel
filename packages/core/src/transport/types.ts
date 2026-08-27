@@ -107,3 +107,16 @@ export interface Transport {
    */
   destroy(): Promise<void>;
 }
+
+export type TransportStatusListener = (status: TransportStatus) => void;
+
+export interface InputTransport {
+  readonly status: TransportStatus;
+  readonly deviceName?: string | null;
+  listDevices(): Promise<DiscoveredDevice[]>;
+  connect(deviceId: string, deviceName?: string | null): Promise<void>;
+  disconnect(): Promise<void>;
+  subscribe(listener: NotificationListener): Unsubscribe;
+  onStatusChange(listener: TransportStatusListener): Unsubscribe;
+  destroy(): Promise<void>;
+}
