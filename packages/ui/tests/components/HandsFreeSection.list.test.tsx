@@ -67,7 +67,7 @@ describe('the action list', () => {
   it('lists an action with no bindings as unassigned', () => {
     const { container, unmount } = renderSection();
     expect(rowFor(container, 'perform.exit').textContent).toContain(
-      'unassigned',
+      'Unassigned',
     );
     unmount();
   });
@@ -82,8 +82,8 @@ describe('the action list', () => {
       b => b.textContent,
     );
 
-    expect(labels[0]).toContain('CC 20 ch1 · on release');
-    expect(labels[1]).toContain('CC 22 ch1 · hold to peek');
+    expect(labels[0]).toContain('CC 20 CH 1 · On Release');
+    expect(labels[1]).toContain('CC 22 CH 1 · Peek');
     unmount();
   });
 
@@ -151,7 +151,7 @@ describe('bindings for actions nobody registered', () => {
     expect(orphan).not.toBeNull();
     expect(orphan!.textContent).toContain('unrecognised');
     expect(orphan!.textContent).toContain('perform.someRenamedThing');
-    expect(orphan!.textContent).toContain('CC 30 ch1');
+    expect(orphan!.textContent).toContain('CC 30 CH 1');
     unmount();
   });
 

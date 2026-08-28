@@ -8,9 +8,9 @@ import {
 
 describe('describeMatch', () => {
   it.each([
-    [{ type: 'cc', channel: 1, id: 20 }, 'CC 20 ch1'],
-    [{ type: 'note', channel: 10, id: 60 }, 'Note 60 ch10'],
-    [{ type: 'pc', channel: 16, id: 5 }, 'PC 5 ch16'],
+    [{ type: 'cc', channel: 1, id: 20 }, 'CC 20 CH 1'],
+    [{ type: 'note', channel: 10, id: 60 }, 'Note 60 CH 10'],
+    [{ type: 'pc', channel: 16, id: 5 }, 'PC 5 CH 16'],
   ])('renders %j as %s', (match, expected) => {
     expect(describeMatch(match as never)).toBe(expected);
   });
@@ -18,9 +18,9 @@ describe('describeMatch', () => {
 
 describe('behaviourLabel', () => {
   it.each([
-    ['press', 'on press'],
-    ['release', 'on release'],
-    ['peek', 'hold to peek'],
+    ['press', 'On Press'],
+    ['release', 'On Release'],
+    ['peek', 'Peek'],
   ])('renders %s as %s', (behaviour, expected) => {
     expect(behaviourLabel(behaviour as never)).toBe(expected);
   });
@@ -35,20 +35,20 @@ describe('bindingLabel', () => {
         actionId: 'perform.nextScene',
         behaviour: 'release',
       }),
-    ).toBe('CC 20 ch1 · on release');
+    ).toBe('CC 20 CH 1 · On Release');
   });
 });
 
 describe('messageLabel', () => {
   it('includes the value so an unexpected switch is diagnosable', () => {
     expect(messageLabel({ type: 'cc', channel: 1, id: 20, value: 127 })).toBe(
-      'CC 20 ch1 val 127',
+      'CC 20 CH 1 val 127',
     );
   });
 
   it('omits the value for a program change, which carries none', () => {
     expect(messageLabel({ type: 'pc', channel: 1, id: 5, value: 127 })).toBe(
-      'PC 5 ch1',
+      'PC 5 CH 1',
     );
   });
 

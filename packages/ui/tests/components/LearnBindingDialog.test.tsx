@@ -67,7 +67,7 @@ describe('the learn dialog', () => {
     await harness.release();
 
     const dialog = container.querySelector('[data-hf-learn]')!;
-    expect(dialog.textContent).toContain('CC 20 ch1');
+    expect(dialog.textContent).toContain('CC 20 CH 1');
     const choices = [...dialog.querySelectorAll('[data-hf-behaviour]')].map(b =>
       b.getAttribute('data-hf-behaviour'),
     );

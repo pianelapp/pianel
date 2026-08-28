@@ -18,14 +18,14 @@ function sysexLabel(data: readonly number[]): string {
 }
 
 const BEHAVIOUR_LABEL: Record<Behaviour, string> = {
-  press: 'on press',
-  release: 'on release',
-  peek: 'hold to peek',
+  press: 'On Press',
+  release: 'On Release',
+  peek: 'Peek',
 };
 
 export function describeMatch(match: ControlMatch): string {
   if (match.type === 'sysex') return sysexLabel(match.data);
-  return `${TYPE_LABEL[match.type]} ${match.id} ch${match.channel}`;
+  return `${TYPE_LABEL[match.type]} ${match.id} CH ${match.channel}`;
 }
 
 export function behaviourLabel(behaviour: Behaviour): string {

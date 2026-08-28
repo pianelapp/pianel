@@ -33,7 +33,7 @@ export function ActionBindingRow({
         </span>
         {bindings.length === 0 && (
           <span className={`ml-auto shrink-0 text-xs ${valueClass}`}>
-            unassigned
+            Unassigned
           </span>
         )}
         <button

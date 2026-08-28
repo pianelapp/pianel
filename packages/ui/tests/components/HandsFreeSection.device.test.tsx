@@ -138,7 +138,7 @@ describe('the last-message monitor', () => {
     await harness.press();
 
     expect(container.querySelector('[data-hf-monitor]')!.textContent).toContain(
-      'CC 20 ch1 val 127',
+      'CC 20 CH 1 val 127',
     );
     unmount();
   });
@@ -150,7 +150,7 @@ describe('the last-message monitor', () => {
     await harness.release();
 
     expect(container.querySelector('[data-hf-monitor]')!.textContent).toContain(
-      'CC 20 ch1 val 0',
+      'CC 20 CH 1 val 0',
     );
     unmount();
   });

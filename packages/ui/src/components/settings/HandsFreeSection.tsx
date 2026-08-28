@@ -46,14 +46,12 @@ export function HandsFreeSection({ isLightMode }: HandsFreeSectionProps) {
     await detachDevice();
   }, [detachDevice]);
 
-  const cardClass = isLightMode
-    ? 'bg-slate-50 border-zinc-200'
-    : 'bg-zinc-950 border-zinc-800';
-  const titleClass = isLightMode ? 'text-zinc-700' : 'text-zinc-300';
   const bodyClass = isLightMode ? 'text-zinc-600' : 'text-zinc-400';
   const actionClass = isLightMode ? 'text-cyan-700' : 'text-cyan-400';
   const destructiveClass = isLightMode ? 'text-red-600' : 'text-red-400';
   const waitingClass = isLightMode ? 'text-amber-700' : 'text-amber-400';
+  const sectionRuleClass = isLightMode ? 'border-zinc-300' : 'border-zinc-700';
+  const rowRuleClass = isLightMode ? 'divide-zinc-200' : 'divide-zinc-800';
 
   const groups: Array<{ name: string; actions: typeof surface.actions }> = [];
   for (const action of surface.actions) {
@@ -63,13 +61,7 @@ export function HandsFreeSection({ isLightMode }: HandsFreeSectionProps) {
   }
 
   return (
-    <div
-      data-handsfree-section
-      className={`p-3.5 rounded-xl border transition-colors ${cardClass}`}>
-      <span className={`block text-base font-medium mb-2.5 ${titleClass}`}>
-        Hands-free control
-      </span>
-
+    <div data-handsfree-section className="flex flex-col">
       <div data-hf-device className="flex items-center gap-2 mb-2">
         <span className={`min-w-0 truncate text-sm font-medium ${bodyClass}`}>
           {surface.device
@@ -123,34 +115,43 @@ export function HandsFreeSection({ isLightMode }: HandsFreeSectionProps) {
         </div>
       )}
 
-      <div data-hf-monitor className={`text-xs mb-3 truncate ${bodyClass}`}>
+      <div data-hf-monitor className={`text-xs truncate ${bodyClass}`}>
         {surface.lastMessage && surface.lastMessageAt !== null
           ? `${messageLabel(surface.lastMessage)} · ${relativeTime(surface.lastMessageAt, now)}`
           : 'No messages yet'}
       </div>
 
       {groups.map(group => (
-        <div key={group.name} data-hf-group={group.name} className="mb-2">
+        <div
+          key={group.name}
+          data-hf-group={group.name}
+          className={`mt-3 pt-3 border-t ${sectionRuleClass}`}>
           <span
-            className={`block text-[10px] font-bold tracking-widest mb-1 ${bodyClass}`}>
+            className={`block text-sm font-bold tracking-widest mb-1 ${bodyClass}`}>
             {group.name.toUpperCase()}
           </span>
-          {group.actions.map(action => (
-            <ActionBindingRow
-              key={action.id}
-              actionId={action.id}
-              label={action.label}
-              bindings={surface.bindings.filter(b => b.actionId === action.id)}
-              isLightMode={isLightMode}
-              onAdd={() => surface.startLearn(action.id)}
-              onRemove={surface.removeBinding}
-            />
-          ))}
+          <div className={`pl-3 divide-y ${rowRuleClass}`}>
+            {group.actions.map(action => (
+              <ActionBindingRow
+                key={action.id}
+                actionId={action.id}
+                label={action.label}
+                bindings={surface.bindings.filter(
+                  b => b.actionId === action.id,
+                )}
+                isLightMode={isLightMode}
+                onAdd={() => surface.startLearn(action.id)}
+                onRemove={surface.removeBinding}
+              />
+            ))}
+          </div>
         </div>
       ))}
 
       {surface.orphanBindings.length > 0 && (
-        <div data-hf-orphan className="mt-1">
+        <div
+          data-hf-orphan
+          className={`mt-3 pt-3 border-t ${sectionRuleClass}`}>
           {surface.orphanBindings.map(binding => (
             <div key={binding.id} className="flex items-center gap-2">
               <span className={`min-w-0 truncate text-xs ${waitingClass}`}>
