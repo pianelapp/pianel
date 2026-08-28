@@ -65,7 +65,7 @@ describe('the registered catalog', () => {
     expect(byId.get('perform.nextSong')!.behaviours).toEqual(['press', 'release']);
     expect(byId.get('perform.prevSong')!.behaviours).toEqual(['press', 'release']);
     expect(byId.get('perform.exit')!.behaviours).toEqual(['press']);
-    expect(byId.get('piano.toggleMetronome')!.behaviours).toEqual(['press']);
+    expect(byId.get('piano.toggleMetronome')!.behaviours).toEqual(['press', 'release']);
   });
 
   it('registers exactly once however many times the components re-render', async () => {
@@ -142,6 +142,19 @@ describe('an action that works outside Perform', () => {
 
     expect(toggleMetronome).toHaveBeenCalledTimes(1);
     expect(useCursorStore.getState().isPerforming).toBe(false);
+  });
+
+  it('waits for the foot to lift when the metronome is bound to release', async () => {
+    wire();
+    const {toggleMetronome} = stubPianoWithMetronome();
+    harness = mountControlSurface();
+    harness.bind('piano.toggleMetronome', 'release');
+
+    await harness.press();
+    expect(toggleMetronome).not.toHaveBeenCalled();
+
+    await harness.release();
+    expect(toggleMetronome).toHaveBeenCalledTimes(1);
   });
 
   it('does nothing and surfaces nothing when a perform action fires outside Perform', async () => {

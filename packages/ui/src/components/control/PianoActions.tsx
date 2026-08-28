@@ -1,10 +1,10 @@
-import {useMemo} from 'react';
-import {usePiano} from '../../hooks/usePiano';
-import {useRegisterControlActions} from '../../hooks/useControlActions';
-import type {ControlAction} from '../../store';
+import { useMemo } from 'react';
+import { usePiano } from '../../hooks/usePiano';
+import { useRegisterControlActions } from '../../hooks/useControlActions';
+import type { ControlAction } from '../../store';
 
 export function PianoActions() {
-  const {toggleMetronome} = usePiano();
+  const { toggleMetronome } = usePiano();
 
   const actions = useMemo<ControlAction[]>(
     () => [
@@ -12,7 +12,7 @@ export function PianoActions() {
         id: 'piano.toggleMetronome',
         label: 'Toggle metronome',
         group: 'Piano',
-        behaviours: ['press'],
+        behaviours: ['press', 'release'],
         run: toggleMetronome,
       },
     ],
