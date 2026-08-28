@@ -3,6 +3,7 @@ import Sun from 'lucide-react/dist/esm/icons/sun';
 import Moon from 'lucide-react/dist/esm/icons/moon';
 import Check from 'lucide-react/dist/esm/icons/check';
 import { usePreferences } from '../../hooks/usePreferences';
+import { HandsFreeSection } from '../settings/HandsFreeSection';
 
 interface SettingsModalProps {
   open: boolean;
@@ -26,7 +27,7 @@ export function SettingsModal({
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div
-        className={`p-6 rounded-3xl w-[360px] max-w-[calc(100vw-2rem)] shadow-2xl border transition-colors ${
+        className={`p-6 rounded-3xl w-[420px] max-w-[calc(100vw-2rem)] shadow-2xl border transition-colors ${
           isLightMode
             ? 'bg-white border-zinc-200'
             : 'bg-zinc-900 border-zinc-800'
@@ -44,7 +45,7 @@ export function SettingsModal({
             />
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
           {/* UI Theme — day/night slide toggle + System checkbox (Task 5.1) */}
           <div
             className={`flex items-center justify-between p-3.5 rounded-xl border transition-colors ${
@@ -155,6 +156,8 @@ export function SettingsModal({
               })}
             </div>
           </div>
+
+          <HandsFreeSection isLightMode={isLightMode} />
         </div>
       </div>
     </div>

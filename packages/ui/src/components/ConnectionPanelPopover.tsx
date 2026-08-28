@@ -7,7 +7,7 @@ import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
 import Unplug from 'lucide-react/dist/esm/icons/unplug';
 import { useConnection } from '../hooks/useConnection';
-import { useConnectionStore } from '../store';
+import { useConnectionStore, useControlSurfaceStore } from '../store';
 import { showAlert } from './modals/AlertModal';
 import type { DiscoveredDevice } from '../store';
 
@@ -28,7 +28,11 @@ export function ConnectionPanelPopover({
     refreshDiscoveredDevices,
     disconnect,
   } = useConnection();
-  const discoveredDevices = useConnectionStore(s => s.discoveredDevices);
+  const allDevices = useConnectionStore(s => s.discoveredDevices);
+  const controlSurfaceName = useControlSurfaceStore(s => s.deviceName);
+  const discoveredDevices = controlSurfaceName
+    ? allDevices.filter(d => d.name !== controlSurfaceName)
+    : allDevices;
 
   const [open, setOpen] = useState(false);
 
