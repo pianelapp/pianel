@@ -9,6 +9,8 @@ interface AdvanceButtonProps {
   onAdvance: () => void;
   onPrev: () => void;
   canGoBack: boolean;
+  armedAdvance?: boolean;
+  armedPrev?: boolean;
 }
 
 export function AdvanceButton({
@@ -18,9 +20,13 @@ export function AdvanceButton({
   onAdvance,
   onPrev,
   canGoBack,
+  armedAdvance = false,
+  armedPrev = false,
 }: AdvanceButtonProps) {
   const height = stacked ? 'h-[78px]' : 'h-[84px]';
   const prevWidth = stacked ? 'w-[54px]' : 'w-[74px]';
+  const showArmedPrev = armedPrev && canGoBack;
+  const showArmedAdvance = armedAdvance && target.kind !== 'end';
 
   return (
     <div className={`${stacked ? 'p-3' : 'px-4 pb-4'} flex gap-2.5 shrink-0`}>
@@ -28,11 +34,12 @@ export function AdvanceButton({
         type="button"
         onClick={onPrev}
         disabled={!canGoBack}
+        data-armed={showArmedPrev ? 'true' : undefined}
         className={`${prevWidth} ${height} shrink-0 flex flex-col items-center justify-center gap-1 rounded-[11px] border text-xs font-bold tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
           isLightMode
             ? 'bg-zinc-100 border-zinc-200 text-zinc-400'
             : 'bg-zinc-900 border-zinc-700 text-zinc-600'
-        }`}>
+        } ${armedClass(showArmedPrev, isLightMode)}`}>
         <ChevronLeft className="w-5 h-5" />
         PREV
       </button>
@@ -41,15 +48,23 @@ export function AdvanceButton({
         data-perform-primary
         onClick={onAdvance}
         disabled={target.kind === 'end'}
+        data-armed={showArmedAdvance ? 'true' : undefined}
         className={`flex-1 min-w-0 ${height} flex justify-center rounded-[11px] border-2 transition-colors disabled:cursor-not-allowed ${
           stacked
             ? 'flex-col items-stretch px-4 py-2'
             : 'items-center gap-3.5'
-        } ${primaryTreatment(target, isLightMode)}`}>
+        } ${primaryTreatment(target, isLightMode)} ${armedClass(showArmedAdvance, isLightMode)}`}>
         {primaryContent(target, isLightMode, stacked)}
       </button>
     </div>
   );
+}
+
+function armedClass(armed: boolean, isLightMode: boolean): string {
+  if (!armed) return '';
+  return isLightMode
+    ? 'ring-2 ring-amber-700 ring-offset-2 ring-offset-slate-100'
+    : 'ring-2 ring-amber-400 ring-offset-2 ring-offset-zinc-950';
 }
 
 function primaryTreatment(target: NextTarget, isLightMode: boolean): string {
