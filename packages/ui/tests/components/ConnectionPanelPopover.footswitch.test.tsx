@@ -1,8 +1,8 @@
-import {act} from 'react';
-import {render, click} from '../utils/render';
-import {initTestStores} from '../utils/stores';
-import {ConnectionPanelPopover} from '../../src/components/ConnectionPanelPopover';
-import {useConnectionStore, useControlSurfaceStore} from '../../src/store';
+import { act } from 'react';
+import { render, click } from '../utils/render';
+import { initTestStores } from '../utils/stores';
+import { ConnectionPanelPopover } from '../../src/components/ConnectionPanelPopover';
+import { useConnectionStore, useControlSurfaceStore } from '../../src/store';
 
 const PEDAL = 'FootCtrlPlus Bluetooth';
 const PIANO = 'Roland Digital Piano';
@@ -14,8 +14,12 @@ beforeAll(() => {
 beforeEach(() => {
   useConnectionStore.getState().clearDiscoveredDevices();
   useControlSurfaceStore.getState().setAttached(false, null);
-  useConnectionStore.getState().addDiscoveredDevice({id: 'out-piano', name: PIANO});
-  useConnectionStore.getState().addDiscoveredDevice({id: 'out-pedal', name: PEDAL});
+  useConnectionStore
+    .getState()
+    .addDiscoveredDevice({ id: 'out-piano', name: PIANO });
+  useConnectionStore
+    .getState()
+    .addDiscoveredDevice({ id: 'out-pedal', name: PEDAL });
 });
 
 function openPanel() {
@@ -30,7 +34,7 @@ function openPanel() {
 
 describe('the piano chooser', () => {
   it('lists every discovered output while no footswitch is claimed', () => {
-    const {unmount} = openPanel();
+    const { unmount } = openPanel();
 
     expect(document.body.textContent).toContain(PIANO);
     expect(document.body.textContent).toContain(PEDAL);
@@ -41,7 +45,7 @@ describe('the piano chooser', () => {
     await act(async () => {
       useControlSurfaceStore.getState().setAttached(true, PEDAL);
     });
-    const {unmount} = openPanel();
+    const { unmount } = openPanel();
 
     expect(document.body.textContent).toContain(PIANO);
     expect(document.body.textContent).not.toContain(PEDAL);
@@ -52,7 +56,7 @@ describe('the piano chooser', () => {
     await act(async () => {
       useControlSurfaceStore.getState().setAttached(false, PEDAL);
     });
-    const {unmount} = openPanel();
+    const { unmount } = openPanel();
 
     expect(document.body.textContent).not.toContain(PEDAL);
     unmount();

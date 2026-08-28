@@ -1,7 +1,7 @@
 import X from 'lucide-react/dist/esm/icons/x';
 import Plus from 'lucide-react/dist/esm/icons/plus';
-import {bindingLabel} from './bindingLabel';
-import type {ControlBinding} from '../../store';
+import { bindingLabel } from './bindingLabel';
+import type { ControlBinding } from '../../store';
 
 interface ActionBindingRowProps {
   actionId: string;
@@ -32,7 +32,7 @@ export function ActionBindingRow({
           {label}
         </span>
         {bindings.length === 0 && (
-          <span className={`ml-auto shrink-0 font-mono text-xs ${valueClass}`}>
+          <span className={`ml-auto shrink-0 text-xs ${valueClass}`}>
             unassigned
           </span>
         )}
@@ -52,7 +52,7 @@ export function ActionBindingRow({
         <div key={binding.id} className="flex items-center gap-2 pl-3">
           <span
             data-hf-binding
-            className={`min-w-0 truncate font-mono text-xs ${valueClass}`}>
+            className={`min-w-0 truncate text-xs ${valueClass}`}>
             {bindingLabel(binding)}
           </span>
           <button

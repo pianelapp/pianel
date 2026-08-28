@@ -44,8 +44,7 @@ export function messageLabel(message: ControlMessage): string {
 
 export function relativeTime(at: number, now: number): string {
   const elapsed = Math.max(0, now - at);
-  if (elapsed < 1000) return 'just now';
-  const seconds = Math.floor(elapsed / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
-  return `${Math.floor(seconds / 60)}m ago`;
+  const minutes = Math.floor(elapsed / 60_000);
+  if (minutes < 1) return 'a few seconds ago';
+  return `${minutes}m ago`;
 }

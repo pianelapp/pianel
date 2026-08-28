@@ -1,16 +1,22 @@
-import {act} from 'react';
-import {render, type RenderResult} from '../utils/render';
-import {PerformActions} from '../../src/components/control/PerformActions';
-import {PianoActions} from '../../src/components/control/PianoActions';
-import {setControlSurfaceService, resetControlSurfaceService} from '../../src/hooks/useControlSurface';
-import {setPianoService} from '../../src/hooks/usePiano';
-import {ControlSurfaceService} from '@pianel/core/services/control/ControlSurfaceService';
+import { act } from 'react';
+import { render, type RenderResult } from '../utils/render';
+import { PerformActions } from '../../src/components/control/PerformActions';
+import { PianoActions } from '../../src/components/control/PianoActions';
+import {
+  setControlSurfaceService,
+  resetControlSurfaceService,
+} from '../../src/hooks/useControlSurface';
+import { setPianoService } from '../../src/hooks/usePiano';
+import { ControlSurfaceService } from '@pianel/core/services/control/ControlSurfaceService';
 import {
   getControlActionRegistry,
   resetControlActionRegistry,
 } from '@pianel/core/services/control/registry';
-import {useControlBindingsStore, useControlSurfaceStore} from '../../src/store';
-import type {PianoService} from '@pianel/core/services/PianoService';
+import {
+  useControlBindingsStore,
+  useControlSurfaceStore,
+} from '../../src/store';
+import type { PianoService } from '@pianel/core/services/PianoService';
 import type {
   DiscoveredDevice,
   InputTransport,
@@ -19,12 +25,14 @@ import type {
   TransportStatusListener,
   Unsubscribe,
 } from '@pianel/core/transport/types';
-import type {Behaviour} from '../../src/store';
+import type { Behaviour } from '../../src/store';
 
 export class StubInputTransport implements InputTransport {
   status: TransportStatus = 'idle';
   deviceName: string | null = null;
-  devices: DiscoveredDevice[] = [{id: 'in-pedal', name: 'FootCtrlPlus Bluetooth'}];
+  devices: DiscoveredDevice[] = [
+    { id: 'in-pedal', name: 'FootCtrlPlus Bluetooth' },
+  ];
   private listeners: NotificationListener[] = [];
   private statusListeners: TransportStatusListener[] = [];
 
@@ -93,12 +101,17 @@ export function mountControlSurface(): ControlHarness {
   useControlSurfaceStore.getState().endLearn();
   useControlSurfaceStore.getState().setHeld(null);
   useControlSurfaceStore.getState().setAttached(false, null);
+  useControlSurfaceStore.setState({ lastMessage: null, lastMessageAt: null });
 
   let clock = 0;
   const transport = new StubInputTransport();
-  const service = new ControlSurfaceService(transport, getControlActionRegistry(), {
-    now: () => clock,
-  });
+  const service = new ControlSurfaceService(
+    transport,
+    getControlActionRegistry(),
+    {
+      now: () => clock,
+    },
+  );
   setControlSurfaceService(service);
 
   const tree = (
@@ -128,7 +141,7 @@ export function mountControlSurface(): ControlHarness {
     release: (id = 20) => emit([0xb0, id, 0x00]),
     bind: (actionId, behaviour, id = 20) => {
       useControlBindingsStore.getState().addBinding({
-        match: {type: 'cc', channel: 1, id},
+        match: { type: 'cc', channel: 1, id },
         actionId,
         behaviour,
       });
@@ -142,8 +155,8 @@ export function mountControlSurface(): ControlHarness {
   };
 }
 
-export function stubPianoWithMetronome(): {toggleMetronome: jest.Mock} {
+export function stubPianoWithMetronome(): { toggleMetronome: jest.Mock } {
   const toggleMetronome = jest.fn().mockResolvedValue(undefined);
-  setPianoService({toggleMetronome} as unknown as PianoService);
-  return {toggleMetronome};
+  setPianoService({ toggleMetronome } as unknown as PianoService);
+  return { toggleMetronome };
 }

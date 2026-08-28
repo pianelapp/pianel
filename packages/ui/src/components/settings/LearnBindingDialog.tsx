@@ -1,15 +1,15 @@
-import {canRelease} from '@pianel/core/helpers/controlMessage';
-import {useControlSurface} from '../../hooks/useControlSurface';
-import {behaviourLabel, describeMatch} from './bindingLabel';
-import type {Behaviour} from '../../store';
+import { canRelease } from '@pianel/core/helpers/controlMessage';
+import { useControlSurface } from '../../hooks/useControlSurface';
+import { behaviourLabel, describeMatch } from './bindingLabel';
+import type { Behaviour } from '../../store';
 
 interface LearnBindingDialogProps {
   isLightMode: boolean;
 }
 
-export function LearnBindingDialog({isLightMode}: LearnBindingDialogProps) {
+export function LearnBindingDialog({ isLightMode }: LearnBindingDialogProps) {
   const surface = useControlSurface();
-  const {learn} = surface;
+  const { learn } = surface;
 
   if (learn.phase === 'idle') return null;
 
@@ -38,7 +38,8 @@ export function LearnBindingDialog({isLightMode}: LearnBindingDialogProps) {
 
       {learn.phase === 'detecting' && (
         <span className={`text-sm font-medium ${titleClass}`}>
-          Got {learn.captured ? describeMatch(learn.captured) : ''} — checking the switch
+          Got {learn.captured ? describeMatch(learn.captured) : ''} — checking
+          the switch
         </span>
       )}
 
@@ -50,15 +51,16 @@ export function LearnBindingDialog({isLightMode}: LearnBindingDialogProps) {
 
       {learn.phase === 'conflict' && (
         <span className={`text-sm font-medium ${warnClass}`}>
-          {learn.captured ? describeMatch(learn.captured) : ''} is already bound to{' '}
-          {conflictLabel}. Reassign it?
+          {learn.captured ? describeMatch(learn.captured) : ''} is already bound
+          to {conflictLabel}. Reassign it?
         </span>
       )}
 
       {learn.phase === 'confirming' && (
         <>
           <span className={`text-sm font-medium ${titleClass}`}>
-            {learn.captured ? describeMatch(learn.captured) : ''} — how should it behave?
+            {learn.captured ? describeMatch(learn.captured) : ''} — how should
+            it behave?
           </span>
           {learn.behaviours.length === 1 && learn.behaviours[0] === 'press' && (
             <span className={`text-xs ${warnClass}`}>
