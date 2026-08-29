@@ -13,8 +13,10 @@ export interface LearnState {
   phase: LearnPhase;
   actionId: string | null;
   captured: ControlMessage | null;
+  capable: Behaviour[];
   behaviours: Behaviour[];
   conflictActionId: string | null;
+  releaseWindowMs: number | null;
 }
 
 export interface HeldControl {
@@ -36,9 +38,16 @@ export interface ControlSurfaceActions {
   setHeld: (held: HeldControl | null) => void;
   noteMessage: (message: ControlMessage, at: number) => void;
   startLearn: (actionId: string) => void;
-  setLearnDetecting: (captured: ControlMessage) => void;
-  setLearnConfirming: (behaviours: Behaviour[]) => void;
-  setLearnConflict: (conflictActionId: string, behaviours: Behaviour[]) => void;
+  setLearnDetecting: (
+    captured: ControlMessage,
+    releaseWindowMs: number | null,
+  ) => void;
+  setLearnConfirming: (behaviours: Behaviour[], capable?: Behaviour[]) => void;
+  setLearnConflict: (
+    conflictActionId: string,
+    behaviours: Behaviour[],
+    capable?: Behaviour[],
+  ) => void;
   setLearnTimeout: () => void;
   endLearn: () => void;
 }
@@ -47,8 +56,10 @@ const IDLE_LEARN: LearnState = {
   phase: 'idle',
   actionId: null,
   captured: null,
+  capable: [],
   behaviours: [],
   conflictActionId: null,
+  releaseWindowMs: null,
 };
 
 export const useControlSurfaceStore = create<
@@ -69,21 +80,39 @@ export const useControlSurfaceStore = create<
 
   startLearn: actionId => set({learn: {...IDLE_LEARN, phase: 'armed', actionId}}),
 
-  setLearnDetecting: captured =>
-    set(state => ({learn: {...state.learn, phase: 'detecting', captured}})),
-
-  setLearnConfirming: behaviours =>
+  setLearnDetecting: (captured, releaseWindowMs) =>
     set(state => ({
-      learn: {...state.learn, phase: 'confirming', behaviours, conflictActionId: null},
+      learn: {...state.learn, phase: 'detecting', captured, releaseWindowMs},
     })),
 
-  setLearnConflict: (conflictActionId, behaviours) =>
+  setLearnConfirming: (behaviours, capable = behaviours) =>
     set(state => ({
-      learn: {...state.learn, phase: 'conflict', behaviours, conflictActionId},
+      learn: {
+        ...state.learn,
+        phase: 'confirming',
+        behaviours,
+        capable,
+        conflictActionId: null,
+        releaseWindowMs: null,
+      },
+    })),
+
+  setLearnConflict: (conflictActionId, behaviours, capable = behaviours) =>
+    set(state => ({
+      learn: {
+        ...state.learn,
+        phase: 'conflict',
+        behaviours,
+        capable,
+        conflictActionId,
+        releaseWindowMs: null,
+      },
     })),
 
   setLearnTimeout: () =>
-    set(state => ({learn: {...state.learn, phase: 'timeout'}})),
+    set(state => ({
+      learn: {...state.learn, phase: 'timeout', releaseWindowMs: null},
+    })),
 
   endLearn: () => set({learn: IDLE_LEARN}),
 }));

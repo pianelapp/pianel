@@ -93,20 +93,76 @@ describe('the learn dialog', () => {
     unmount();
   });
 
-  it('points at the pedal editor when a CC switch is the one that reported no release', async () => {
+  it('says only that the switch reported no release, naming no hardware', async () => {
     const { container, unmount } = renderSection();
     addBindingFor(container, 'perform.nextScene');
 
     await act(async () => {
       useControlSurfaceStore
         .getState()
-        .setLearnDetecting({ type: 'cc', channel: 1, id: 20, value: 127 });
+        .setLearnDetecting(
+          { type: 'cc', channel: 1, id: 20, value: 127 },
+          5_000,
+        );
       useControlSurfaceStore.getState().setLearnConfirming(['press']);
     });
 
+    const note = container.querySelector('[data-hf-press-only]')!;
+    expect(note.textContent).toBe(
+      'This switch did not report a release, so only press is available.',
+    );
+    expect(note.textContent).not.toContain('carries no release');
+    unmount();
+  });
+
+  it('does not blame the switch when the action is what only takes press', async () => {
+    const { container, unmount } = renderSection();
+    addBindingFor(container, 'perform.exit');
+
+    await harness.press();
+    await harness.release();
+
     const dialog = container.querySelector('[data-hf-learn]')!;
-    expect(dialog.textContent).toContain('M-Vave editor');
-    expect(dialog.textContent).not.toContain('carries no release');
+    const choices = [...dialog.querySelectorAll('[data-hf-behaviour]')].map(b =>
+      b.getAttribute('data-hf-behaviour'),
+    );
+    expect(choices).toEqual(['press']);
+    expect(dialog.querySelector('[data-hf-press-only]')).toBeNull();
+    unmount();
+  });
+
+  it('counts the release window down while it waits', async () => {
+    jest.useFakeTimers();
+    try {
+      const { container, unmount } = renderSection();
+      addBindingFor(container, 'perform.nextScene');
+
+      await harness.press();
+
+      const countdown = () =>
+        container.querySelector('[data-hf-countdown]')?.textContent ?? '';
+      expect(countdown()).toContain('5s');
+
+      await act(async () => {
+        jest.advanceTimersByTime(2_000);
+      });
+      expect(countdown()).toContain('3s');
+
+      unmount();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('drops the countdown the moment a release lands', async () => {
+    const { container, unmount } = renderSection();
+    addBindingFor(container, 'perform.nextScene');
+
+    await harness.press();
+    expect(container.querySelector('[data-hf-countdown]')).not.toBeNull();
+
+    await harness.release();
+    expect(container.querySelector('[data-hf-countdown]')).toBeNull();
     unmount();
   });
 

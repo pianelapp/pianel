@@ -21,6 +21,137 @@ function learn() {
   return world;
 }
 
+function recordWindows() {
+  const windows: Array<number | null> = [];
+  const unsubscribe = useControlSurfaceStore.subscribe(state =>
+    windows.push(state.learn.releaseWindowMs),
+  );
+  return {
+    stop: () => {
+      unsubscribe();
+      return windows;
+    },
+  };
+}
+
+describe('the release window', () => {
+  it('defaults to five seconds so the countdown is not a blink', async () => {
+    const world = controlWorld();
+    world.registry.register(makeAction('perform.nextScene'));
+    world.service.startLearn('perform.nextScene');
+
+    world.transport.emit([0xb0, 0x14, 0x7f]);
+    await world.service.whenIdle();
+
+    expect(useControlSurfaceStore.getState().learn.releaseWindowMs).toBe(5_000);
+
+    jest.advanceTimersByTime(4_999);
+    expect(useControlSurfaceStore.getState().learn.phase).toBe('detecting');
+
+    jest.advanceTimersByTime(1);
+    expect(useControlSurfaceStore.getState().learn.phase).toBe('confirming');
+    await world.service.destroy();
+  });
+
+  it('publishes the window so the dialog can count it down', async () => {
+    const {service, transport} = learn();
+    service.startLearn('perform.nextScene');
+
+    transport.emit([0xb0, 0x14, 0x7f]);
+    await service.whenIdle();
+
+    expect(useControlSurfaceStore.getState().learn.releaseWindowMs).toBe(2_000);
+    await service.destroy();
+  });
+
+  it('does not open a countdown for a message that can never carry a release', async () => {
+    const {service, transport} = learn();
+    const seen = recordWindows();
+    service.startLearn('perform.nextScene');
+
+    transport.emit([0xc0, 0x05]);
+    await service.whenIdle();
+
+    expect(seen.stop().some(window => window !== null)).toBe(false);
+    expect(useControlSurfaceStore.getState().learn.phase).toBe('confirming');
+    await service.destroy();
+  });
+
+  it('opens the countdown for a switch that could still send a release', async () => {
+    const {service, transport} = learn();
+    const seen = recordWindows();
+    service.startLearn('perform.nextScene');
+
+    transport.emit([0xb0, 0x14, 0x7f]);
+    await service.whenIdle();
+
+    expect(seen.stop()).toContain(2_000);
+    await service.destroy();
+  });
+
+  it('clears the window once the release arrives', async () => {
+    const {service, transport} = learn();
+    service.startLearn('perform.nextScene');
+
+    transport.emit([0xb0, 0x14, 0x7f]);
+    transport.emit([0xb0, 0x14, 0x00]);
+    await service.whenIdle();
+
+    expect(useControlSurfaceStore.getState().learn.releaseWindowMs).toBeNull();
+    await service.destroy();
+  });
+});
+
+describe('what the switch can do, separately from what the action accepts', () => {
+  it('records the full capability even when the action only takes press', async () => {
+    const {service, transport} = learn();
+    service.startLearn('piano.toggleMetronome');
+
+    transport.emit([0xb0, 0x14, 0x7f]);
+    transport.emit([0xb0, 0x14, 0x00]);
+    await service.whenIdle();
+
+    const state = useControlSurfaceStore.getState().learn;
+    expect(state.behaviours).toEqual(['press']);
+    expect(state.capable).toEqual(['press', 'release', 'peek']);
+    await service.destroy();
+  });
+
+  it('records press-only capability when no release ever arrives', async () => {
+    const {service, transport} = learn();
+    service.startLearn('perform.nextScene');
+
+    transport.emit([0xb0, 0x14, 0x7f]);
+    await service.whenIdle();
+    jest.advanceTimersByTime(2_000);
+
+    expect(useControlSurfaceStore.getState().learn.capable).toEqual(['press']);
+    await service.destroy();
+  });
+
+  it('keeps the capability through a conflict reassignment', async () => {
+    const {service, transport} = learn();
+    useControlBindingsStore.getState().addBinding({
+      match: {type: 'cc', channel: 1, id: 20},
+      actionId: 'perform.prevScene',
+      behaviour: 'press',
+    });
+    service.startLearn('piano.toggleMetronome');
+
+    transport.emit([0xb0, 0x14, 0x7f]);
+    transport.emit([0xb0, 0x14, 0x00]);
+    await service.whenIdle();
+    expect(useControlSurfaceStore.getState().learn.phase).toBe('conflict');
+
+    service.acceptConflict();
+
+    const state = useControlSurfaceStore.getState().learn;
+    expect(state.phase).toBe('confirming');
+    expect(state.capable).toEqual(['press', 'release', 'peek']);
+    await service.destroy();
+  });
+});
+
 describe('learn mode capture', () => {
   it('arms for one action', async () => {
     const {service} = learn();

@@ -56,7 +56,7 @@ describe('controlSurfaceStore learn state', () => {
 
   it('moves to detecting when a message is captured', () => {
     useControlSurfaceStore.getState().startLearn('perform.nextScene');
-    useControlSurfaceStore.getState().setLearnDetecting(CC20);
+    useControlSurfaceStore.getState().setLearnDetecting(CC20, 5_000);
 
     const learn = useControlSurfaceStore.getState().learn;
     expect(learn.phase).toBe('detecting');
@@ -65,7 +65,7 @@ describe('controlSurfaceStore learn state', () => {
 
   it('moves to confirming with the behaviours on offer', () => {
     useControlSurfaceStore.getState().startLearn('perform.nextScene');
-    useControlSurfaceStore.getState().setLearnDetecting(CC20);
+    useControlSurfaceStore.getState().setLearnDetecting(CC20, 5_000);
     useControlSurfaceStore.getState().setLearnConfirming(['press', 'release', 'peek']);
 
     const learn = useControlSurfaceStore.getState().learn;
@@ -75,7 +75,7 @@ describe('controlSurfaceStore learn state', () => {
 
   it('carries the behaviours through a conflict so the user can continue', () => {
     useControlSurfaceStore.getState().startLearn('perform.nextScene');
-    useControlSurfaceStore.getState().setLearnDetecting(CC20);
+    useControlSurfaceStore.getState().setLearnDetecting(CC20, 5_000);
     useControlSurfaceStore.getState().setLearnConflict('perform.prevScene', ['press', 'release']);
 
     const learn = useControlSurfaceStore.getState().learn;
@@ -96,15 +96,17 @@ describe('controlSurfaceStore learn state', () => {
 
   it('returns to idle and forgets everything on end', () => {
     useControlSurfaceStore.getState().startLearn('perform.nextScene');
-    useControlSurfaceStore.getState().setLearnDetecting(CC20);
+    useControlSurfaceStore.getState().setLearnDetecting(CC20, 5_000);
     useControlSurfaceStore.getState().endLearn();
 
     expect(useControlSurfaceStore.getState().learn).toEqual({
       phase: 'idle',
       actionId: null,
       captured: null,
+      capable: [],
       behaviours: [],
       conflictActionId: null,
+      releaseWindowMs: null,
     });
   });
 });

@@ -24,7 +24,7 @@ import type {
 } from '../../types/control';
 
 const DEFAULT_LEARN_TIMEOUT_MS = 10_000;
-const DEFAULT_RELEASE_WINDOW_MS = 2_000;
+const DEFAULT_RELEASE_WINDOW_MS = 5_000;
 const ALL_BEHAVIOURS: Behaviour[] = ['press', 'release', 'peek'];
 const PRESS_ONLY: Behaviour[] = ['press'];
 
@@ -134,7 +134,9 @@ export class ControlSurfaceService {
   acceptConflict(): void {
     const {learn} = useControlSurfaceStore.getState();
     if (learn.phase !== 'conflict') return;
-    useControlSurfaceStore.getState().setLearnConfirming(learn.behaviours);
+    useControlSurfaceStore
+      .getState()
+      .setLearnConfirming(learn.behaviours, learn.capable);
   }
 
   confirmLearn(behaviour: Behaviour): void {
@@ -281,8 +283,9 @@ export class ControlSurfaceService {
 
     if (learn.phase === 'armed') {
       this.clearLearnTimers();
-      store.setLearnDetecting(message);
-      if (!canRelease(message)) {
+      const releasable = canRelease(message);
+      store.setLearnDetecting(message, releasable ? this.releaseWindowMs : null);
+      if (!releasable) {
         this.finishDetection(PRESS_ONLY);
         return;
       }
@@ -321,11 +324,11 @@ export class ControlSurfaceService {
 
     const existing = useControlBindingsStore.getState().findByMessage(captured);
     if (existing) {
-      store.setLearnConflict(existing.actionId, offered);
+      store.setLearnConflict(existing.actionId, offered, capable);
       return;
     }
 
-    store.setLearnConfirming(offered);
+    store.setLearnConfirming(offered, capable);
   }
 
   private clearLearnTimers(): void {

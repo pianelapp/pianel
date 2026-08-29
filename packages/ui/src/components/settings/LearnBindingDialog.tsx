@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { canRelease } from '@pianel/core/helpers/controlMessage';
 import { useControlSurface } from '../../hooks/useControlSurface';
 import { behaviourLabel, describeMatch } from './bindingLabel';
@@ -7,11 +8,31 @@ interface LearnBindingDialogProps {
   isLightMode: boolean;
 }
 
+const COUNTDOWN_TICK_MS = 250;
+
 export function LearnBindingDialog({ isLightMode }: LearnBindingDialogProps) {
   const surface = useControlSurface();
   const { learn } = surface;
+  const releaseWindow =
+    learn.phase === 'detecting' ? learn.releaseWindowMs : null;
+  const [remaining, setRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (releaseWindow === null) {
+      setRemaining(null);
+      return;
+    }
+    const startedAt = Date.now();
+    const left = () => Math.max(0, releaseWindow - (Date.now() - startedAt));
+    setRemaining(left());
+    const id = setInterval(() => setRemaining(left()), COUNTDOWN_TICK_MS);
+    return () => clearInterval(id);
+  }, [releaseWindow]);
 
   if (learn.phase === 'idle') return null;
+
+  const pressOnlySwitch =
+    learn.capable.length === 1 && learn.capable[0] === 'press';
 
   const action = surface.actions.find(a => a.id === learn.actionId) ?? null;
   const conflictLabel =
@@ -39,7 +60,13 @@ export function LearnBindingDialog({ isLightMode }: LearnBindingDialogProps) {
       {learn.phase === 'detecting' && (
         <span className={`text-sm font-medium ${titleClass}`}>
           Got {learn.captured ? describeMatch(learn.captured) : ''} — checking
-          the switch
+          for a release
+          {remaining !== null && (
+            <span data-hf-countdown className={warnClass}>
+              {' '}
+              · {Math.ceil(remaining / 1000)}s
+            </span>
+          )}
         </span>
       )}
 
@@ -62,11 +89,11 @@ export function LearnBindingDialog({ isLightMode }: LearnBindingDialogProps) {
             {learn.captured ? describeMatch(learn.captured) : ''} — how should
             it behave?
           </span>
-          {learn.behaviours.length === 1 && learn.behaviours[0] === 'press' && (
-            <span className={`text-xs ${warnClass}`}>
+          {pressOnlySwitch && (
+            <span data-hf-press-only className={`text-xs ${warnClass}`}>
               {learn.captured && !canRelease(learn.captured)
                 ? `A ${learn.captured.type === 'pc' ? 'program change' : 'SysEx'} message carries no release, so only press is available. Send CC from this switch for hold and peek.`
-                : 'This switch did not report a release, so only press is available. Set it to "Press down – Release" in the M-Vave editor for hold and peek.'}
+                : 'This switch did not report a release, so only press is available.'}
             </span>
           )}
           <div className="flex flex-col">
