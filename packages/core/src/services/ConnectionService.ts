@@ -139,6 +139,7 @@ export class ConnectionService {
       // name than the store does (e.g. WebMIDITransport with an empty deviceId
       // arg, or BLE where the OS revealed the friendly name only after pairing).
       this.syncDeviceNameFromTransport();
+      useConnectionStore.getState().setInputPort(this.transport.inputPortId ?? null);
 
       // Resolve engine via Identity Request → Identity Reply → resolveEngine()
       this.engine = await this.identifyAndResolveEngine();
@@ -199,6 +200,7 @@ export class ConnectionService {
       // Already disconnected
     }
 
+    useConnectionStore.getState().setInputPort(null);
     useConnectionStore.getState().setDisconnected();
   }
 

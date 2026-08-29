@@ -9,13 +9,18 @@ import { MobileMenuSettingsItem } from './components/MobileMenuSettingsItem';
 import { TopTabs, type Tab } from './components/TopTabs';
 import { MIDIDeviceChooser } from './components/MIDIDeviceChooser';
 import { AlertModal } from './components/modals/AlertModal';
-import { SettingsModal } from './components/modals/SettingsModal';
+import {
+  SettingsSurface,
+  type SettingsView,
+} from './components/settings/SettingsSurface';
 import { DisplayScreen } from './screens/display/DisplayScreen';
 import { StatusBar } from './screens/display/StatusBar';
 import { PerformMode } from './screens/perform/PerformMode';
 import { PresetsScreen } from './screens/presets/PresetsScreen';
 import { ProfilesScreen } from './screens/profiles/ProfilesScreen';
 import { SetlistsScreen } from './screens/setlists/SetlistsScreen';
+import { PerformActions } from './components/control/PerformActions';
+import { PianoActions } from './components/control/PianoActions';
 
 const TABS = [
   'PRESETS',
@@ -26,7 +31,7 @@ const TABS = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('DISPLAY');
-  const [showSettings, setShowSettings] = useState(false);
+  const [settingsView, setSettingsView] = useState<SettingsView>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [armedSongId, setArmedSongId] = useState<string | null>(null);
 
@@ -104,7 +109,7 @@ export default function App() {
               )}
               {!isSidebarMobile && (
                 <button
-                  onClick={() => setShowSettings(true)}
+                  onClick={() => setSettingsView({ kind: 'menu' })}
                   aria-label="Open settings">
                   <Settings
                     className={`w-6 h-6 transition-colors ${
@@ -177,7 +182,7 @@ export default function App() {
               <MobileMenuSettingsItem
                 isLightMode={isLightMode}
                 onOpenSettings={() => {
-                  setShowSettings(true);
+                  setSettingsView({ kind: 'menu' });
                   setLibraryOpen(false);
                 }}
               />
@@ -192,14 +197,17 @@ export default function App() {
           </>
         )}
       </div>
-      <SettingsModal
-        open={showSettings}
-        onClose={() => setShowSettings(false)}
+      <SettingsSurface
+        view={settingsView}
         isLightMode={isLightMode}
+        onSelect={id => setSettingsView({ kind: 'category', id })}
+        onClose={() => setSettingsView(null)}
       />
       <MIDIDeviceChooser isLightMode={isLightMode} />
       <AlertModal isLightMode={isLightMode} />
       <PerformMode isLightMode={isLightMode} />
+      <PerformActions />
+      <PianoActions />
     </div>
   );
 }

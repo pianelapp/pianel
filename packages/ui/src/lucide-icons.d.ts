@@ -173,3 +173,13 @@ declare module 'lucide-react/dist/esm/icons/circle' {
   const Icon: LucideIcon;
   export default Icon;
 }
+declare module 'lucide-react/dist/esm/icons/palette' {
+  import type { LucideIcon } from 'lucide-react';
+  const Icon: LucideIcon;
+  export default Icon;
+}
+declare module 'lucide-react/dist/esm/icons/footprints' {
+  import type { LucideIcon } from 'lucide-react';
+  const Icon: LucideIcon;
+  export default Icon;
+}

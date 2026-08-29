@@ -40,6 +40,10 @@ export class WebHostMIDITransport implements Transport {
     return this.inner.deviceName ?? null;
   }
 
+  get inputPortId(): string | null {
+    return this.inner.inputPortId ?? null;
+  }
+
   async connect(deviceId: string): Promise<void> {
     try {
       // Delegating to the reused transport drives `requestMIDIAccess` — i.e.

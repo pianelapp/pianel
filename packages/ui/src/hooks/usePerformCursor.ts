@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useCursorStore, useProfilesStore, selectActiveProfile } from '../store';
 import type { Scene, Song } from '../store';
 import type { SetlistCursorService } from '@pianel/core/services/cursor/SetlistCursorService';
+import type { PeekHandle } from '@pianel/core/types/control';
 
 let cursorServiceInstance: SetlistCursorService | null = null;
 
@@ -37,6 +38,7 @@ export function usePerformCursor() {
   const setlistId = useCursorStore(s => s.setlistId);
   const entryIndex = useCursorStore(s => s.entryIndex);
   const sceneIndex = useCursorStore(s => s.sceneIndex);
+  const anchor = useCursorStore(s => s.anchor);
   useProfilesStore(selectActiveProfile);
 
   const service = getCursorService();
@@ -85,6 +87,36 @@ export function usePerformCursor() {
     await getCursorService()?.jumpToSong(index);
   }, []);
 
+  const beginScenePeek = useCallback(
+    async (direction: 1 | -1): Promise<PeekHandle | null> => {
+      const service = getCursorService();
+      const before = useCursorStore.getState();
+      if (!service || !before.isPerforming) return null;
+
+      const from = {entryIndex: before.entryIndex, sceneIndex: before.sceneIndex};
+      const fromSongId = before.songId;
+      useCursorStore.getState().setAnchor(from);
+
+      await (direction === 1 ? service.nextScene() : service.prevScene());
+
+      const moved = useCursorStore.getState().sceneIndex !== from.sceneIndex;
+      if (!moved) useCursorStore.getState().clearAnchor();
+
+      return {
+        end: async () => {
+          useCursorStore.getState().clearAnchor();
+          if (!moved) return;
+          const now = useCursorStore.getState();
+          if (!now.isPerforming) return;
+          if (now.songId !== fromSongId) return;
+          if (now.entryIndex !== from.entryIndex) return;
+          await service.jumpToScene(from.sceneIndex);
+        },
+      };
+    },
+    [],
+  );
+
   return {
     isPerforming,
     setlistId,
@@ -103,5 +135,7 @@ export function usePerformCursor() {
     prevSong,
     jumpToScene,
     jumpToSong,
+    beginScenePeek,
+    anchor,
   };
 }

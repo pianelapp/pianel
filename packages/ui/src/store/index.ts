@@ -4,6 +4,7 @@ import {
   createFavoritesStore,
   createProfilesStore,
   createAppSettingsStore,
+  createControlBindingsStore,
 } from '@pianel/core/store';
 import type { StateStorage } from '@pianel/core/store';
 
@@ -39,7 +40,7 @@ export {
   PresetGridFullError,
 } from '@pianel/core/store';
 
-export type { CursorState, CursorActions } from '@pianel/core/store';
+export type { CursorState, CursorActions, CursorAnchor } from '@pianel/core/store';
 export { useCursorStore } from '@pianel/core/store';
 export type { Scene, Song, SetlistEntry, Setlist } from '@pianel/core/store';
 export {
@@ -52,6 +53,36 @@ export {
   MissingSongError,
 } from '@pianel/core/store';
 
+export {
+  useControlBindingsStore,
+  useControlSurfaceStore,
+  CONTROL_BINDINGS_VERSION,
+} from '@pianel/core/store';
+
+export type {
+  Behaviour,
+  ChannelMessageType,
+  ControlMessageType,
+  Edge,
+  ChannelControlMessage,
+  SysexControlMessage,
+  ControlMessage,
+  ChannelControlMatch,
+  SysexControlMatch,
+  ControlMatch,
+  ControlAction,
+  ControlBinding,
+  ControlDevice,
+  PeekHandle,
+  ControlBindingsState,
+  ControlBindingsActions,
+  LearnPhase,
+  LearnState,
+  HeldControl,
+  ControlSurfaceState,
+  ControlSurfaceActions,
+} from '@pianel/core/store';
+
 let initialized = false;
 
 export function initStores(storage: StateStorage): void {
@@ -61,5 +92,6 @@ export function initStores(storage: StateStorage): void {
   createFavoritesStore({ storage });
   createProfilesStore({ storage });
   createAppSettingsStore({ storage });
+  createControlBindingsStore({ storage });
   initialized = true;
 }

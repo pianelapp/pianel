@@ -20,4 +20,17 @@ describe('barrel exports', () => {
     expect(typeof rootBarrel.SetlistService).toBe('function');
     expect(typeof rootBarrel.SetlistCursorService).toBe('function');
   });
+
+  it('store barrel exposes the control stores', () => {
+    expect(typeof storeBarrel.useControlBindingsStore.getState).toBe('function');
+    expect(typeof storeBarrel.useControlSurfaceStore.getState).toBe('function');
+    expect(typeof storeBarrel.createControlBindingsStore).toBe('function');
+    expect(storeBarrel.CONTROL_BINDINGS_VERSION).toBe(1);
+  });
+
+  it('root barrel exposes the control surface service and registry', () => {
+    expect(typeof rootBarrel.ControlSurfaceService).toBe('function');
+    expect(typeof rootBarrel.ControlActionRegistry).toBe('function');
+    expect(typeof rootBarrel.getControlActionRegistry).toBe('function');
+  });
 });

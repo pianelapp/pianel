@@ -46,6 +46,8 @@ export interface Transport {
    */
   readonly deviceName?: string | null;
 
+  readonly inputPortId?: string | null;
+
   /**
    * Scan for devices advertising the BLE MIDI service.
    * Calls onDiscovered for each found device.
@@ -103,5 +105,18 @@ export interface Transport {
    * Clean up all resources (subscriptions, BLE manager).
    * Call on app unmount.
    */
+  destroy(): Promise<void>;
+}
+
+export type TransportStatusListener = (status: TransportStatus) => void;
+
+export interface InputTransport {
+  readonly status: TransportStatus;
+  readonly deviceName?: string | null;
+  listDevices(): Promise<DiscoveredDevice[]>;
+  connect(deviceId: string, deviceName?: string | null): Promise<void>;
+  disconnect(): Promise<void>;
+  subscribe(listener: NotificationListener): Unsubscribe;
+  onStatusChange(listener: TransportStatusListener): Unsubscribe;
   destroy(): Promise<void>;
 }

@@ -46,7 +46,7 @@ export {DEFAULT_PERFORMANCE_SNAPSHOT} from '../types/performanceSnapshot';
 export type {ThemePreference, AccidentalPreference, AppSettingsState, AppSettingsActions} from './appSettingsStore';
 export {useAppSettingsStore, createAppSettingsStore} from './appSettingsStore';
 
-export type {CursorState, CursorActions} from './cursorStore';
+export type {CursorState, CursorActions, CursorAnchor} from './cursorStore';
 export {useCursorStore} from './cursorStore';
 
 export type {Scene, Song, SetlistEntry, Setlist} from '../types/setlist';
@@ -63,3 +63,37 @@ export {
 } from '../types/setlist';
 
 export {normalizeProfile} from '../helpers/profileMigration';
+
+export type {
+  Behaviour,
+  ChannelMessageType,
+  ControlMessageType,
+  Edge,
+  ChannelControlMessage,
+  SysexControlMessage,
+  ControlMessage,
+  ChannelControlMatch,
+  SysexControlMatch,
+  ControlMatch,
+  ControlAction,
+  ControlBinding,
+  ControlDevice,
+  PeekHandle,
+} from '../types/control';
+export {BEHAVIOURS} from '../types/control';
+
+export type {ControlBindingsState, ControlBindingsActions} from './controlBindingsStore';
+export {
+  useControlBindingsStore,
+  createControlBindingsStore,
+  CONTROL_BINDINGS_VERSION,
+} from './controlBindingsStore';
+
+export type {
+  LearnPhase,
+  LearnState,
+  HeldControl,
+  ControlSurfaceState,
+  ControlSurfaceActions,
+} from './controlSurfaceStore';
+export {useControlSurfaceStore} from './controlSurfaceStore';

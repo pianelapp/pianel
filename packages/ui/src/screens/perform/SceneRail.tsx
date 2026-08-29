@@ -6,11 +6,18 @@ import type {Scene} from '../../store';
 interface SceneRailProps {
   scenes: Scene[];
   currentIndex: number;
+  anchorIndex?: number | null;
   isLightMode: boolean;
   onJump: (index: number) => void;
 }
 
-export function SceneRail({scenes, currentIndex, isLightMode, onJump}: SceneRailProps) {
+export function SceneRail({
+  scenes,
+  currentIndex,
+  anchorIndex = null,
+  isLightMode,
+  onJump,
+}: SceneRailProps) {
   const {findToneById} = useTones();
   const currentRef = useRef<HTMLButtonElement | null>(null);
 
@@ -25,6 +32,7 @@ export function SceneRail({scenes, currentIndex, isLightMode, onJump}: SceneRail
     <div data-scrolls className="flex-1 overflow-y-auto custom-scrollbar">
       {scenes.map((scene, index) => {
         const isCurrent = index === currentIndex;
+        const isAnchor = !isCurrent && index === anchorIndex;
         const summary = summariseScene(scene.snapshot, id => findToneById(id)?.name);
 
         return (
@@ -33,9 +41,10 @@ export function SceneRail({scenes, currentIndex, isLightMode, onJump}: SceneRail
             type="button"
             data-scene-row
             data-current={isCurrent ? 'true' : 'false'}
+            data-anchor-row={isAnchor ? '' : undefined}
             ref={isCurrent ? currentRef : undefined}
             onClick={() => onJump(index)}
-            className={`tap-target w-full flex items-center gap-2.5 px-3.5 py-3 text-base border-b text-left transition-colors ${
+            className={`tap-target relative w-full flex items-center gap-2.5 px-3.5 py-3 text-base border-b text-left transition-colors ${
               isLightMode ? 'border-zinc-200' : 'border-zinc-800'
             } ${rowStateClass(isCurrent, isLightMode)}`}>
             <span className={`shrink-0 w-4 font-mono text-xs ${numberClass(isCurrent, isLightMode)}`}>
@@ -45,6 +54,20 @@ export function SceneRail({scenes, currentIndex, isLightMode, onJump}: SceneRail
             <span className={`ml-auto shrink-0 text-xs font-medium ${soundClass(isCurrent, isLightMode)}`}>
               {soundLabel(summary)}
             </span>
+            {isAnchor && (
+              <>
+                <span
+                  data-anchor-bar
+                  aria-hidden="true"
+                  className={`absolute inset-y-0 right-0 w-[3px] ${anchorBarClass(isLightMode)}`}
+                />
+                <span
+                  className={`shrink-0 font-mono text-[10px] font-bold tracking-widest ${anchorTextClass(isLightMode)}`}>
+                  HOLD
+                  <span className="sr-only">, release returns here</span>
+                </span>
+              </>
+            )}
           </button>
         );
       })}
@@ -57,6 +80,14 @@ function rowStateClass(isCurrent: boolean, isLightMode: boolean): string {
   return `font-extrabold shadow-[inset_3px_0_0] ${
     isLightMode ? 'bg-cyan-100 text-cyan-800' : 'bg-cyan-950 text-cyan-400'
   }`;
+}
+
+function anchorBarClass(isLightMode: boolean): string {
+  return isLightMode ? 'bg-amber-700' : 'bg-amber-400';
+}
+
+function anchorTextClass(isLightMode: boolean): string {
+  return isLightMode ? 'text-amber-700' : 'text-amber-400';
 }
 
 function numberClass(isCurrent: boolean, isLightMode: boolean): string {

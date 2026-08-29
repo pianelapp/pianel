@@ -259,11 +259,13 @@ function sceneRailElement(
   scenes: Scene[],
   currentIndex: number,
   onJump: (index: number) => void,
+  anchorIndex: number | null = null,
 ): ReactElement {
   return (
     <SceneRail
       scenes={scenes}
       currentIndex={currentIndex}
+      anchorIndex={anchorIndex}
       isLightMode={false}
       onJump={onJump}
     />
@@ -274,8 +276,11 @@ export function renderRail(
   labels: string[],
   currentIndex: number,
   onJump: (index: number) => void = () => {},
+  anchorIndex: number | null = null,
 ): RenderResult {
-  lastRendered = render(sceneRailElement(railScenesFromLabels(labels), currentIndex, onJump));
+  lastRendered = render(
+    sceneRailElement(railScenesFromLabels(labels), currentIndex, onJump, anchorIndex),
+  );
   return lastRendered;
 }
 
@@ -283,8 +288,11 @@ export function renderRailWithScenes(
   specs: RailSceneSpec[],
   currentIndex: number,
   onJump: (index: number) => void = () => {},
+  anchorIndex: number | null = null,
 ): RenderResult {
-  lastRendered = render(sceneRailElement(railScenesFromSpecs(specs), currentIndex, onJump));
+  lastRendered = render(
+    sceneRailElement(railScenesFromSpecs(specs), currentIndex, onJump, anchorIndex),
+  );
   return lastRendered;
 }
 
@@ -292,8 +300,14 @@ export function railAt(
   labels: string[],
   currentIndex: number,
   onJump: (index: number) => void = () => {},
+  anchorIndex: number | null = null,
 ): ReactElement {
-  return sceneRailElement(railScenesFromLabels(labels), currentIndex, onJump);
+  return sceneRailElement(
+    railScenesFromLabels(labels),
+    currentIndex,
+    onJump,
+    anchorIndex,
+  );
 }
 
 export function renderPicker(

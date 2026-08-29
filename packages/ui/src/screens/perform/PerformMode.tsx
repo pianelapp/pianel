@@ -1,11 +1,17 @@
 import { useMemo, useState } from 'react';
 import Unplug from 'lucide-react/dist/esm/icons/unplug';
+import Footprints from 'lucide-react/dist/esm/icons/footprints';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { usePerformCursor } from '../../hooks/usePerformCursor';
 import { useSetlists } from '../../hooks/useSetlists';
 import { useSongs } from '../../hooks/useSongs';
 import { useConnection } from '../../hooks/useConnection';
-import { usePerformanceStore } from '../../store';
+import {
+  useControlBindingsStore,
+  useControlSurfaceStore,
+  useCursorStore,
+  usePerformanceStore,
+} from '../../store';
 import { statusBadgeClass } from '../../helpers/sceneBadge';
 import { StatusBar } from '../display/StatusBar';
 import { AdvanceButton } from './AdvanceButton';
@@ -26,6 +32,11 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
   const tier = useBreakpoint();
   const connection = useConnection();
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  const anchor = useCursorStore(s => s.anchor);
+  const held = useControlSurfaceStore(s => s.held);
+  const pedalAttached = useControlSurfaceStore(s => s.attached);
+  const pedalDevice = useControlBindingsStore(s => s.device);
 
   const voiceMode = usePerformanceStore(s => s.voiceMode);
   const activeTone = usePerformanceStore(s => s.activeTone);
@@ -96,7 +107,15 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
     ? !slotIdentityEquals(cursor.scene.snapshot.voiceModeSnapshot, captureSource)
     : false;
   const showDisconnectedBanner = connection.status !== 'connected';
+  const showPedalBanner = pedalDevice !== null && !pedalAttached;
   const canGoBack = cursor.sceneIndex > 0 || cursor.hasPrevSong;
+  const anchorIndex =
+    anchor && anchor.entryIndex === cursor.entryIndex ? anchor.sceneIndex : null;
+  const armedRelease = held?.behaviour === 'release' ? held.actionId : null;
+  const armedAdvance =
+    armedRelease === 'perform.nextScene' || armedRelease === 'perform.nextSong';
+  const armedPrev =
+    armedRelease === 'perform.prevScene' || armedRelease === 'perform.prevSong';
 
   const handleAdvance = () => {
     if (cursor.nextTarget.kind === 'scene') void cursor.nextScene();
@@ -134,6 +153,15 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
           }`}>
           <Unplug className="w-3.5 h-3.5" />
           PIANO DISCONNECTED
+        </div>
+      )}
+      {showPedalBanner && (
+        <div
+          data-pedal-banner
+          role="status"
+          className="shrink-0 flex items-center justify-center gap-2 py-1.5 text-xs font-bold tracking-widest text-white bg-amber-700">
+          <Footprints className="w-3.5 h-3.5" />
+          FOOTSWITCH LOST
         </div>
       )}
 
@@ -212,6 +240,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
           <SceneRail
             scenes={cursor.song.scenes}
             currentIndex={cursor.sceneIndex}
+            anchorIndex={anchorIndex}
             isLightMode={isLightMode}
             onJump={handleJumpScene}
           />
@@ -222,6 +251,8 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
             onAdvance={handleAdvance}
             onPrev={handlePrev}
             canGoBack={canGoBack}
+            armedAdvance={armedAdvance}
+            armedPrev={armedPrev}
           />
           <StatusBar isLightMode={isLightMode} compact />
         </div>
@@ -235,6 +266,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
               <SceneRail
                 scenes={cursor.song.scenes}
                 currentIndex={cursor.sceneIndex}
+                anchorIndex={anchorIndex}
                 isLightMode={isLightMode}
                 onJump={handleJumpScene}
               />
@@ -257,6 +289,8 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
                 onAdvance={handleAdvance}
                 onPrev={handlePrev}
                 canGoBack={canGoBack}
+                armedAdvance={armedAdvance}
+                armedPrev={armedPrev}
               />
             </div>
           </div>
