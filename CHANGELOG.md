@@ -5,6 +5,14 @@ automatically by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/); see
 [docs/VERSIONING.md](docs/VERSIONING.md) for the versioning rules.
 
+## [0.1.4](https://github.com/pianelapp/pianel/compare/v0.1.3...v0.1.4) (2026-08-30)
+
+
+### Features
+
+* add hands-free control ([#11](https://github.com/pianelapp/pianel/issues/11)) ([d215e17](https://github.com/pianelapp/pianel/commit/d215e17748672b0c6078ee35eebd9fa5ea77b497))
+* add key touch and some minor adjustments ([#13](https://github.com/pianelapp/pianel/issues/13)) ([5139d5a](https://github.com/pianelapp/pianel/commit/5139d5afeec626e5e963665df1a382b14c0da92c))
+
 ## [0.1.3](https://github.com/pianelapp/pianel/compare/v0.1.2...v0.1.3) (2026-08-21)
 
 
