@@ -15,6 +15,7 @@
     "./types": "./src/types/types.ts",
     "./types/metronomePatterns": "./src/types/metronomePatterns.ts",
     "./types/voicingMode": "./src/types/voicingMode.ts",
+    "./helpers/keyTouch": "./src/helpers/keyTouch.ts",
     "./helpers/metronomePatterns": "./src/helpers/metronomePatterns.ts",
     "./helpers/voicingMode": "./src/helpers/voicingMode.ts"
   },

@@ -3,6 +3,7 @@ export * from './types/voicingMode';
 export * from './types/quickToneSlot';
 export * from './helpers/voicingMode';
 export * from './helpers/quickToneSlot';
+export * from './helpers/keyTouch';
 export * from './engine/IPianoEngine';
 export * from './engine/registry';
 export * from './transport/types';

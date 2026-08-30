@@ -579,6 +579,7 @@ function applySnapshotDefaults(
   return {
     volume: typeof snap.volume === 'number' ? snap.volume : d.volume,
     tempo: typeof snap.tempo === 'number' ? snap.tempo : d.tempo,
+    keyTouch: typeof snap.keyTouch === 'number' ? snap.keyTouch : d.keyTouch,
     metronome:
       snap.metronome && typeof snap.metronome === 'object'
         ? {...snap.metronome}

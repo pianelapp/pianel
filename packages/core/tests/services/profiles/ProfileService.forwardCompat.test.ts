@@ -66,6 +66,43 @@ describe('applyExportFileDefaults', () => {
     expect(filled.profile.presets[0].snapshot.volume).toBe(100);
   });
 
+  it('leaves key touch absent when the file never captured one', () => {
+    const filled = applyExportFileDefaults(minimalExport());
+    expect(filled.profile.defaultState.keyTouch).toBeUndefined();
+  });
+
+  it('carries a captured key touch curve through instead of dropping it', () => {
+    const withCurve = minimalExport();
+    withCurve.profile.defaultState = {
+      volume: 50,
+      keyTouch: 4,
+    } as unknown as ProfileExportFile['profile']['defaultState'];
+    const filled = applyExportFileDefaults(withCurve);
+    expect(filled.profile.defaultState.keyTouch).toBe(4);
+  });
+
+  it('carries a preset key touch curve through as well', () => {
+    const withPreset = minimalExport();
+    withPreset.profile.presets = [
+      {
+        id: '1234567890-aaaaaaaa',
+        tilePosition: 0,
+        snapshot: {volume: 90, keyTouch: 1},
+      } as unknown as ProfileExportFile['profile']['presets'][number],
+    ];
+    const filled = applyExportFileDefaults(withPreset);
+    expect(filled.profile.presets[0].snapshot.keyTouch).toBe(1);
+  });
+
+  it('keeps key touch 0 (Fix) rather than treating it as missing', () => {
+    const withFix = minimalExport();
+    withFix.profile.defaultState = {
+      keyTouch: 0,
+    } as unknown as ProfileExportFile['profile']['defaultState'];
+    const filled = applyExportFileDefaults(withFix);
+    expect(filled.profile.defaultState.keyTouch).toBe(0);
+  });
+
   it('fills in createdAt / updatedAt when missing', () => {
     const filled = applyExportFileDefaults(minimalExport());
     expect(typeof filled.profile.createdAt).toBe('string');

@@ -22,6 +22,7 @@ export function usePiano() {
   const metronomePattern = usePerformanceStore(s => s.metronomePattern);
   const metronomeVolume = usePerformanceStore(s => s.metronomeVolume);
   const metronomeTone = usePerformanceStore(s => s.metronomeTone);
+  const keyTouch = usePerformanceStore(s => s.keyTouch);
   const activeTone = usePerformanceStore(s => s.activeTone);
 
   const changeVolume = useCallback(async (value: number) => {
@@ -60,6 +61,13 @@ export function usePiano() {
     [],
   );
 
+  const changeKeyTouch = useCallback(async (level: number) => {
+    usePerformanceStore.getState().setKeyTouch(level);
+    const service = getPianoService();
+    if (!service) return;
+    await service.changeKeyTouch(level);
+  }, []);
+
   const applyQuickToneSlot = useCallback(async (slot: QuickToneSlot) => {
     const service = getPianoService();
     if (!service) return;
@@ -75,11 +83,13 @@ export function usePiano() {
     metronomePattern,
     metronomeVolume,
     metronomeTone,
+    keyTouch,
     activeTone,
     changeVolume,
     changeTempo,
     toggleMetronome,
     changeMetronomeParam,
+    changeKeyTouch,
     applyQuickToneSlot,
   };
 }

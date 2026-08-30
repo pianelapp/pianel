@@ -215,6 +215,75 @@ describe('PresetService.applyPreset', () => {
   });
 });
 
+// ─── Key touch ──────────────────────────────────────────────────
+
+const KEY_TOUCH_ADDR = '1,0,2,29';
+
+function keyTouchWrites(transport: FakeTransport): number[][] {
+  return transport.sentMessages.filter(m =>
+    m.join(',').includes(KEY_TOUCH_ADDR),
+  );
+}
+
+describe('PresetService key touch', () => {
+  // resetPerformance() shallow-merges, so optional fields need clearing by hand.
+  beforeEach(() => {
+    usePerformanceStore.setState({keyTouch: undefined});
+  });
+
+  it('captures the key touch curve from performanceStore', () => {
+    const {service} = makeService();
+    usePerformanceStore.getState().setKeyTouch(5);
+    expect(service.captureSnapshot().keyTouch).toBe(5);
+  });
+
+  it('leaves keyTouch undefined when the piano has not reported one', () => {
+    const {service} = makeService();
+    expect(service.captureSnapshot().keyTouch).toBeUndefined();
+  });
+
+  it('writes the captured curve on apply', async () => {
+    const {service, transport} = makeService();
+    const preset = makePreset({
+      snapshot: {...defaultSnapshot, keyTouch: 4},
+    });
+    await service.applyPreset(preset);
+    expect(keyTouchWrites(transport)).toEqual([
+      [0xf0, 0x41, 0x10, 0x00, 0x00, 0x00, 0x28, 0x12,
+       0x01, 0x00, 0x02, 0x1d, 0x04, 0x5c, 0xf7],
+    ]);
+  });
+
+  it('skips the write when the snapshot has no key touch (FR-010 "no change")', async () => {
+    const {service, transport} = makeService();
+    await service.applyPreset(makePreset({snapshot: {...defaultSnapshot}}));
+    expect(keyTouchWrites(transport)).toEqual([]);
+  });
+
+  it('clamps an out-of-range stored curve before writing', async () => {
+    const {service, transport} = makeService();
+    const preset = makePreset({
+      snapshot: {...defaultSnapshot, keyTouch: 42},
+    });
+    await service.applyPreset(preset);
+    expect(keyTouchWrites(transport)[0]).toEqual(
+      [0xf0, 0x41, 0x10, 0x00, 0x00, 0x00, 0x28, 0x12,
+       0x01, 0x00, 0x02, 0x1d, 0x05, 0x5b, 0xf7],
+    );
+  });
+
+  it('survives a capture → apply round-trip', async () => {
+    const {service, transport} = makeService();
+    usePerformanceStore.getState().setKeyTouch(1);
+    const captured = service.captureSnapshot();
+    await service.applySnapshot(captured);
+    expect(keyTouchWrites(transport)).toEqual([
+      [0xf0, 0x41, 0x10, 0x00, 0x00, 0x00, 0x28, 0x12,
+       0x01, 0x00, 0x02, 0x1d, 0x01, 0x5f, 0xf7],
+    ]);
+  });
+});
+
 // ─── Round-trip ─────────────────────────────────────────────────
 
 describe('PresetService capture → apply round-trip', () => {

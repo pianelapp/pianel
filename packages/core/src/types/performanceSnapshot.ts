@@ -21,6 +21,9 @@ export interface PerformanceSnapshot {
   /** Tempo (BPM 20-250). DT1: 01 00 03 09. */
   tempo: number;
 
+  /** Key touch curve (0=Fix … 5=Super Heavy). DT1: 01 00 02 1D. */
+  keyTouch?: number;
+
   /** Metronome capture (FR-005 §3). All fields optional ⇒ "no change" on apply. */
   metronome: {
     /** DT1: 01 00 01 0F (echo address). */

@@ -12,6 +12,7 @@ import type {Transport} from '../transport/types';
 import type {PianoEngine} from '../engine/IPianoEngine';
 import type {Tone, ToneCatalog, PianoEvent} from '../types/types';
 import {VOICING_MODE_TO_BYTE, encodeShift} from '../helpers/voicingMode';
+import {clampKeyTouch} from '../helpers/keyTouch';
 import type {VoicingMode, ShiftTarget} from '../types/voicingMode';
 import type {QuickToneSlot} from '../types/quickToneSlot';
 import {usePerformanceStore} from '../store/performanceStore';
@@ -236,6 +237,13 @@ export class PianoService {
     if (!this.engine) return;
 
     const sysex = this.engine.buildMetronomeParam(param, value);
+    await this.transport.send(sysex);
+  }
+
+  async changeKeyTouch(level: number): Promise<void> {
+    if (!this.engine) return;
+
+    const sysex = this.engine.buildKeyTouchChange(clampKeyTouch(level));
     await this.transport.send(sysex);
   }
 
