@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Music from 'lucide-react/dist/esm/icons/music-3';
-import Clock from 'lucide-react/dist/esm/icons/clock';
 import Volume2 from 'lucide-react/dist/esm/icons/volume-2';
 import Headphones from 'lucide-react/dist/esm/icons/headphones';
 import Hand from 'lucide-react/dist/esm/icons/hand';
@@ -13,6 +12,7 @@ import { useVoicingMode } from '../../hooks/useVoicingMode';
 import { TempoModal } from '../../components/modals/TempoModal';
 import { MetronomeModal } from '../../components/modals/MetronomeModal';
 import { KeyTouchModal } from '../../components/modals/KeyTouchModal';
+import { MetronomeIcon } from '../../components/icons/MetronomeIcon';
 import { VoicingModeModal } from '../../components/modals/VoicingModeModal';
 import { VoicingModeButton } from './VoicingModeButton';
 
@@ -126,25 +126,13 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
 
         <button
           onClick={toggleMetronome}
-          aria-label={
-            compact
-              ? metronomeOn
-                ? 'Metronome on'
-                : 'Metronome off'
-              : undefined
-          }
-          className={`${compact ? 'tap-target ' : ''}flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
+          aria-label={metronomeOn ? 'Metronome on' : 'Metronome off'}
+          className={`${compact ? 'tap-target ' : ''}flex items-center px-2 py-1 rounded-lg transition-colors ${
             isLightMode ? 'hover:bg-zinc-200' : 'hover:bg-zinc-800'
           }`}>
-          <Clock
+          <MetronomeIcon
             className={`w-5 h-5 ${metronomeOn ? 'text-cyan-500' : 'text-zinc-500'}`}
           />
-          {!compact && (
-            <span
-              className={`font-mono text-xl uppercase tracking-widest ${metronomeOn ? (isLightMode ? 'text-cyan-700' : 'text-cyan-400') : 'text-zinc-500'}`}>
-              {metronomeOn ? 'On' : 'Off'}
-            </span>
-          )}
         </button>
 
         <div className="relative">
