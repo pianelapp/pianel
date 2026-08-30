@@ -14,7 +14,7 @@
  * the actual reused component tree, not a mock. Stores are bound to the web
  * IndexedDB adapter via `initStores` exactly as the web entry does.
  */
-import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import App from '@pianel/ui/App';
 import { PianoService } from '@pianel/core/services/PianoService';
 import { getDefaultEngine } from '@pianel/core/engine/registry';
@@ -99,8 +99,7 @@ describe('Responsive Library layout (web host, reused renderer)', () => {
     const drawer = screen.getByRole('dialog', { name: /tone library/i });
     expect(drawer.className).toContain('translate-x-0');
 
-    // The backdrop is the aria-hidden sibling overlay.
-    const backdrop = document.querySelector('[aria-hidden]');
+    const backdrop = document.querySelector('[data-library-backdrop]');
     expect(backdrop).not.toBeNull();
     fireEvent.click(backdrop as Element);
     expect(drawer.className).toContain('-translate-x-full');
@@ -128,13 +127,9 @@ describe('Responsive Library layout (web host, reused renderer)', () => {
     const drawer = screen.getByRole('dialog', { name: /tone library/i });
     expect(drawer.className).toContain('translate-x-0');
 
-    // Select the first tone inside the open drawer. Tone-name buttons carry the
-    // `flex-col items-start` layout class (distinct from category buttons).
-    const firstTone = within(drawer)
-      .getAllByRole('button')
-      .find(b => b.className.includes('flex-col items-start'));
-    expect(firstTone).toBeTruthy();
-    fireEvent.click(firstTone as HTMLElement);
+    const firstTone = drawer.querySelector('[data-tone-item]');
+    expect(firstTone).not.toBeNull();
+    fireEvent.click(firstTone as Element);
 
     expect(drawer.className).toContain('-translate-x-full');
   });

@@ -126,6 +126,7 @@ export function LibrarySidebar({
         key={tone.id}
         className={`${toneItemBase} ${isActive ? toneItemActive : toneItemInactive}`}>
         <button
+          data-tone-item
           onClick={() => handleToneClick(tone)}
           aria-pressed={isActive}
           className="flex flex-col items-start min-w-0 flex-1 text-left">
