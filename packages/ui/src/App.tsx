@@ -166,6 +166,7 @@ export default function App() {
         {isSidebarMobile && (
           <>
             <div
+              data-library-backdrop
               onClick={() => setLibraryOpen(false)}
               aria-hidden
               className={`absolute inset-0 z-30 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${

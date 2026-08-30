@@ -36,6 +36,7 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
   const anchor = useCursorStore(s => s.anchor);
   const held = useControlSurfaceStore(s => s.held);
   const pedalAttached = useControlSurfaceStore(s => s.attached);
+  const pedalSpoke = useControlSurfaceStore(s => s.lastMessageAt !== null);
   const pedalDevice = useControlBindingsStore(s => s.device);
 
   const voiceMode = usePerformanceStore(s => s.voiceMode);
@@ -107,7 +108,8 @@ export function PerformMode({ isLightMode }: PerformModeProps) {
     ? !slotIdentityEquals(cursor.scene.snapshot.voiceModeSnapshot, captureSource)
     : false;
   const showDisconnectedBanner = connection.status !== 'connected';
-  const showPedalBanner = pedalDevice !== null && !pedalAttached;
+  const showPedalBanner =
+    pedalDevice !== null && !pedalAttached && pedalSpoke;
   const canGoBack = cursor.sceneIndex > 0 || cursor.hasPrevSong;
   const anchorIndex =
     anchor && anchor.entryIndex === cursor.entryIndex ? anchor.sceneIndex : null;

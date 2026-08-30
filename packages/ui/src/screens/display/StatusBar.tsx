@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import Music from 'lucide-react/dist/esm/icons/music-3';
-import Clock from 'lucide-react/dist/esm/icons/clock';
 import Volume2 from 'lucide-react/dist/esm/icons/volume-2';
 import Headphones from 'lucide-react/dist/esm/icons/headphones';
+import Hand from 'lucide-react/dist/esm/icons/hand';
+import {
+  keyTouchLabel,
+  keyTouchShortLabel,
+} from '@pianel/core/helpers/keyTouch';
 import { usePiano } from '../../hooks/usePiano';
 import { useVoicingMode } from '../../hooks/useVoicingMode';
 import { TempoModal } from '../../components/modals/TempoModal';
 import { MetronomeModal } from '../../components/modals/MetronomeModal';
+import { KeyTouchModal } from '../../components/modals/KeyTouchModal';
+import { MetronomeIcon } from '../../components/icons/MetronomeIcon';
 import { VoicingModeModal } from '../../components/modals/VoicingModeModal';
 import { VoicingModeButton } from './VoicingModeButton';
 
@@ -23,6 +29,7 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
     tempo,
     metronomeOn,
     metronomeBeat,
+    keyTouch,
     headphonesConnected,
     changeVolume,
     toggleMetronome,
@@ -31,6 +38,7 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
   const [showVolume, setShowVolume] = useState(false);
   const [showTempo, setShowTempo] = useState(false);
   const [showMetronome, setShowMetronome] = useState(false);
+  const [showKeyTouch, setShowKeyTouch] = useState(false);
   const [showMode, setShowMode] = useState(false);
 
   const handleVolumeChange = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -51,6 +59,12 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
   };
 
   const beatLabel = BEAT_LABELS[metronomeBeat] ?? '4/4';
+  const keyTouchText =
+    keyTouch === undefined ? '—' : keyTouchShortLabel(keyTouch);
+  const keyTouchTitle =
+    keyTouch === undefined
+      ? 'Key touch'
+      : `Key touch: ${keyTouchLabel(keyTouch)}`;
 
   return (
     <div data-statusbar className={`${compact ? 'px-3' : 'px-8'} pb-5 shrink-0`}>
@@ -84,6 +98,22 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
             aria-label="Metronome settings">
             {beatLabel}
           </button>
+          <button
+            type="button"
+            onClick={() => setShowKeyTouch(true)}
+            title={keyTouchTitle}
+            aria-label={keyTouchTitle}
+            className={`${compact ? 'tap-target ' : ''}flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity`}>
+            <Hand className="w-5 h-5 text-zinc-500" />
+            {!compact && (
+              <span
+                className={`font-mono text-xl ${
+                  isLightMode ? 'text-zinc-700' : 'text-zinc-300'
+                }`}>
+                {keyTouchText}
+              </span>
+            )}
+          </button>
         </div>
         <div className={'pl-2'}>
           <VoicingModeButton
@@ -96,25 +126,13 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
 
         <button
           onClick={toggleMetronome}
-          aria-label={
-            compact
-              ? metronomeOn
-                ? 'Metronome on'
-                : 'Metronome off'
-              : undefined
-          }
-          className={`${compact ? 'tap-target ' : ''}flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
+          aria-label={metronomeOn ? 'Metronome on' : 'Metronome off'}
+          className={`${compact ? 'tap-target ' : ''}flex items-center px-2 py-1 rounded-lg transition-colors ${
             isLightMode ? 'hover:bg-zinc-200' : 'hover:bg-zinc-800'
           }`}>
-          <Clock
+          <MetronomeIcon
             className={`w-5 h-5 ${metronomeOn ? 'text-cyan-500' : 'text-zinc-500'}`}
           />
-          {!compact && (
-            <span
-              className={`font-mono text-xl uppercase tracking-widest ${metronomeOn ? (isLightMode ? 'text-cyan-700' : 'text-cyan-400') : 'text-zinc-500'}`}>
-              {metronomeOn ? 'On' : 'Off'}
-            </span>
-          )}
         </button>
 
         <div className="relative">
@@ -218,6 +236,12 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
       <MetronomeModal
         open={showMetronome}
         onClose={() => setShowMetronome(false)}
+        isLightMode={isLightMode}
+      />
+
+      <KeyTouchModal
+        open={showKeyTouch}
+        onClose={() => setShowKeyTouch(false)}
         isLightMode={isLightMode}
       />
 

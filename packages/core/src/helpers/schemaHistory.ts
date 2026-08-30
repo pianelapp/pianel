@@ -20,6 +20,18 @@ export const SCHEMA_HISTORY: readonly SchemaVersionEntry[] = [
     version: 2,
     notes: 'Songs/setlists pivot — reusable song library plus ordered gig setlists.',
     added: ['profile.songs', 'profile.setlists'],
+    migrate: file => file,
+  },
+  {
+    version: 3,
+    notes:
+      'Key touch capture — snapshots remember the velocity curve. Additive and optional: a v2 snapshot simply omits it, and apply then leaves the piano\'s own curve alone.',
+    added: [
+      'profile.defaultState.keyTouch',
+      'profile.presets[].snapshot.keyTouch',
+      'profile.songs[].scenes[].snapshot.keyTouch',
+      'profile.setlists[].entries[].override.scenes[].snapshot.keyTouch',
+    ],
   },
 ];
 

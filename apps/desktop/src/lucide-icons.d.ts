@@ -148,3 +148,8 @@ declare module 'lucide-react/dist/esm/icons/upload' {
   const Icon: LucideIcon;
   export default Icon;
 }
+declare module 'lucide-react/dist/esm/icons/hand' {
+  import type { LucideIcon } from 'lucide-react';
+  const Icon: LucideIcon;
+  export default Icon;
+}

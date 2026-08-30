@@ -17,6 +17,8 @@ import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerA
 import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 import {OLDEST_SCHEMA_VERSION} from '../../../src/helpers/schemaHistory';
 
+const PRE_KEY_TOUCH_VERSION = 2;
+
 class FakeTransport implements Transport {
   status: 'idle' | 'connected' | 'disconnected' = 'idle';
   deviceName: string | null = null;
@@ -155,6 +157,70 @@ describe('schemaVersion validation', () => {
     await expect(service.importProfile()).rejects.toBeInstanceOf(
       UnsupportedProfileVersionError,
     );
+  });
+
+  it('imports a v2 profile written before key touch existed', async () => {
+    const file = {
+      schemaVersion: PRE_KEY_TOUCH_VERSION,
+      exportedAt: '2026-01-01T00:00:00Z',
+      profile: {...validProfile(), schemaVersion: PRE_KEY_TOUCH_VERSION},
+    };
+    const service = buildService(JSON.stringify(file));
+    const result = await service.importProfile();
+
+    expect(result.kind).toBe('imported');
+    const stored = useProfilesStore.getState().profiles[0];
+    expect(stored.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+  });
+
+  it('leaves key touch absent on a v2 import rather than inventing a curve', async () => {
+    const file = {
+      schemaVersion: PRE_KEY_TOUCH_VERSION,
+      exportedAt: '2026-01-01T00:00:00Z',
+      profile: {...validProfile(), schemaVersion: PRE_KEY_TOUCH_VERSION},
+    };
+    const service = buildService(JSON.stringify(file));
+    await service.importProfile();
+
+    const stored = useProfilesStore.getState().profiles[0];
+    expect(stored.defaultState.keyTouch).toBeUndefined();
+  });
+
+  it('carries the rest of a v2 profile through the key-touch hop untouched', async () => {
+    const original = {...validProfile(), schemaVersion: PRE_KEY_TOUCH_VERSION};
+    const file = {
+      schemaVersion: PRE_KEY_TOUCH_VERSION,
+      exportedAt: '2026-01-01T00:00:00Z',
+      profile: original,
+    };
+    const service = buildService(JSON.stringify(file));
+    await service.importProfile();
+
+    const stored = useProfilesStore.getState().profiles[0];
+    expect(stored.id).toBe(original.id);
+    expect(stored.name).toBe(original.name);
+    expect(stored.defaultState.volume).toBe(original.defaultState.volume);
+    expect(stored.defaultState.tempo).toBe(original.defaultState.tempo);
+    expect(stored.defaultState.voiceModeSnapshot).toEqual(
+      original.defaultState.voiceModeSnapshot,
+    );
+  });
+
+  it('keeps a captured key touch curve through a current-version import', async () => {
+    const profile = validProfile();
+    const file = {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      exportedAt: '2026-01-01T00:00:00Z',
+      profile: {
+        ...profile,
+        defaultState: {...profile.defaultState, keyTouch: 5},
+      },
+    };
+    const service = buildService(JSON.stringify(file));
+    await service.importProfile();
+
+    const stored = useProfilesStore.getState().profiles[0];
+    expect(stored.defaultState.keyTouch).toBe(5);
   });
 
   it('rejects negative schemaVersion as malformed', async () => {

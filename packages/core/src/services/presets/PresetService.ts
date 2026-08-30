@@ -6,8 +6,8 @@
  *  - `captureSnapshot()` reads the full FR-005 six-group state from
  *    `performanceStore` + `appSettingsStore.quickToneSlots`.
  *  - `applyPreset(preset)` builds the documented DT1 batch (voice mode,
- *    mode-specific tones + params, volume, tempo, metronome) and dispatches
- *    via `PianoService.applyPreset`. Restores the three quick-tone slots
+ *    mode-specific tones + params, volume, tempo, key touch, metronome) and
+ *    dispatches via `PianoService.applyPreset`. Restores the three quick-tone slots
  *    into `appSettingsStore`. Marks the preset as active.
  *  - `applySnapshot(snapshot)` — same code path without preset-id/label
  *    coupling. Used by `ProfileService.loadProfile`.
@@ -30,6 +30,7 @@ import {
   VOICING_MODE_TO_BYTE,
   byteToVoicingMode,
 } from '../../helpers/voicingMode';
+import {clampKeyTouch} from '../../helpers/keyTouch';
 
 export class PresetService {
   private pianoService: PianoService;
@@ -87,6 +88,7 @@ export class PresetService {
     return {
       volume: perf.volume,
       tempo: perf.tempo,
+      keyTouch: perf.keyTouch,
       metronome: {
         on: perf.metronomeOn,
         beat: perf.metronomeBeat,
@@ -197,7 +199,12 @@ export class PresetService {
       commands.push(engine.buildTempoChange(snapshot.tempo));
     }
 
-    // 6. Metronome.
+    // 6. Key touch.
+    if (snapshot.keyTouch !== undefined) {
+      commands.push(engine.buildKeyTouchChange(clampKeyTouch(snapshot.keyTouch)));
+    }
+
+    // 7. Metronome.
     const metro = snapshot.metronome ?? {};
     if (metro.on !== undefined && metro.on !== perf.metronomeOn) {
       commands.push(engine.buildMetronomeToggle());
@@ -217,7 +224,7 @@ export class PresetService {
 
     await this.pianoService.applyPreset(commands);
 
-    // 7. Restore the three quick-tone slots into appSettingsStore.
+    // 8. Restore the three quick-tone slots into appSettingsStore.
     if (snapshot.quickToneSlots) {
       const appSettings = useAppSettingsStore.getState();
       snapshot.quickToneSlots.forEach((slot, i) => {
@@ -225,16 +232,16 @@ export class PresetService {
       });
     }
 
-    // 8. Mirror the captured current tone into the live store so the
+    // 9. Mirror the captured current tone into the live store so the
     //    always-visible tone display reflects the change without waiting
     //    on the RQ1 round-trip. Authoritative reconciliation happens in
-    //    step 9 below.
+    //    step 10 below.
     if (vm?.rightToneId) {
       const t = tones.findById(vm.rightToneId);
       if (t) usePerformanceStore.getState().setActiveTone(t);
     }
 
-    // 9. Hardware-authoritative read-back: fire the engine's full RQ1
+    // 10. Hardware-authoritative read-back: fire the engine's full RQ1
     //    sweep so the piano repopulates voiceMode / volume / metronome /
     //    split-and-dual params / tones in `performanceStore` via
     //    `parseStateResponse`. Awaited so callers know state is settled.

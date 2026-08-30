@@ -17,12 +17,19 @@ beforeEach(() => {
   setPianoConnected(true);
   useControlBindingsStore.getState().clearAll();
   useControlSurfaceStore.getState().setAttached(false, null);
+  useControlSurfaceStore.setState({ lastMessage: null, lastMessageAt: null });
 });
 
 function rememberPedal(): void {
   useControlBindingsStore
     .getState()
     .setDevice({ id: 'in-pedal', name: 'FootCtrlPlus Bluetooth' });
+}
+
+function pedalSpoke(at = 1_000): void {
+  useControlSurfaceStore
+    .getState()
+    .noteMessage({ type: 'cc', channel: 1, id: 20, value: 127 }, at);
 }
 
 describe('the pedal-lost line', () => {
@@ -41,8 +48,16 @@ describe('the pedal-lost line', () => {
     expect(container.querySelector('[data-pedal-banner]')).toBeNull();
   });
 
-  it('appears when a set-up footswitch is not attached', async () => {
+  it('stays quiet when a remembered footswitch never spoke this session', async () => {
     rememberPedal();
+
+    const { container } = await renderPerforming(['A', 'B']);
+    expect(container.querySelector('[data-pedal-banner]')).toBeNull();
+  });
+
+  it('appears when a footswitch that spoke this session drops away', async () => {
+    rememberPedal();
+    pedalSpoke();
 
     const { container } = await renderPerforming(['A', 'B']);
     const banner = container.querySelector('[data-pedal-banner]');
@@ -51,8 +66,21 @@ describe('the pedal-lost line', () => {
     expect(banner!.textContent).toContain('FOOTSWITCH LOST');
   });
 
+  it('starts blaming the switch the moment it first speaks, not before', async () => {
+    rememberPedal();
+
+    const { container } = await renderPerforming(['A', 'B']);
+    expect(container.querySelector('[data-pedal-banner]')).toBeNull();
+
+    await act(async () => {
+      pedalSpoke();
+    });
+    expect(container.querySelector('[data-pedal-banner]')).not.toBeNull();
+  });
+
   it('announces itself rather than relying on the player noticing', async () => {
     rememberPedal();
+    pedalSpoke();
 
     const { container } = await renderPerforming(['A', 'B']);
     const banner = container.querySelector('[data-pedal-banner]')!;
@@ -62,6 +90,7 @@ describe('the pedal-lost line', () => {
 
   it('appears and disappears live as the pedal drops and wakes', async () => {
     rememberPedal();
+    pedalSpoke();
     useControlSurfaceStore
       .getState()
       .setAttached(true, 'FootCtrlPlus Bluetooth');
@@ -86,6 +115,7 @@ describe('the pedal-lost line', () => {
 
   it('sits below the piano banner rather than replacing it', async () => {
     rememberPedal();
+    pedalSpoke();
     setPianoConnected(false);
 
     const { container } = await renderPerforming(['A', 'B']);
@@ -101,6 +131,7 @@ describe('the pedal-lost line', () => {
 
   it('uses white on an amber that clears 4.5:1', async () => {
     rememberPedal();
+    pedalSpoke();
 
     const { container } = await renderPerforming(['A', 'B']);
     const banner = container.querySelector('[data-pedal-banner]')!;

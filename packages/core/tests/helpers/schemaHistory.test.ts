@@ -64,6 +64,25 @@ describe('schema history', () => {
     }
   });
 
+  it('adds key touch without disturbing the rest of the profile', () => {
+    const profile = {
+      id: '1234567890-abcdefgh',
+      name: 'Pre key touch',
+      presets: [{id: 'p1', label: 'Warm', snapshot: {volume: 70, tempo: 90}}],
+      songs: [{id: 's1', name: 'Opener'}],
+    };
+    const migrated = migrateToCurrent(
+      {schemaVersion: 2, exportedAt: 'x', profile},
+      2,
+    );
+
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(migrated.profile).toEqual({
+      ...profile,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+    });
+  });
+
   it('finds an entry by version and misses on an unknown one', () => {
     expect(findSchemaVersionEntry(OLDEST_SCHEMA_VERSION)?.version).toBe(
       OLDEST_SCHEMA_VERSION,
