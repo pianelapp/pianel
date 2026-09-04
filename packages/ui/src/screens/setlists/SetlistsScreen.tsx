@@ -503,8 +503,8 @@ export function SetlistsScreen({
               <SetlistDetail
                 setlist={selectedSetlist}
                 isLightMode={isLightMode}
-                onPerform={setlistId => {
-                  void enterSetlist(setlistId).catch(() => {});
+                onPerform={(setlistId, startAt) => {
+                  void enterSetlist(setlistId, startAt).catch(() => {});
                 }}
               />
             ) : (

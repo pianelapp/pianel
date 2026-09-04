@@ -18,6 +18,11 @@ export function resetCursorService(): void {
   cursorServiceInstance = null;
 }
 
+export interface PerformStartAt {
+  entryIndex: number;
+  sceneIndex?: number;
+}
+
 export type NextTarget =
   | { kind: 'scene'; scene: Scene }
   | { kind: 'song'; song: Song }
@@ -51,9 +56,12 @@ export function usePerformCursor() {
     : END;
   const hasPrevSong = ready ? safely(() => service.hasPrevSong(), false) : false;
 
-  const enterSetlist = useCallback(async (id: string): Promise<void> => {
-    await getCursorService()?.enterPerform({ setlistId: id });
-  }, []);
+  const enterSetlist = useCallback(
+    async (id: string, startAt?: PerformStartAt): Promise<void> => {
+      await getCursorService()?.enterPerform({ setlistId: id, ...startAt });
+    },
+    [],
+  );
 
   const enterSong = useCallback(async (songId: string): Promise<void> => {
     await getCursorService()?.enterPerform({ songId });

@@ -4,6 +4,7 @@ import {
   decodeShift,
   toneSlotLabels,
   clampBalanceForUi,
+  resolveActiveToneSlot,
   BALANCE_BYTE_CENTER,
 } from '@pianel/core/helpers/voicingMode';
 import type {
@@ -20,17 +21,15 @@ import { getPianoService } from './usePiano';
  * Reads mode + per-slot tones + per-mode parameters from the shared store,
  * exposes action creators that delegate to PianoService.
  *
- * Per Constitution Principle V the renderer never imports engine/transport
+ * Per Constitution the renderer never imports engine/transport
  * directly — all writes go through PianoService.
  */
 export function useVoicingMode() {
   const voiceModeByte = usePerformanceStore(s => s.voiceMode ?? 0);
   const mode: VoicingMode = byteToVoicingMode(voiceModeByte) ?? 'single';
 
-  // Active slot lives in the shared app-settings store so every consumer — the
-  // slot tabs, the tone steppers, and the Library sidebar — stays in sync.
-  // PianoService.changeVoiceMode resets it to 'right' on Single/Twin entry.
-  const activeSlot = useAppSettingsStore(s => s.activeToneSlot);
+  const storedSlot = useAppSettingsStore(s => s.activeToneSlot);
+  const activeSlot = resolveActiveToneSlot(mode, storedSlot);
   const setActiveSlot = useCallback((slot: ToneSlot) => {
     useAppSettingsStore.getState().setActiveToneSlot(slot);
   }, []);
@@ -41,8 +40,12 @@ export function useVoicingMode() {
   // The "second tone" presented to the UI depends on the active mode:
   // Dual → dualTone2 (01 00 02 0D), Split → leftTone (01 00 02 0A).
   const tone2 = mode === 'dual' ? dualTone2 : splitLowerTone;
-  const splitBalanceByte = usePerformanceStore(s => s.balance ?? BALANCE_BYTE_CENTER);
-  const dualBalanceByte = usePerformanceStore(s => s.dualBalance ?? BALANCE_BYTE_CENTER);
+  const splitBalanceByte = usePerformanceStore(
+    s => s.balance ?? BALANCE_BYTE_CENTER,
+  );
+  const dualBalanceByte = usePerformanceStore(
+    s => s.dualBalance ?? BALANCE_BYTE_CENTER,
+  );
   // Surface the correct balance register for the current mode.
   const balance = mode === 'dual' ? dualBalanceByte : splitBalanceByte;
   const splitPoint = usePerformanceStore(s => s.splitPoint ?? 54);

@@ -1,7 +1,10 @@
 import React from 'react';
 import Settings2 from 'lucide-react/dist/esm/icons/settings-2';
 import type { VoicingMode, ToneSlot } from '@pianel/core/types/voicingMode';
-import { toneSlotLabels } from '@pianel/core/helpers/voicingMode';
+import {
+  hasLeftToneSlot,
+  toneSlotLabels,
+} from '@pianel/core/helpers/voicingMode';
 
 interface ToneSlotTabsProps {
   mode: VoicingMode;
@@ -27,7 +30,7 @@ export function ToneSlotTabs({
   onOpenOptions,
   isLightMode,
 }: ToneSlotTabsProps) {
-  if (mode === 'single' || mode === 'twin') return null;
+  if (!hasLeftToneSlot(mode)) return null;
 
   const labels = toneSlotLabels(mode);
 

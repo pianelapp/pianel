@@ -19,10 +19,15 @@ import {
 import { patchScene, moveSceneInSong, removeScene } from '@pianel/core/helpers/songEdits';
 import type { Scene, Setlist, Song } from '../../store';
 
+export interface PerformStartAt {
+  entryIndex: number;
+  sceneIndex?: number;
+}
+
 interface SetlistDetailProps {
   setlist: Setlist;
   isLightMode: boolean;
-  onPerform: (setlistId: string) => void;
+  onPerform: (setlistId: string, startAt?: PerformStartAt) => void;
 }
 
 type SceneDialogState =
@@ -238,6 +243,9 @@ export function SetlistDetail({
   const handleSceneAction = useCallback(
     async (entryIndex: number, action: SceneAction, scene: Scene, sceneIndex: number) => {
       switch (action) {
+        case 'performFrom':
+          onPerform(setlist.id, { entryIndex, sceneIndex });
+          break;
         case 'rename':
           setSceneDialog({ kind: 'rename', entryIndex, scene });
           break;
@@ -285,7 +293,15 @@ export function SetlistDetail({
           break;
       }
     },
-    [editEntrySong, captureSnapshot, presets, applySnapshot, savePresetToTile],
+    [
+      editEntrySong,
+      captureSnapshot,
+      presets,
+      applySnapshot,
+      savePresetToTile,
+      onPerform,
+      setlist.id,
+    ],
   );
 
   const handleRenameScene = useCallback(
@@ -315,6 +331,9 @@ export function SetlistDetail({
   const handleEntryAction = useCallback(
     async (action: EntryAction, index: number) => {
       switch (action) {
+        case 'performFrom':
+          onPerform(setlist.id, { entryIndex: index });
+          break;
         case 'moveUp':
           moveEntry(setlist.id, index, index - 1);
           break;
@@ -372,6 +391,7 @@ export function SetlistDetail({
       revertEntry,
       promoteEntry,
       countSetlistsUsing,
+      onPerform,
     ],
   );
 

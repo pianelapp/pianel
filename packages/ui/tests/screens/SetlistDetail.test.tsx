@@ -6,6 +6,7 @@ import {
   byText,
   openContextMenu as openEntryMenu,
   renderList,
+  type PerformStartAt,
 } from '../fixtures/setlistsUi';
 
 beforeAll(() => {
@@ -122,6 +123,88 @@ describe('SetlistDetail', () => {
     click(expander);
     expect(expander.getAttribute('aria-expanded')).toBeNull();
     expect(container.textContent).not.toContain('Vanished Scene');
+  });
+
+  it('starts a performance from a chosen song', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Opener').id;
+    const b = songs.createSong('Closer').id;
+    songs.captureScene(a, 'x');
+    songs.captureScene(b, 'y');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+    setlists.addSong(listId, b);
+
+    const calls: Array<[string, PerformStartAt | undefined]> = [];
+    const {container} = renderList(listId, {
+      onPerform: (id, startAt) => calls.push([id, startAt]),
+    });
+    openEntryMenu(container, 'Closer');
+    click(byText(container, 'Perform from here'));
+
+    expect(calls).toEqual([[listId, {entryIndex: 1}]]);
+  });
+
+  it('starts a performance from a chosen scene', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Opener').id;
+    const b = songs.createSong('Closer').id;
+    songs.captureScene(a, 'x');
+    songs.captureScene(b, 'Head');
+    songs.captureScene(b, 'Solo');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+    setlists.addSong(listId, b);
+
+    const calls: Array<[string, PerformStartAt | undefined]> = [];
+    const {container} = renderList(listId, {
+      onPerform: (id, startAt) => calls.push([id, startAt]),
+    });
+    click(byText(container, 'Closer'));
+    openEntryMenu(container, 'Solo');
+    click(byText(container, 'Perform from here'));
+
+    expect(calls).toEqual([[listId, {entryIndex: 1, sceneIndex: 1}]]);
+  });
+
+  it('offers no start point on an entry with no scenes', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Bare').id;
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+
+    const {container} = renderList(listId);
+    openEntryMenu(container, 'Bare');
+    expect(container.textContent).not.toContain('Perform from here');
+  });
+
+  it('offers no start point on an entry whose library song has been deleted', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Ghost').id;
+    songs.captureScene(a, 'x');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+    songs.deleteSong(a);
+
+    const {container} = renderList(listId);
+    openEntryMenu(container, 'Missing song');
+    expect(container.textContent).not.toContain('Perform from here');
+  });
+
+  it('PERFORM still starts the setlist from the top', () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Opener').id;
+    songs.captureScene(a, 'x');
+    const listId = setlists.createSetlist('Gig').id;
+    setlists.addSong(listId, a);
+
+    const calls: Array<[string, PerformStartAt | undefined]> = [];
+    const {container} = renderList(listId, {
+      onPerform: (id, startAt) => calls.push([id, startAt]),
+    });
+    click(byText(container, 'PERFORM'));
+
+    expect(calls).toEqual([[listId, undefined]]);
   });
 
   it('disables PERFORM on a setlist with no playable entry', () => {

@@ -46,6 +46,30 @@ describe('cursorStore', () => {
     expect(useCursorStore.getState().entryIndex).toBe(3);
   });
 
+  it('enter accepts a starting sceneIndex', () => {
+    useCursorStore.getState().enter({
+      setlistId: 'list-1',
+      songId: 'song-1',
+      entryIndex: 2,
+      sceneIndex: 3,
+    });
+    const s = useCursorStore.getState();
+    expect(s.entryIndex).toBe(2);
+    expect(s.sceneIndex).toBe(3);
+  });
+
+  it('enter with null setlistId pins entryIndex but keeps the given sceneIndex', () => {
+    useCursorStore.getState().enter({
+      setlistId: null,
+      songId: 'song-9',
+      entryIndex: 5,
+      sceneIndex: 2,
+    });
+    const s = useCursorStore.getState();
+    expect(s.entryIndex).toBe(0);
+    expect(s.sceneIndex).toBe(2);
+  });
+
   it('setPosition updates sceneIndex alone', () => {
     useCursorStore.getState().enter({setlistId: 'l', songId: 's', entryIndex: 0});
     useCursorStore.getState().setPosition({sceneIndex: 3});
