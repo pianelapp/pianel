@@ -5,6 +5,13 @@ automatically by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/); see
 [docs/VERSIONING.md](docs/VERSIONING.md) for the versioning rules.
 
+## [0.1.5](https://github.com/pianelapp/pianel/compare/v0.1.4...v0.1.5) (2026-09-06)
+
+
+### Bug Fixes
+
+* tone panel behavior and enhance performance entry options ([#15](https://github.com/pianelapp/pianel/issues/15)) ([ff600e5](https://github.com/pianelapp/pianel/commit/ff600e5398600c842f31d488052c2db7d23ca76f))
+
 ## [0.1.4](https://github.com/pianelapp/pianel/compare/v0.1.3...v0.1.4) (2026-08-30)
 
 
