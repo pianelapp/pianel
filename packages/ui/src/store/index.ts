@@ -42,6 +42,26 @@ export {
 
 export type { CursorState, CursorActions, CursorAnchor } from '@pianel/core/store';
 export { useCursorStore } from '@pianel/core/store';
+
+export type {
+  MidiChannelState,
+  MidiChannelActions,
+  ChannelAssignment,
+  MidiChannel,
+  ChannelToneIneligibility,
+  ChannelToneChangePlan,
+  ChannelToneAssignmentRefusal,
+  ChannelToneAssignmentResult,
+  ChannelToneTarget,
+} from '@pianel/core/store';
+export {
+  useMidiChannelStore,
+  selectChannelAssignments,
+  selectAssignmentsMayBeStale,
+  KEYBOARD_CHANNEL,
+  DRUM_CHANNEL,
+  ALL_MIDI_CHANNELS,
+} from '@pianel/core/store';
 export type { Scene, Song, SetlistEntry, Setlist } from '@pianel/core/store';
 export {
   SongNotFoundError,

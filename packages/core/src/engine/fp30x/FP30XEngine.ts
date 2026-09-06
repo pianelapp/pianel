@@ -17,6 +17,17 @@ import type {
 } from '../../types/types';
 import {encodeShift} from '../../helpers/voicingMode';
 import type {ShiftTarget} from '../../types/voicingMode';
+import {
+  DRUM_CHANNEL,
+  KEYBOARD_CHANNEL,
+  type MidiChannel,
+} from '../../types/midiChannelStrip';
+import type {ChannelToneChangePlan} from '../../types/midiChannelAssignment';
+import {
+  bankProgramForTone,
+  buildChannelToneChange,
+  isDrumKit,
+} from './bankProgram';
 import {buildDT1, buildRQ1, buildIdentityRequest, encodeTempo} from './sysex';
 import {parseNotification, parseStateResponse, isAliveReply} from './parser';
 import {fp30xToneCatalog} from './tones';
@@ -207,6 +218,25 @@ export class FP30XEngine implements PianoEngine {
 
   buildIdentityRequest(): number[] {
     return buildIdentityRequest();
+  }
+
+  planChannelToneChange(
+    channel: MidiChannel,
+    tone: Tone,
+  ): ChannelToneChangePlan {
+    if (!Number.isInteger(channel) || channel < 1 || channel > 16) {
+      return {eligible: false, reason: 'channel-out-of-range'};
+    }
+    if (channel === KEYBOARD_CHANNEL) {
+      return {eligible: false, reason: 'keyboard-channel'};
+    }
+    if (channel === DRUM_CHANNEL && !isDrumKit(tone)) {
+      return {eligible: false, reason: 'requires-drum-kit'};
+    }
+    if (!bankProgramForTone(tone)) {
+      return {eligible: false, reason: 'tone-not-assignable'};
+    }
+    return {eligible: true, messages: buildChannelToneChange(channel, tone)};
   }
 
   parseNotification(rawMidiBytes: number[]): PianoEvent | null {

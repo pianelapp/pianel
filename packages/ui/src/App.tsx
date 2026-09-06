@@ -13,6 +13,7 @@ import {
   SettingsSurface,
   type SettingsView,
 } from './components/settings/SettingsSurface';
+import { Toast } from './components/Toast';
 import { DisplayScreen } from './screens/display/DisplayScreen';
 import { StatusBar } from './screens/display/StatusBar';
 import { PerformMode } from './screens/perform/PerformMode';
@@ -206,6 +207,7 @@ export default function App() {
       />
       <MIDIDeviceChooser isLightMode={isLightMode} />
       <AlertModal isLightMode={isLightMode} />
+      <Toast isLightMode={isLightMode} />
       <PerformMode isLightMode={isLightMode} />
       <PerformActions />
       <PianoActions />

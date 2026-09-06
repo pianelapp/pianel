@@ -6,6 +6,7 @@
  * GM2 variant counts.
  */
 
+import {FP30XEngine} from '../../../src/engine/fp30x/FP30XEngine';
 import {fp30xToneCatalog} from '../../../src/engine/fp30x/tones';
 import {
   GM2_VARIANTS_PER_PC,
@@ -52,6 +53,27 @@ describe('catalog coverage', () => {
       }
     }
     expect(Object.keys(SN_BANK_PROGRAM).sort()).toEqual([...live].sort());
+  });
+
+  /**
+   * The catalog total is pinned so a silent *removal* fails the build just as
+   * a silent addition does — the sweep below only proves what is still there.
+   */
+  it('assigns every surfaced tone through the engine capability', () => {
+    const engine = new FP30XEngine();
+    const refused: string[] = [];
+    let swept = 0;
+    for (const cat of fp30xToneCatalog.categories) {
+      for (const t of cat.tones) {
+        swept++;
+        if (!engine.planChannelToneChange(5, t).eligible) {
+          refused.push(`${t.categoryName}/${t.name}`);
+        }
+      }
+    }
+    expect(refused).toEqual([]);
+    expect(swept).toBe(314);
+    expect(fp30xToneCatalog.totalCount).toBe(314);
   });
 });
 

@@ -63,6 +63,7 @@ const mockEngine: PianoEngine = {
   buildKeyTouchChange: jest.fn().mockReturnValue([]),
   buildShiftChange: jest.fn().mockReturnValue([]),
   buildTwinModeSet: jest.fn().mockReturnValue([]),
+  planChannelToneChange: jest.fn().mockReturnValue({eligible: true, messages: []}),
   buildSessionUnlock: jest.fn().mockReturnValue([]),
   buildInitialStateRequest: jest.fn().mockReturnValue([]),
   buildIdentityRequest: jest.fn().mockReturnValue([]),

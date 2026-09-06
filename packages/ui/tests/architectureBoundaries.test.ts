@@ -54,6 +54,16 @@ const presentation = walk(SRC)
   .map(readPresentationFile)
   .filter(f => !isServiceLayer(f.path));
 
+const SESSION_STORE_NAMES =
+  /\b(useMidiChannelStore|selectChannelAssignments|selectAssignmentsMayBeStale)\b/;
+const SESSION_STORE_OWNER = join('hooks', 'useChannelAssignment.ts');
+const SESSION_STORE_BARREL = join('store', 'index.ts');
+
+const allSourceFiles = walk(SRC).map(file => ({
+  path: relative(SRC, file),
+  source: readFileSync(file, 'utf-8'),
+}));
+
 describe('Renderer architecture boundaries', () => {
   it('imports core services into presentation only as types', () => {
     const violations = presentation.flatMap(f =>
@@ -74,6 +84,14 @@ describe('Renderer architecture boundaries', () => {
       .filter(f => DYNAMIC_SERVICE_IMPORT.test(f.source))
       .map(f => f.path);
     expect(violations).toEqual([]);
+  });
+
+  it('reaches the session channel store from the assignment hook alone', () => {
+    const importers = allSourceFiles
+      .filter(f => f.path !== SESSION_STORE_BARREL)
+      .filter(f => SESSION_STORE_NAMES.test(f.source))
+      .map(f => f.path);
+    expect(importers).toEqual([SESSION_STORE_OWNER]);
   });
 
   it('scans the presentation files it is meant to cover', () => {

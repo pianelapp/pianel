@@ -17,6 +17,8 @@ import type {
   DeviceIdentity,
 } from '../types/types';
 import type {ShiftTarget} from '../types/voicingMode';
+import type {MidiChannel} from '../types/midiChannelStrip';
+import type {ChannelToneChangePlan} from '../types/midiChannelAssignment';
 
 export interface PianoEngine {
   /** Human-readable model name (e.g. "Roland FP-30X") */
@@ -98,6 +100,17 @@ export interface PianoEngine {
    * completeness but its speaker-routing semantics are not yet reverse-engineered.
    */
   buildTwinModeSet(mode: 'pair' | 'individual'): number[];
+
+  /**
+   * Decide whether `tone` may be placed on `channel` and, when it may, produce
+   * the exact messages that place it there.
+   *
+   * The single authority for channel eligibility: the rules that exclude the
+   * keyboard channel and restrict the drum channel to rhythm sets live here, so
+   * eligibility and byte construction can never disagree. Total over its inputs
+   * — an out-of-range channel is refused defensively rather than thrown.
+   */
+  planChannelToneChange(channel: MidiChannel, tone: Tone): ChannelToneChangePlan;
 
   /**
    * Build SysEx messages to send on connect, after the engine is resolved

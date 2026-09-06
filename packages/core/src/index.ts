@@ -1,6 +1,7 @@
 export * from './types/types';
 export * from './types/voicingMode';
 export * from './types/quickToneSlot';
+export * from './types/midiChannelAssignment';
 export * from './helpers/voicingMode';
 export * from './helpers/quickToneSlot';
 export * from './helpers/keyTouch';
