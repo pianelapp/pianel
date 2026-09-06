@@ -3,7 +3,10 @@ import { usePerformanceStore, useAppSettingsStore } from '../store';
 import { getPianoService } from './usePiano';
 import type { Tone, ToneCategory } from '@pianel/core/types/types';
 import type { ToneSlot } from '@pianel/core/types/voicingMode';
-import { byteToVoicingMode } from '@pianel/core/helpers/voicingMode';
+import {
+  byteToVoicingMode,
+  resolveActiveToneSlot,
+} from '@pianel/core/helpers/voicingMode';
 
 const EMPTY_CATEGORIES: ToneCategory[] = [];
 
@@ -25,9 +28,11 @@ function syncCategoryFromTone(tone: Tone, slot: ToneSlot): void {
  * Tone-selection hook.
  *
  * `slot`:
- *   undefined (default) — follows `appSettingsStore.activeToneSlot`. Use this in
- *                         consumers that should track whichever tone the user
- *                         is currently editing (Library sidebar, tone stepper).
+ *   undefined (default) — follows `appSettingsStore.activeToneSlot`, resolved
+ *                         against the live voicing mode so Single/Twin always
+ *                         land on 'right'. Use this in consumers that should
+ *                         track whichever tone the user is currently editing
+ *                         (Library sidebar, tone stepper).
  *   'right'             — pin to Tone 1 / Single / Upper (DT1 01 00 02 07-09).
  *                         Drives `activeTone`, `lastCategoryIndex`, `service.changeTone`.
  *   'left'              — pin to the second tone slot. Mode-aware:
@@ -40,15 +45,15 @@ function syncCategoryFromTone(tone: Tone, slot: ToneSlot): void {
  */
 export function useTones(slot?: ToneSlot) {
   const storeSlot = useAppSettingsStore(s => s.activeToneSlot);
-  const resolvedSlot: ToneSlot = slot ?? storeSlot;
   const catalog = getPianoService()?.getToneCatalog() ?? null;
   const categories = catalog?.categories ?? EMPTY_CATEGORIES;
-
   const rightTone = usePerformanceStore(s => s.activeTone);
   const splitLowerTone = usePerformanceStore(s => s.leftTone ?? null);
   const dualTone2 = usePerformanceStore(s => s.dualTone2 ?? null);
   const voiceModeByte = usePerformanceStore(s => s.voiceMode ?? 0);
-  const isDual = byteToVoicingMode(voiceModeByte) === 'dual';
+  const mode = byteToVoicingMode(voiceModeByte) ?? 'single';
+  const isDual = mode === 'dual';
+  const resolvedSlot: ToneSlot = slot ?? resolveActiveToneSlot(mode, storeSlot);
   const leftSlotTone = isDual ? dualTone2 : splitLowerTone;
   const rightHistory = usePerformanceStore(s => s.toneHistory);
   const leftHistory = usePerformanceStore(s => s.leftToneHistory);

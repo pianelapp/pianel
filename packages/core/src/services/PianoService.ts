@@ -1,23 +1,17 @@
-/**
- * Piano Service — Core Facade.
- *
- * T034: Routes commands to engine via transport, handles notifications
- * by updating the correct stores. Debounces rapid input.
- *
- * Constitution II: Bidirectional Control Surface.
- * Constitution V: Services orchestrate engine + transport.
- */
-
-import type {Transport} from '../transport/types';
-import type {PianoEngine} from '../engine/IPianoEngine';
-import type {Tone, ToneCatalog, PianoEvent} from '../types/types';
-import {VOICING_MODE_TO_BYTE, encodeShift} from '../helpers/voicingMode';
-import {clampKeyTouch} from '../helpers/keyTouch';
-import type {VoicingMode, ShiftTarget} from '../types/voicingMode';
-import type {QuickToneSlot} from '../types/quickToneSlot';
-import {usePerformanceStore} from '../store/performanceStore';
-import {useAppSettingsStore} from '../store/appSettingsStore';
-import {getChordService} from './ChordService';
+import type { Transport } from '../transport/types';
+import type { PianoEngine } from '../engine/IPianoEngine';
+import type { Tone, ToneCatalog, PianoEvent } from '../types/types';
+import {
+  VOICING_MODE_TO_BYTE,
+  encodeShift,
+  hasLeftToneSlot,
+} from '../helpers/voicingMode';
+import { clampKeyTouch } from '../helpers/keyTouch';
+import type { VoicingMode, ShiftTarget } from '../types/voicingMode';
+import type { QuickToneSlot } from '../types/quickToneSlot';
+import { usePerformanceStore } from '../store/performanceStore';
+import { useAppSettingsStore } from '../store/appSettingsStore';
+import { getChordService } from './ChordService';
 
 /** Debounce timeout for rapid input (ms). */
 const DEBOUNCE_MS = 50;
@@ -31,17 +25,14 @@ export class PianoService {
     this.transport = transport;
   }
 
-  /** Set the engine (called by ConnectionService after identification). */
   setEngine(engine: PianoEngine): void {
     this.engine = engine;
   }
 
-  /** Get the current engine. */
   getEngine(): PianoEngine | null {
     return this.engine;
   }
 
-  /** Get the tone catalog from the active engine. */
   getToneCatalog(): ToneCatalog | null {
     return this.engine?.tones ?? null;
   }
@@ -49,7 +40,6 @@ export class PianoService {
   /**
    * Dispatch a piano state event to the correct store.
    * Handles both incoming BLE notifications and app-originated events
-   * (pad apply, preset apply).
    */
   dispatchEvent(event: PianoEvent): void {
     const store = usePerformanceStore.getState();
@@ -64,7 +54,6 @@ export class PianoService {
         );
         if (tone) {
           store.setActiveTone(tone);
-          // BUG-05: Sync category index so category display stays current
           const catIdx = this.engine.tones.categories.findIndex(
             c => c.id === tone.category,
           );
@@ -162,17 +151,14 @@ export class PianoService {
         break;
       }
       case 'controlChange':
-        // T021 (A7): CC echoes are informational only over BLE — log, don't update stores
         console.debug(
           `CC echo: ch=${event.channel} cc=${event.controller} val=${event.value}`,
         );
         break;
       case 'programChange':
-        // T021 (A7): PC echoes are informational only over BLE — log, don't update stores
         console.debug(`PC echo: ch=${event.channel} pc=${event.program}`);
         break;
       case 'unknown':
-        // Logged but not acted on
         break;
     }
   }
@@ -256,7 +242,7 @@ export class PianoService {
     }
   }
 
-  // ─── Voicing modes (005-piano-modes) ─────────────────────────
+  // ─── Voicing modes ─────────────────────────
 
   /**
    * Switch the piano's voicing mode.
@@ -274,9 +260,7 @@ export class PianoService {
     const store = usePerformanceStore.getState();
     store.setVoiceMode(byte);
 
-    // Single/Twin have no second slot — collapse the UI selector so the next
-    // entry into Dual/Split starts from Tone 1/Upper.
-    if (mode === 'single' || mode === 'twin') {
+    if (!hasLeftToneSlot(mode)) {
       useAppSettingsStore.getState().setActiveToneSlot('right');
     }
 
@@ -398,7 +382,7 @@ export class PianoService {
    * Apply a quick-tone slot: restore the captured voicing mode, tones, and
    * mode-relevant parameters.
    *
-   * Order matters — on the FP-30X the voice-mode write resets some downstream
+   * Order matters — voice-mode write resets some downstream
    * registers, so we send it first, then the tone writes for that mode, then
    * the parameter writes. All writes are awaited sequentially (no debounce)
    * because this is a discrete user commit, not rapid input.
@@ -417,7 +401,7 @@ export class PianoService {
       await this.transport.send(engine.buildTwinModeSet('pair'));
     }
     perf.setVoiceMode(modeByte);
-    if (slot.voiceMode === 'single' || slot.voiceMode === 'twin') {
+    if (!hasLeftToneSlot(slot.voiceMode)) {
       useAppSettingsStore.getState().setActiveToneSlot('right');
     }
     await this.transport.send(engine.buildVoiceModeChange(modeByte));
@@ -442,7 +426,9 @@ export class PianoService {
       }
       if (slot.splitPoint !== undefined) {
         perf.setSplitPoint(slot.splitPoint);
-        await this.transport.send(engine.buildSplitPointChange(slot.splitPoint));
+        await this.transport.send(
+          engine.buildSplitPointChange(slot.splitPoint),
+        );
       }
       if (slot.balance !== undefined) {
         perf.setBalance(slot.balance);

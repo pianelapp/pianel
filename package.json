@@ -19,9 +19,9 @@
     "package:desktop:mac": "npm run build:core && npm run package:mac -w @pianel/desktop",
     "package:desktop:win": "npm run build:core && npm run package:win -w @pianel/desktop",
     "dev:core": "npm run dev -w @pianel/core",
-    "dev:desktop": "npm run dev -w @pianel/desktop",
-    "dev:web": "npm run dev -w @pianel/web",
-    "dev": "concurrently --names core,desktop --prefix-colors blue,green \"npm:dev:core\" \"npm:dev:desktop\"",
+    "dev:desktop": "concurrently --names core,desktop --prefix-colors blue,green \"npm:dev:core\" \"npm run dev -w @pianel/desktop\"",
+    "dev:web": "concurrently --names core,web --prefix-colors blue,magenta \"npm:dev:core\" \"npm run dev -w @pianel/web\"",
+    "dev": "npm run dev:desktop",
     "postinstall": "npm run build:core"
   },
   "devDependencies": {

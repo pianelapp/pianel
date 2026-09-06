@@ -1,7 +1,12 @@
+import {act} from 'react';
 import {click} from '../utils/render';
 import {initTestStores} from '../utils/stores';
 import {wire, resetSetlistWorld} from '../fixtures/setlists';
-import {byText, renderScreen} from '../fixtures/setlistsUi';
+import {
+  byText,
+  openContextMenu,
+  renderScreen,
+} from '../fixtures/setlistsUi';
 import {useCursorStore} from '../../src/store';
 
 beforeAll(() => {
@@ -91,6 +96,55 @@ describe('SetlistsScreen', () => {
     click(byText(container, 'Superstition'));
     click(byText(container, 'PERFORM SONG'));
     expect(useCursorStore.getState().isPerforming).toBe(true);
+    unmount();
+  });
+
+  it('starts a setlist performance at the chosen song rather than the first', async () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Opener').id;
+    const b = songs.createSong('Closer').id;
+    songs.captureScene(a, 'x');
+    songs.captureScene(b, 'Head');
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, a);
+    setlists.addSong(listId, b);
+
+    const {container, unmount} = renderScreen();
+    click(byText(container, 'Setlists'));
+    click(byText(container, 'Bar Gig'));
+    openContextMenu(container, 'Closer');
+    click(byText(container, 'Perform from here'));
+    await act(async () => {});
+
+    const s = useCursorStore.getState();
+    expect(s.isPerforming).toBe(true);
+    expect(s.entryIndex).toBe(1);
+    expect(s.songId).toBe(b);
+    unmount();
+  });
+
+  it('starts a setlist performance at the chosen scene', async () => {
+    const {songs, setlists} = wire();
+    const a = songs.createSong('Opener').id;
+    const b = songs.createSong('Closer').id;
+    songs.captureScene(a, 'x');
+    songs.captureScene(b, 'Head');
+    songs.captureScene(b, 'Solo');
+    const listId = setlists.createSetlist('Bar Gig').id;
+    setlists.addSong(listId, a);
+    setlists.addSong(listId, b);
+
+    const {container, unmount} = renderScreen();
+    click(byText(container, 'Setlists'));
+    click(byText(container, 'Bar Gig'));
+    click(byText(container, 'Closer'));
+    openContextMenu(container, 'Solo');
+    click(byText(container, 'Perform from here'));
+    await act(async () => {});
+
+    const s = useCursorStore.getState();
+    expect(s.entryIndex).toBe(1);
+    expect(s.sceneIndex).toBe(1);
     unmount();
   });
 

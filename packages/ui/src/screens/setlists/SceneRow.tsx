@@ -7,6 +7,7 @@ import { sceneBadgeClass } from '../../helpers/sceneBadge';
 import type { Scene } from '../../store';
 
 export type SceneAction =
+  | 'performFrom'
   | 'rename'
   | 'notes'
   | 'recapture'
@@ -22,6 +23,7 @@ interface SceneRowProps {
   compact: boolean;
   isLightMode: boolean;
   nested?: boolean;
+  canPerformFrom?: boolean;
   onAction: (id: SceneAction, scene: Scene, index: number) => void;
 }
 
@@ -34,6 +36,7 @@ export function SceneRow({
   compact,
   isLightMode,
   nested = false,
+  canPerformFrom = false,
   onAction,
 }: SceneRowProps) {
   const { findToneById } = useTones();
@@ -45,6 +48,7 @@ export function SceneRow({
   });
 
   const actions: RowAction[] = [
+    ...(canPerformFrom ? [{ id: 'performFrom', label: 'Perform from here' }] : []),
     { id: 'rename', label: 'Rename' },
     { id: 'notes', label: 'Notes' },
     { id: 'saveAsPad', label: 'Save scene as pad' },

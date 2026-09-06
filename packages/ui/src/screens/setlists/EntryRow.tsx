@@ -8,7 +8,14 @@ import { SceneRow, type SceneAction } from './SceneRow';
 import { sceneCountLabel, setlistCountLabel } from './labels';
 import type { Scene, Song } from '../../store';
 
-export type EntryAction = 'moveUp' | 'moveDown' | 'remove' | 'customize' | 'revert' | 'promote';
+export type EntryAction =
+  | 'performFrom'
+  | 'moveUp'
+  | 'moveDown'
+  | 'remove'
+  | 'customize'
+  | 'revert'
+  | 'promote';
 
 type EntryMenuState =
   | { kind: 'closed' }
@@ -52,8 +59,11 @@ export function EntryRow({
     onLongPress: point => setMenu({ kind: 'open', index, x: point.x, y: point.y }),
   });
 
+  const playable = (resolved?.scenes.length ?? 0) > 0;
+
   const actions: RowAction[] = resolved
     ? [
+        ...(playable ? [{ id: 'performFrom', label: 'Perform from here' }] : []),
         ...(index > 0 ? [{ id: 'moveUp', label: 'Move up' }] : []),
         ...(index < total - 1 ? [{ id: 'moveDown', label: 'Move down' }] : []),
         ...(customized
@@ -183,6 +193,7 @@ export function EntryRow({
               compact={compact}
               isLightMode={isLightMode}
               nested
+              canPerformFrom
               onAction={(action, actionScene, actionIndex) => {
                 onSceneAction(index, action, actionScene, actionIndex).catch(() => {});
               }}

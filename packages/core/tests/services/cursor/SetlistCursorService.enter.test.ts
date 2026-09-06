@@ -174,6 +174,96 @@ describe('SetlistCursorService enter/exit/jump', () => {
     expect(applied).toHaveLength(1);
   });
 
+  it('enterPerform(setlist, entryIndex) starts at that entry and applies its first scene', async () => {
+    const second = songs.createSong('Superstition').id;
+    songs.captureScene(second, 'Head');
+    songs.captureScene(second, 'Solo');
+    setlists.addSong(listId, second);
+
+    await cursor.enterPerform({setlistId: listId, entryIndex: 1});
+    const s = useCursorStore.getState();
+    expect(s.entryIndex).toBe(1);
+    expect(s.songId).toBe(second);
+    expect(s.sceneIndex).toBe(0);
+    expect(cursor.getCurrentScene()?.label).toBe('Head');
+    expect(applied).toHaveLength(1);
+  });
+
+  it('enterPerform(setlist, entryIndex, sceneIndex) starts mid-song and applies that scene', async () => {
+    const second = songs.createSong('Superstition').id;
+    songs.captureScene(second, 'Head');
+    songs.captureScene(second, 'Solo');
+    setlists.addSong(listId, second);
+
+    await cursor.enterPerform({setlistId: listId, entryIndex: 1, sceneIndex: 1});
+    const s = useCursorStore.getState();
+    expect(s.entryIndex).toBe(1);
+    expect(s.sceneIndex).toBe(1);
+    expect(cursor.getCurrentScene()?.label).toBe('Solo');
+    expect(applied).toHaveLength(1);
+  });
+
+  it('enterPerform starts at the requested scene of entry 0', async () => {
+    await cursor.enterPerform({setlistId: listId, sceneIndex: 2});
+    expect(useCursorStore.getState().sceneIndex).toBe(2);
+    expect(cursor.getCurrentScene()?.label).toBe('Chorus');
+  });
+
+  it('enterPerform falls back to scene 0 when the requested sceneIndex is out of range', async () => {
+    await cursor.enterPerform({setlistId: listId, entryIndex: 0, sceneIndex: 99});
+    expect(useCursorStore.getState().sceneIndex).toBe(0);
+    expect(cursor.getCurrentScene()?.label).toBe('Intro');
+  });
+
+  it('enterPerform falls back to scene 0 when the requested sceneIndex is negative', async () => {
+    await cursor.enterPerform({setlistId: listId, entryIndex: 0, sceneIndex: -1});
+    expect(useCursorStore.getState().sceneIndex).toBe(0);
+  });
+
+  it('enterPerform falls back to the first playable entry when the requested entry has no scenes', async () => {
+    const bare = songs.createSong('No Scenes Yet').id;
+    const gig = setlists.createSetlist('Fallback Gig').id;
+    setlists.addSong(gig, songId);
+    setlists.addSong(gig, bare);
+
+    await cursor.enterPerform({setlistId: gig, entryIndex: 1});
+    const s = useCursorStore.getState();
+    expect(s.entryIndex).toBe(0);
+    expect(s.songId).toBe(songId);
+    expect(s.sceneIndex).toBe(0);
+  });
+
+  it('enterPerform falls back to the first playable entry when the requested entry is dangling', async () => {
+    const doomed = songs.createSong('Doomed').id;
+    songs.captureScene(doomed, 'X');
+    const gig = setlists.createSetlist('Dangling Gig').id;
+    setlists.addSong(gig, songId);
+    setlists.addSong(gig, doomed);
+    songs.deleteSong(doomed);
+
+    await cursor.enterPerform({setlistId: gig, entryIndex: 1});
+    expect(useCursorStore.getState().entryIndex).toBe(0);
+    expect(useCursorStore.getState().songId).toBe(songId);
+  });
+
+  it('enterPerform falls back to the first playable entry when entryIndex is out of range', async () => {
+    await cursor.enterPerform({setlistId: listId, entryIndex: 99});
+    expect(useCursorStore.getState().entryIndex).toBe(0);
+    expect(useCursorStore.getState().sceneIndex).toBe(0);
+  });
+
+  it('enterPerform still throws EmptySetlistError when a start point is given but nothing is playable', async () => {
+    const bare = songs.createSong('No Scenes Yet').id;
+    const gig = setlists.createSetlist('Barren Gig').id;
+    setlists.addSong(gig, bare);
+
+    await expect(
+      cursor.enterPerform({setlistId: gig, entryIndex: 0, sceneIndex: 1}),
+    ).rejects.toThrow(EmptySetlistError);
+    expect(useCursorStore.getState().isPerforming).toBe(false);
+    expect(applied).toHaveLength(0);
+  });
+
   it('getCurrentSong and getCurrentScene reflect the cursor', async () => {
     await cursor.enterPerform({setlistId: listId});
     expect(cursor.getCurrentSong()?.id).toBe(songId);

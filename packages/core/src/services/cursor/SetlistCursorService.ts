@@ -27,18 +27,28 @@ export class SetlistCursorService {
     this.presetService = presetService;
   }
 
-  async enterPerform(opts: {setlistId: string} | {songId: string}): Promise<void> {
+  async enterPerform(
+    opts:
+      | {setlistId: string; entryIndex?: number; sceneIndex?: number}
+      | {songId: string},
+  ): Promise<void> {
     if ('setlistId' in opts) {
       const list = this.setlistService.getSetlist(opts.setlistId);
       if (!list) throw new SetlistNotFoundError(opts.setlistId);
 
-      const playable = this._firstPlayableEntry(list);
+      const requested = this._playableEntryAt(list, opts.entryIndex);
+      const playable = requested ?? this._firstPlayableEntry(list);
       if (!playable) throw new EmptySetlistError(list.name);
+
+      const rejectedEntry = opts.entryIndex !== undefined && requested === null;
 
       useCursorStore.getState().enter({
         setlistId: opts.setlistId,
         songId: list.entries[playable.entryIndex].songId,
         entryIndex: playable.entryIndex,
+        sceneIndex: rejectedEntry
+          ? 0
+          : this._startSceneIndex(playable.song, opts.sceneIndex),
       });
     } else {
       const song = this.songService.getSong(opts.songId);
@@ -168,6 +178,26 @@ export class SetlistCursorService {
       if (song && song.scenes.length > 0) return i;
     }
     return null;
+  }
+
+  protected _playableEntryAt(
+    list: Setlist,
+    entryIndex: number | undefined,
+  ): {song: Song; entryIndex: number} | null {
+    if (entryIndex === undefined) return null;
+    if (!Number.isInteger(entryIndex)) return null;
+    if (entryIndex < 0 || entryIndex >= list.entries.length) return null;
+
+    const song = this.setlistService.resolveEntry(list.id, entryIndex);
+    if (!song || song.scenes.length === 0) return null;
+    return {song, entryIndex};
+  }
+
+  protected _startSceneIndex(song: Song, sceneIndex: number | undefined): number {
+    if (sceneIndex === undefined) return 0;
+    if (!Number.isInteger(sceneIndex)) return 0;
+    if (sceneIndex < 0 || sceneIndex >= song.scenes.length) return 0;
+    return sceneIndex;
   }
 
   protected _firstPlayableEntry(

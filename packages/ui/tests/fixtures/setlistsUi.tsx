@@ -126,8 +126,13 @@ export function renderDetail(
   return lastRendered;
 }
 
+export interface PerformStartAt {
+  entryIndex: number;
+  sceneIndex?: number;
+}
+
 interface RenderListOptions {
-  onPerform?: (setlistId: string) => void;
+  onPerform?: (setlistId: string, startAt?: PerformStartAt) => void;
 }
 
 function ListHarness({

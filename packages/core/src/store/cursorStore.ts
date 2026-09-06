@@ -43,6 +43,7 @@ export interface CursorActions {
     setlistId: string | null;
     songId: string;
     entryIndex: number;
+    sceneIndex?: number;
   }) => void;
   exit: () => void;
   setPosition: (p: CursorPosition) => void;
@@ -62,14 +63,14 @@ const IDLE: CursorState = {
 export const useCursorStore = create<CursorState & CursorActions>()(set => ({
   ...IDLE,
 
-  enter: ({setlistId, songId, entryIndex}) =>
+  enter: ({setlistId, songId, entryIndex, sceneIndex = 0}) =>
     set({
       setlistId,
       songId,
       // Single-song mode has no setlist to index into, so the entry index is
       // pinned rather than trusted from the caller.
       entryIndex: setlistId === null ? 0 : entryIndex,
-      sceneIndex: 0,
+      sceneIndex,
       isPerforming: true,
       anchor: null,
     }),
