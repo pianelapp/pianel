@@ -17,6 +17,7 @@ import {FP30XEngine} from '../../../src/engine/fp30x/FP30XEngine';
 import {createPerformanceStore, usePerformanceStore} from '../../../src/store/performanceStore';
 import {createAppSettingsStore, useAppSettingsStore} from '../../../src/store/appSettingsStore';
 import {inMemoryStorage} from '../../../src/store/storage';
+import {useEngineVolumeStore} from '../../../src/store/engineVolumeStore';
 import type {Transport} from '../../../src/transport/types';
 import type {Preset} from '../../../src/types/profile';
 import type {QuickToneSlot} from '../../../src/types/quickToneSlot';
@@ -62,18 +63,32 @@ beforeEach(() => {
   useAppSettingsStore.setState({
     quickToneSlots: [null, null, null],
   });
+  useEngineVolumeStore.getState().reset();
 });
 
 // ─── captureSnapshot ────────────────────────────────────────────
 
 describe('PresetService.captureSnapshot', () => {
-  it('captures volume + tempo from performanceStore', () => {
+  it('captures the Engine Volume position and tempo', () => {
     const {service} = makeService();
-    usePerformanceStore.getState().setOutputVolume(77);
+    useEngineVolumeStore.getState().setPosition(77);
     usePerformanceStore.getState().setTempo(155);
     const snap = service.captureSnapshot();
     expect(snap.volume).toBe(77);
     expect(snap.tempo).toBe(155);
+  });
+
+  it('never captures the Output Volume mirror', () => {
+    const {service} = makeService();
+    usePerformanceStore.getState().setOutputVolume(12);
+    useEngineVolumeStore.getState().setPosition(64);
+    expect(service.captureSnapshot().volume).toBe(64);
+  });
+
+  it('captures the default Engine Volume position 100 on a fresh session', () => {
+    const {service} = makeService();
+    usePerformanceStore.getState().setOutputVolume(40);
+    expect(service.captureSnapshot().volume).toBe(100);
   });
 
   it('captures all five metronome fields', () => {
@@ -128,7 +143,7 @@ describe('PresetService.captureSnapshot', () => {
 // ─── applyPreset / applySnapshot ────────────────────────────────
 
 describe('PresetService.applyPreset', () => {
-  it('sends volume + tempo DT1 writes via PianoService', async () => {
+  it('sends the tempo DT1 write and no Output Volume write via PianoService', async () => {
     const {service, transport} = makeService();
     const preset: Preset = makePreset({
       snapshot: {
@@ -146,8 +161,10 @@ describe('PresetService.applyPreset', () => {
       },
     });
     await service.applyPreset(preset);
-    // Volume + tempo each produce exactly one SysEx message.
-    expect(transport.sentMessages.length).toBeGreaterThanOrEqual(2);
+    const joined = transport.sentMessages.map(m => m.join(','));
+    expect(joined.some(m => m.includes('1,0,3,9'))).toBe(true);
+    expect(joined.some(m => m.includes(OUTPUT_VOLUME_ADDR))).toBe(false);
+    expect(useEngineVolumeStore.getState().position).toBe(50);
   });
 
   it('marks the preset as active in performanceStore', async () => {
@@ -212,6 +229,78 @@ describe('PresetService.applyPreset', () => {
     await service.applyPreset(preset);
     // Voice-mode change + split params should produce multiple sends.
     expect(transport.sentMessages.length).toBeGreaterThan(2);
+  });
+});
+
+// ─── Engine Volume ──────────────────────────────────────────────
+
+const OUTPUT_VOLUME_ADDR = '1,0,2,19';
+
+describe('PresetService Engine Volume', () => {
+  it('stores a finite snapshot volume as the Engine Volume position when no engine is set', async () => {
+    const pianoService = new PianoService(new FakeTransport());
+    const service = new PresetService(pianoService);
+    const setEngineVolume = jest.spyOn(pianoService, 'setEngineVolume');
+    await service.applySnapshot({...defaultSnapshot, volume: 42});
+    expect(setEngineVolume).toHaveBeenCalledWith(42);
+    expect(useEngineVolumeStore.getState().position).toBe(42);
+  });
+
+  it('leaves Engine Volume unchanged without an engine when the volume is not a number', async () => {
+    const pianoService = new PianoService(new FakeTransport());
+    const service = new PresetService(pianoService);
+    useEngineVolumeStore.getState().setPosition(33);
+    await service.applySnapshot({
+      ...defaultSnapshot,
+      volume: undefined as unknown as number,
+    });
+    expect(useEngineVolumeStore.getState().position).toBe(33);
+  });
+
+  it('sets Engine Volume through the piano service after the parameter batch', async () => {
+    const {service, pianoService} = makeService();
+    const calls: string[] = [];
+    jest.spyOn(pianoService, 'applyPreset').mockImplementation(async () => {
+      calls.push('batch');
+    });
+    jest.spyOn(pianoService, 'setEngineVolume').mockImplementation(() => {
+      calls.push('engineVolume');
+    });
+    await service.applySnapshot({...defaultSnapshot, volume: 60});
+    expect(calls).toEqual(['batch', 'engineVolume']);
+  });
+
+  it('clamps an out-of-range snapshot volume into 0-100', async () => {
+    const {service} = makeService();
+    await service.applySnapshot({...defaultSnapshot, volume: 150});
+    expect(useEngineVolumeStore.getState().position).toBe(100);
+    await service.applySnapshot({...defaultSnapshot, volume: -4});
+    expect(useEngineVolumeStore.getState().position).toBe(0);
+  });
+
+  it.each([
+    ['missing', undefined],
+    ['NaN', Number.NaN],
+    ['a string', '60'],
+    ['null', null],
+  ])('leaves Engine Volume unchanged when the volume is %s', async (_label, value) => {
+    const {service} = makeService();
+    useEngineVolumeStore.getState().setPosition(21);
+    await service.applySnapshot({
+      ...defaultSnapshot,
+      volume: value as unknown as number,
+    });
+    expect(useEngineVolumeStore.getState().position).toBe(21);
+  });
+
+  it('never changes the Output Volume mirror on apply', async () => {
+    const {service, transport} = makeService();
+    usePerformanceStore.getState().setOutputVolume(45);
+    await service.applySnapshot({...defaultSnapshot, volume: 10});
+    expect(usePerformanceStore.getState().outputVolume).toBe(45);
+    expect(
+      transport.sentMessages.some(m => m.join(',').includes(OUTPUT_VOLUME_ADDR)),
+    ).toBe(false);
   });
 });
 
@@ -293,7 +382,7 @@ describe('PresetService capture → apply round-trip', () => {
     const tone = engine.tones.findById(engine.tones.categories[0].tones[0].id);
 
     usePerformanceStore.getState().setActiveTone(tone!);
-    usePerformanceStore.getState().setOutputVolume(63);
+    useEngineVolumeStore.getState().setPosition(63);
     usePerformanceStore.getState().setTempo(110);
     usePerformanceStore.getState().setMetronomeOn(true);
     usePerformanceStore.getState().setMetronomeBeat(2);

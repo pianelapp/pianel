@@ -12,7 +12,7 @@ export interface SceneSummary {
   tones: ToneLine[];
   splitPoint: string | null;
   tempo: number;
-  volume: number;
+  engineVolume: number;
 }
 
 const MODE_LABELS: Record<VoicingMode, SceneSummary['modeLabel']> = {
@@ -70,6 +70,6 @@ export function summariseScene(
         ? noteName(slot.splitPoint)
         : null,
     tempo: snapshot.tempo,
-    volume: snapshot.volume,
+    engineVolume: snapshot.volume,
   };
 }

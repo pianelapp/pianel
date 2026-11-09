@@ -112,9 +112,10 @@ describe('summariseScene', () => {
     expect(s.tones[0].name).toBe('—');
   });
 
-  it('carries tempo and volume through', () => {
+  it('carries tempo and the Engine Volume position through', () => {
     const s = summariseScene(snapshot({tempo: 96, volume: 80}), lookup);
     expect(s.tempo).toBe(96);
-    expect(s.volume).toBe(80);
+    expect(s.engineVolume).toBe(80);
+    expect('volume' in s).toBe(false);
   });
 });

@@ -6,7 +6,7 @@
  *  - `captureSnapshot()` reads the full FR-005 six-group state from
  *    `performanceStore` + `appSettingsStore.quickToneSlots`.
  *  - `applyPreset(preset)` builds the documented DT1 batch (voice mode,
- *    mode-specific tones + params, volume, tempo, key touch, metronome) and
+ *    mode-specific tones + params, tempo, key touch, metronome) and
  *    dispatches via `PianoService.applyPreset`. Restores the three quick-tone slots
  *    into `appSettingsStore`. Marks the preset as active.
  *  - `applySnapshot(snapshot)` — same code path without preset-id/label
@@ -26,6 +26,7 @@ import type {PerformanceSnapshot} from '../../types/performanceSnapshot';
 import type {QuickToneSlot} from '../../types/quickToneSlot';
 import {usePerformanceStore} from '../../store/performanceStore';
 import {useAppSettingsStore} from '../../store/appSettingsStore';
+import {useEngineVolumeStore} from '../../store/engineVolumeStore';
 import {
   VOICING_MODE_TO_BYTE,
   byteToVoicingMode,
@@ -86,7 +87,7 @@ export class PresetService {
     ) as PerformanceSnapshot['quickToneSlots'];
 
     return {
-      volume: perf.outputVolume,
+      volume: useEngineVolumeStore.getState().position,
       tempo: perf.tempo,
       keyTouch: perf.keyTouch,
       metronome: {
@@ -124,7 +125,13 @@ export class PresetService {
    */
   async applySnapshot(snapshot: PerformanceSnapshot): Promise<void> {
     const engine = this.pianoService.getEngine();
-    if (!engine) return;
+    const engineVolume = Number.isFinite(snapshot.volume)
+      ? snapshot.volume
+      : null;
+    if (!engine) {
+      if (engineVolume !== null) this.pianoService.setEngineVolume(engineVolume);
+      return;
+    }
 
     const commands: number[][] = [];
     const perf = usePerformanceStore.getState();
@@ -189,11 +196,6 @@ export class PresetService {
       }
     }
 
-    // 4. Output Volume.
-    if (snapshot.volume !== undefined) {
-      commands.push(engine.buildOutputVolumeChange(snapshot.volume));
-    }
-
     // 5. Tempo.
     if (snapshot.tempo !== undefined) {
       commands.push(engine.buildTempoChange(snapshot.tempo));
@@ -223,6 +225,8 @@ export class PresetService {
     }
 
     await this.pianoService.applyPreset(commands);
+
+    if (engineVolume !== null) this.pianoService.setEngineVolume(engineVolume);
 
     // 8. Restore the three quick-tone slots into appSettingsStore.
     if (snapshot.quickToneSlots) {
