@@ -44,7 +44,7 @@ function SongPickerDialog({ songs, isLightMode, onSelect, onCancel }: SongPicker
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-pad-as-scene-dialog-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
     >
       <div
         className={`w-[320px] max-h-[70vh] rounded-3xl p-6 shadow-2xl border flex flex-col ${

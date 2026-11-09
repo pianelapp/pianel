@@ -303,7 +303,7 @@ export function LibrarySidebar({
             placeholder="Search tones..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className={`w-full pl-9 pr-9 py-2 text-lg rounded-md outline-none transition-all ${
+            className={`w-full pl-9 pr-9 py-2 text-lg rounded-md outline-hidden transition-all ${
               isLightMode
                 ? 'bg-zinc-200/50 border border-zinc-300 text-zinc-800 placeholder-zinc-500 focus:border-[#519B9F] focus:ring-1 focus:ring-[#519B9F]/20'
                 : 'bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500 shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:border-cyan-700'

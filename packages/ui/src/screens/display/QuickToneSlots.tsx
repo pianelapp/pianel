@@ -151,7 +151,7 @@ export function QuickToneSlots({ isLightMode }: QuickToneSlotsProps) {
               className={`absolute top-2 right-2 w-2 h-2 rounded-full ${
                 isActive
                   ? isLightMode
-                    ? "bg-orange-500 shadow-sm"
+                    ? "bg-orange-500 shadow-xs"
                     : "bg-orange-500 drop-shadow-[0_0_4px_rgba(249,115,22,1)]"
                   : isLightMode
                   ? isEmpty

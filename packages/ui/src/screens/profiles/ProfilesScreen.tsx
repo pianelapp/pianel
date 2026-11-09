@@ -313,7 +313,7 @@ function ImportConflictDialog({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
     >
       <div
         className={`w-[360px] rounded-3xl p-6 shadow-2xl border ${

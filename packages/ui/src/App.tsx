@@ -170,7 +170,7 @@ export default function App() {
               data-library-backdrop
               onClick={() => setLibraryOpen(false)}
               aria-hidden
-              className={`absolute inset-0 z-30 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
+              className={`absolute inset-0 z-30 bg-black/40 backdrop-blur-xs transition-opacity duration-200 ${
                 libraryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             />

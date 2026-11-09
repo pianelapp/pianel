@@ -52,7 +52,7 @@ export function ToneActionsModal({
   const subtitleClass = isLightMode ? 'text-zinc-500' : 'text-zinc-400';
 
   const primaryActionClass = isLightMode
-    ? 'bg-white text-zinc-800 hover:bg-zinc-100 border border-zinc-200 shadow-sm'
+    ? 'bg-white text-zinc-800 hover:bg-zinc-100 border border-zinc-200 shadow-xs'
     : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700 border border-zinc-700';
 
   const disabledActionClass = isLightMode
@@ -85,7 +85,7 @@ export function ToneActionsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-labelledby="tone-actions-title"

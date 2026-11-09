@@ -189,7 +189,7 @@ export function SongDetail({
             disabled={song.scenes.length === 0}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
               isLightMode
-                ? 'bg-white text-cyan-700 border border-cyan-200 shadow-sm'
+                ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
                 : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50'
             }`}
           >

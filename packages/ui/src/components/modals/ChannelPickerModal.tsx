@@ -125,7 +125,7 @@ export function ChannelPickerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-labelledby="channel-picker-title"
@@ -134,7 +134,7 @@ export function ChannelPickerModal({
       <div
         ref={cardRef}
         tabIndex={isReview ? -1 : undefined}
-        className={`w-[380px] max-h-[85vh] flex flex-col rounded-3xl p-5 shadow-2xl border transition-colors outline-none ${cardClass}`}
+        className={`w-[380px] max-h-[85vh] flex flex-col rounded-3xl p-5 shadow-2xl border transition-colors outline-hidden ${cardClass}`}
         onClick={e => e.stopPropagation()}
       >
         <div className="text-center mb-4 shrink-0">

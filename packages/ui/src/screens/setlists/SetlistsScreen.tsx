@@ -48,7 +48,7 @@ function paneButtonClass(active: boolean, isLightMode: boolean): string {
   return `px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
     active
       ? isLightMode
-        ? 'bg-white text-cyan-700 border border-cyan-200 shadow-sm'
+        ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
         : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50'
       : isLightMode
         ? 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'

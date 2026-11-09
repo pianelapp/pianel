@@ -42,7 +42,7 @@ export function PresetTile({
         onClick={onClick}
         onContextMenu={onContextMenu}
         aria-label={`Empty preset ${position + 1}`}
-        className={`flex items-center justify-center rounded-[1rem] border-2 border-dashed transition-all active:scale-[0.97] ${
+        className={`flex items-center justify-center rounded-2xl border-2 border-dashed transition-all active:scale-[0.97] ${
           isLightMode
             ? 'border-zinc-300 bg-zinc-50/50 hover:bg-zinc-200/50 text-zinc-400'
             : 'border-zinc-800 bg-transparent hover:bg-zinc-800/30 text-zinc-700'
@@ -60,12 +60,12 @@ export function PresetTile({
       {...longPress}
       aria-label={`Apply preset "${preset.label}"`}
       className={`
-        flex flex-col items-center justify-center p-2 rounded-[1rem] border-2
+        flex flex-col items-center justify-center p-2 rounded-2xl border-2
         transition-all duration-75 active:translate-y-[2px]
         ${
           isLightMode
-            ? 'bg-gradient-to-b from-[#E9F0F8] to-[#D5E1EE] border-[#9DB4CE] shadow-[0_3px_0_#A8BDD4,0_4px_8px_rgba(0,0,0,0.1)] active:shadow-[0_0px_0_#A8BDD4,0_2px_4px_rgba(0,0,0,0.1)] text-zinc-800'
-            : 'bg-gradient-to-b from-zinc-800 to-zinc-900 border-cyan-800/80 shadow-[0_3px_0_#112933,inset_0_0_15px_rgba(6,182,212,0.15)] active:shadow-[0_0px_0_#112933,inset_0_0_15px_rgba(6,182,212,0.15)] text-cyan-50'
+            ? 'bg-linear-to-b from-[#E9F0F8] to-[#D5E1EE] border-[#9DB4CE] shadow-[0_3px_0_#A8BDD4,0_4px_8px_rgba(0,0,0,0.1)] active:shadow-[0_0px_0_#A8BDD4,0_2px_4px_rgba(0,0,0,0.1)] text-zinc-800'
+            : 'bg-linear-to-b from-zinc-800 to-zinc-900 border-cyan-800/80 shadow-[0_3px_0_#112933,inset_0_0_15px_rgba(6,182,212,0.15)] active:shadow-[0_0px_0_#112933,inset_0_0_15px_rgba(6,182,212,0.15)] text-cyan-50'
         }
         ${className ?? ''}
       `}

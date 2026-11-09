@@ -31,7 +31,7 @@ function tabButtonClass(
                       ${
                         active
                           ? isLightMode
-                            ? 'bg-white text-cyan-700 border border-cyan-200 shadow-sm'
+                            ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
                             : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
                           : isLightMode
                             ? 'text-zinc-500 hover:text-zinc-700'
@@ -74,7 +74,7 @@ export function TopTabs(props: TopTabsProps) {
                 minWidth: 'var(--radix-popover-trigger-width)',
                 maxWidth: 'calc(100vw - 2rem)',
               }}
-              className={`z-50 flex flex-col gap-1 p-1 rounded-lg border shadow-2xl outline-none ${
+              className={`z-50 flex flex-col gap-1 p-1 rounded-lg border shadow-2xl outline-hidden ${
                 isLightMode
                   ? 'bg-zinc-100 border-zinc-200'
                   : 'bg-zinc-900 border-zinc-800'

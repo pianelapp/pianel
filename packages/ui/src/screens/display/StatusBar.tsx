@@ -166,7 +166,7 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
               className="fixed inset-0 z-40"
               onClick={() => setShowVolume(false)}>
               <div
-                className={`absolute bottom-12 right-6 w-28 py-6 rounded-[2rem] flex flex-col items-center shadow-2xl border transition-colors z-50 ${
+                className={`absolute bottom-12 right-6 w-28 py-6 rounded-4xl flex flex-col items-center shadow-2xl border transition-colors z-50 ${
                   isLightMode
                     ? 'bg-white border-zinc-200'
                     : 'bg-zinc-900 border-zinc-800'

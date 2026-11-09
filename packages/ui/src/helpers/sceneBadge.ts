@@ -6,7 +6,7 @@ export function sceneBadgeClass(
   large = false,
 ): string {
   const isPlainBadge = modeLabel === 'SINGLE';
-  return `${large ? 'text-xs px-2 py-1' : 'text-[10px] px-1.5 py-0.5'} font-mono font-bold tracking-widest rounded border ${
+  return `${large ? 'text-xs px-2 py-1' : 'text-[10px] px-1.5 py-0.5'} font-mono font-bold tracking-widest rounded-sm border ${
     isPlainBadge
       ? isLightMode
         ? 'text-zinc-400 border-zinc-300 bg-transparent'
@@ -22,7 +22,7 @@ export function statusBadgeClass(
   isLightMode: boolean,
   large = false,
 ): string {
-  return `${large ? 'text-xs px-2 py-1' : 'text-[10px] px-1.5 py-0.5'} font-mono font-bold tracking-widest rounded border ${
+  return `${large ? 'text-xs px-2 py-1' : 'text-[10px] px-1.5 py-0.5'} font-mono font-bold tracking-widest rounded-sm border ${
     tone === 'amber'
       ? isLightMode
         ? 'text-amber-600 border-amber-200 bg-amber-50'

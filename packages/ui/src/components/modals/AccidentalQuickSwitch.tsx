@@ -41,7 +41,7 @@ export function AccidentalQuickSwitch({
     <div
       data-testid="quick-switch-backdrop"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-label="Accidental spelling"
@@ -89,7 +89,7 @@ export function AccidentalQuickSwitch({
                 className={`flex-1 px-2 py-2 rounded-md font-bold tracking-wide text-sm uppercase transition-all ${
                   selected
                     ? isLightMode
-                      ? 'bg-white text-cyan-700 border border-cyan-200 shadow-sm'
+                      ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
                       : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
                     : isLightMode
                     ? 'text-zinc-500 hover:text-zinc-700'

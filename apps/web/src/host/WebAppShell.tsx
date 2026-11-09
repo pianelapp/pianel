@@ -48,7 +48,7 @@ export function WebAppShell({ capabilities }: WebAppShellProps) {
       {/* Connect-affordance gating: a non-blocking banner shown only when the
           browser cannot connect (no Web MIDI and/or non-secure context). */}
       {!isConnectionCapable(caps) && (
-        <div className="fixed inset-x-0 bottom-0 z-[60] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-x-0 bottom-0 z-60 pb-[env(safe-area-inset-bottom)]">
           <WebUnsupportedNotice
             capabilities={caps}
             isLightMode={isLightMode}

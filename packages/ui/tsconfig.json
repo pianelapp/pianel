@@ -11,7 +11,8 @@
     "typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
     "baseUrl": ".",
     "paths": {
-      "@pianel/core/*": ["../../packages/core/dist/*"]
+      "@pianel/core/*": ["../../packages/core/dist/*"],
+      "@pianel/ui/*": ["./src/*"]
     }
   }
 }
