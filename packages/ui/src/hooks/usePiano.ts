@@ -14,7 +14,7 @@ export function getPianoService(): PianoService | null {
 }
 
 export function usePiano() {
-  const volume = usePerformanceStore(s => s.volume);
+  const volume = usePerformanceStore(s => s.outputVolume);
   const tempo = usePerformanceStore(s => s.tempo);
   const metronomeOn = usePerformanceStore(s => s.metronomeOn);
   const headphonesConnected = usePerformanceStore(s => s.headphonesConnected);
@@ -26,10 +26,12 @@ export function usePiano() {
   const activeTone = usePerformanceStore(s => s.activeTone);
 
   const changeVolume = useCallback(async (value: number) => {
-    usePerformanceStore.getState().setVolume(value);
     const service = getPianoService();
-    if (!service) return;
-    await service.changeVolume(value);
+    if (!service) {
+      usePerformanceStore.getState().setOutputVolume(value);
+      return;
+    }
+    await service.changeOutputVolume(value);
   }, []);
 
   const changeTempo = useCallback(async (bpm: number) => {

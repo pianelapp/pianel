@@ -60,6 +60,20 @@ export {
   selectAssignmentsMayBeStale,
 } from './midiChannelStore';
 
+export type {
+  EngineVolumeState,
+  EngineVolumeActions,
+} from './engineVolumeStore';
+export type {
+  EngineVolumeDelivery,
+  EngineVolumeSkipReason,
+} from '../types/engineVolume';
+export {
+  useEngineVolumeStore,
+  selectEngineVolumeValue,
+  selectEngineVolumeAttenuated,
+} from './engineVolumeStore';
+
 export type {MidiChannel} from '../types/midiChannelStrip';
 export {
   KEYBOARD_CHANNEL,

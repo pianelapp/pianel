@@ -62,6 +62,12 @@ export {
   DRUM_CHANNEL,
   ALL_MIDI_CHANNELS,
 } from '@pianel/core/store';
+export type { EngineVolumeState, EngineVolumeActions } from '@pianel/core/store';
+export {
+  useEngineVolumeStore,
+  selectEngineVolumeValue,
+  selectEngineVolumeAttenuated,
+} from '@pianel/core/store';
 export type { Scene, Song, SetlistEntry, Setlist } from '@pianel/core/store';
 export {
   SongNotFoundError,

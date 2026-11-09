@@ -69,7 +69,7 @@ beforeEach(() => {
 describe('PresetService.captureSnapshot', () => {
   it('captures volume + tempo from performanceStore', () => {
     const {service} = makeService();
-    usePerformanceStore.getState().setVolume(77);
+    usePerformanceStore.getState().setOutputVolume(77);
     usePerformanceStore.getState().setTempo(155);
     const snap = service.captureSnapshot();
     expect(snap.volume).toBe(77);
@@ -293,7 +293,7 @@ describe('PresetService capture → apply round-trip', () => {
     const tone = engine.tones.findById(engine.tones.categories[0].tones[0].id);
 
     usePerformanceStore.getState().setActiveTone(tone!);
-    usePerformanceStore.getState().setVolume(63);
+    usePerformanceStore.getState().setOutputVolume(63);
     usePerformanceStore.getState().setTempo(110);
     usePerformanceStore.getState().setMetronomeOn(true);
     usePerformanceStore.getState().setMetronomeBeat(2);

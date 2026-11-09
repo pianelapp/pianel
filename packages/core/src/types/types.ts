@@ -98,7 +98,7 @@ export interface ToneCatalog {
  */
 export type PianoEvent =
   | { type: "tone"; category: number; indexHigh: number; indexLow: number }
-  | { type: "volume"; value: number }
+  | { type: "outputVolume"; value: number }
   | { type: "tempo"; bpm: number }
   | { type: "metronomeState"; on: boolean }
   | { type: "headphonesConnection"; connected: boolean }
@@ -163,8 +163,8 @@ export interface PianoCapabilities {
   hasTranspose: boolean;
   /** Whether the piano supports key touch sensitivity adjustment */
   hasKeyTouch: boolean;
-  /** Maximum volume value (FP-30X: 100) */
-  maxVolume: number;
+  /** Maximum Output Volume value (FP-30X: 100) */
+  maxOutputVolume: number;
   /** Valid tempo range as [min, max] in BPM */
   tempoRange: [number, number];
 }

@@ -5,6 +5,7 @@ export * from './types/midiChannelAssignment';
 export * from './helpers/voicingMode';
 export * from './helpers/quickToneSlot';
 export * from './helpers/keyTouch';
+export * from './helpers/engineVolume';
 export * from './engine/IPianoEngine';
 export * from './engine/registry';
 export * from './transport/types';

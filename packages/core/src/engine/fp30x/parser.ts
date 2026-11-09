@@ -122,9 +122,9 @@ function parseDT1Event(
     };
   }
 
-  // Volume: 01 00 02 13
+  // Output Volume: 01 00 02 13
   if (addressEquals(address, [0x01, 0x00, 0x02, 0x13]) && data.length >= 1) {
-    return {type: 'volume', value: data[0]};
+    return {type: 'outputVolume', value: data[0]};
   }
 
   // Voice mode: 01 00 02 00
@@ -422,8 +422,8 @@ export function parseStateResponse(
       indexHigh: data[0x0e],
       indexLow: data[0x0f],
     });
-    // Volume at offset 0x13
-    events.push({type: 'volume', value: data[0x13]});
+    // Output Volume at offset 0x13
+    events.push({type: 'outputVolume', value: data[0x13]});
     // Split — Right Shift at offset 0x16
     events.push({type: 'splitRightShift', value: data[0x16]});
     // Dual — Tone 1 Shift at offset 0x17

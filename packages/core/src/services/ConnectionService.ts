@@ -161,6 +161,8 @@ export class ConnectionService {
 
       store.setConnected();
 
+      await this.resyncEngineVolume();
+
       // Read initial state via RQ1
       await this.refreshPerformanceState();
 
@@ -188,6 +190,7 @@ export class ConnectionService {
    * Disconnect from the current device.
    */
   async disconnect(): Promise<void> {
+    this.pianoServiceRef?.handleLinkClosed();
     this.cancelReconnect();
     this.stopHeartbeat();
     this.clearMonitorInterval();
@@ -323,6 +326,15 @@ export class ConnectionService {
     }
   }
 
+  private async resyncEngineVolume(): Promise<void> {
+    if (!this.pianoServiceRef) return;
+    try {
+      await this.pianoServiceRef.resyncEngineVolume();
+    } catch (error) {
+      console.debug('Engine Volume resync failed on connect', error);
+    }
+  }
+
   private async sendSessionUnlock(): Promise<void> {
     if (!this.engine) return;
 
@@ -389,6 +401,7 @@ export class ConnectionService {
         this.reconnectAttempts < MAX_RECONNECT_RETRIES
       ) {
         this.clearMonitorInterval();
+        this.pianoServiceRef?.handleLinkClosed();
         useConnectionStore.getState().setDisconnected();
         this.attemptReconnect(deviceId);
       }

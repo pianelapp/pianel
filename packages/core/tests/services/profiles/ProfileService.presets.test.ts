@@ -133,7 +133,7 @@ describe('ProfileService.updatePreset', () => {
   it('re-captures snapshot and optionally updates label', async () => {
     const service = await newProfileService();
     const preset = await service.savePresetToTile(0, 'Old');
-    usePerformanceStore.getState().setVolume(42);
+    usePerformanceStore.getState().setOutputVolume(42);
 
     const updated = await service.updatePreset(preset.id, {label: 'New'});
     expect(updated.label).toBe('New');
@@ -156,7 +156,7 @@ describe('ProfileService.renamePreset', () => {
     const service = await newProfileService();
     const preset = await service.savePresetToTile(0, 'Before');
     // Mutate performance state so a re-capture WOULD differ.
-    usePerformanceStore.getState().setVolume(33);
+    usePerformanceStore.getState().setOutputVolume(33);
     const renamed = await service.renamePreset(preset.id, 'After');
     expect(renamed.label).toBe('After');
     expect(renamed.snapshot).toEqual(preset.snapshot);

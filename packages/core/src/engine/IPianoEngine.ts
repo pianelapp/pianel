@@ -34,11 +34,15 @@ export interface PianoEngine {
    */
   buildToneChange(tone: Tone): number[];
 
+  readonly supportsEngineVolume: boolean;
+
+  buildEngineVolumeChange(value: number): number[];
+
   /**
-   * Build a DT1 SysEx message to set volume.
-   * @param value - Volume level (0-100)
+   * Build a DT1 SysEx message to set Output Volume (01 00 02 13).
+   * @param value - Output Volume level (0-100)
    */
-  buildVolumeChange(value: number): number[];
+  buildOutputVolumeChange(value: number): number[];
 
   /**
    * Build a DT1 SysEx message to set tempo.

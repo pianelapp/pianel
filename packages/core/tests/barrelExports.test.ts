@@ -72,6 +72,28 @@ describe('barrel exports', () => {
     expect(storeBarrel.ALL_MIDI_CHANNELS).toHaveLength(16);
   });
 
+  it('store barrel exposes the Engine Volume store surface', () => {
+    expect(typeof storeBarrel.useEngineVolumeStore.getState).toBe('function');
+    expect(typeof storeBarrel.selectEngineVolumeValue).toBe('function');
+    expect(typeof storeBarrel.selectEngineVolumeAttenuated).toBe('function');
+    const state: storeBarrel.EngineVolumeState = {position: 100, supported: true};
+    const actions: storeBarrel.EngineVolumeActions = {
+      setPosition: () => {},
+      setSupported: () => {},
+      reset: () => {},
+    };
+    expect(storeBarrel.selectEngineVolumeValue(state)).toBe(127);
+    expect(typeof actions.reset).toBe('function');
+  });
+
+  it('root barrel exposes the Engine Volume curve helper', () => {
+    expect(ROOT_BARREL_SOURCE).toContain("export * from './helpers/engineVolume'");
+    expect(rootBarrel.DEFAULT_ENGINE_VOLUME_POSITION).toBe(100);
+    expect(typeof rootBarrel.engineVolumeValueForPosition).toBe('function');
+    expect(typeof rootBarrel.engineVolumePositionForValue).toBe('function');
+    expect(typeof rootBarrel.clampEngineVolumePosition).toBe('function');
+  });
+
   /**
    * Bound as types rather than matched against the barrel source: a substring
    * match cannot fail here, because every name is a substring of a sibling

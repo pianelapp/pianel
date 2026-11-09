@@ -7,6 +7,11 @@ import {
   hasLeftToneSlot,
 } from '../helpers/voicingMode';
 import { clampKeyTouch } from '../helpers/keyTouch';
+import {
+  clampEngineVolumePosition,
+  engineVolumeValueForPosition,
+} from '../helpers/engineVolume';
+import type { EngineVolumeDelivery } from '../types/engineVolume';
 import type { VoicingMode, ShiftTarget } from '../types/voicingMode';
 import type { QuickToneSlot } from '../types/quickToneSlot';
 import type { MidiChannel } from '../types/midiChannelStrip';
@@ -19,23 +24,42 @@ import { usePerformanceStore } from '../store/performanceStore';
 import { useAppSettingsStore } from '../store/appSettingsStore';
 import { useConnectionStore } from '../store/connectionStore';
 import { useMidiChannelStore } from '../store/midiChannelStore';
+import { useEngineVolumeStore } from '../store/engineVolumeStore';
 import { getChordService } from './ChordService';
+import { LatestValueSender } from './volume/LatestValueSender';
 
 /** Debounce timeout for rapid input (ms). */
 const DEBOUNCE_MS = 50;
+
+export const ENGINE_VOLUME_SEND_INTERVAL_MS = 25;
 
 export class PianoService {
   private transport: Transport;
   private engine: PianoEngine | null = null;
   private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private channelToneQueue: Promise<unknown> = Promise.resolve();
+  private engineVolumeSender: LatestValueSender;
 
   constructor(transport: Transport) {
     this.transport = transport;
+    this.engineVolumeSender = new LatestValueSender({
+      intervalMs: ENGINE_VOLUME_SEND_INTERVAL_MS,
+      send: value => this.sendEngineVolume(value),
+      now: () => Date.now(),
+      setTimer: (callback, delayMs) => {
+        const id = setTimeout(callback, delayMs);
+        return () => clearTimeout(id);
+      },
+      onDelivered: () => undefined,
+      onFailed: (value, error) => {
+        console.debug(`Engine Volume send failed: vv=${value}`, error);
+      },
+    });
   }
 
   setEngine(engine: PianoEngine): void {
     this.engine = engine;
+    useEngineVolumeStore.getState().setSupported(engine.supportsEngineVolume);
   }
 
   getEngine(): PianoEngine | null {
@@ -72,8 +96,8 @@ export class PianoService {
         }
         break;
       }
-      case 'volume':
-        store.setVolume(event.value);
+      case 'outputVolume':
+        store.setOutputVolume(event.value);
         break;
       case 'tempo':
         store.setTempo(event.bpm);
@@ -186,18 +210,54 @@ export class PianoService {
     });
   }
 
-  /**
-   * Change volume.
-   * @param value 0–100
-   */
-  async changeVolume(value: number): Promise<void> {
+  async changeOutputVolume(value: number): Promise<void> {
+    const clamped = Math.max(0, Math.min(100, Math.round(value)));
+    usePerformanceStore.getState().setOutputVolume(clamped);
     if (!this.engine) return;
 
-    this.debounce('volume', async () => {
+    this.debounce('outputVolume', async () => {
       if (!this.engine) return;
-      const sysex = this.engine.buildVolumeChange(value);
+      const sysex = this.engine.buildOutputVolumeChange(clamped);
       await this.transport.send(sysex);
     });
+  }
+
+  setEngineVolume(position: number): void {
+    const clamped = clampEngineVolumePosition(position);
+    useEngineVolumeStore.getState().setPosition(clamped);
+    if (!this.canSendEngineVolume()) return;
+    this.engineVolumeSender.request(engineVolumeValueForPosition(clamped));
+  }
+
+  async resyncEngineVolume(): Promise<EngineVolumeDelivery> {
+    this.engineVolumeSender.resetDelivered();
+    const engine = this.engine;
+    if (!engine || !this.isLinkUp()) {
+      return {status: 'skipped', reason: 'not-connected'};
+    }
+    if (!engine.supportsEngineVolume) {
+      return {status: 'skipped', reason: 'unsupported'};
+    }
+    try {
+      const position = useEngineVolumeStore.getState().position;
+      this.engineVolumeSender.request(engineVolumeValueForPosition(position), {
+        force: true,
+      });
+      const outcome = await this.engineVolumeSender.settled();
+      if (outcome === null) return {status: 'skipped', reason: 'not-connected'};
+      if (outcome.status === 'unchanged') {
+        return {status: 'skipped', reason: 'unchanged'};
+      }
+      return outcome;
+    } catch (error) {
+      console.debug('Engine Volume resync failed', error);
+      return {status: 'skipped', reason: 'not-connected'};
+    }
+  }
+
+  handleLinkClosed(): void {
+    this.engineVolumeSender.cancel();
+    this.engineVolumeSender.resetDelivered();
   }
 
   /**
@@ -585,6 +645,29 @@ export class PianoService {
       .record({channel, toneId: tone.id, deviceId, connectionMark});
 
     return {status: 'applied', channel, toneId: tone.id};
+  }
+
+  private isLinkUp(): boolean {
+    try {
+      const status = useConnectionStore.getState().status;
+      return status === 'connected' || status === 'stale';
+    } catch {
+      return false;
+    }
+  }
+
+  private canSendEngineVolume(): boolean {
+    return (
+      this.engine !== null && this.engine.supportsEngineVolume && this.isLinkUp()
+    );
+  }
+
+  private async sendEngineVolume(value: number): Promise<void> {
+    const engine = this.engine;
+    if (!engine || !engine.supportsEngineVolume) {
+      throw new Error('Engine Volume is not available');
+    }
+    await this.transport.send(engine.buildEngineVolumeChange(value));
   }
 
   private debounce(key: string, fn: () => Promise<void>): void {

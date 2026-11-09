@@ -8,24 +8,24 @@
 import {parseNotification, parseStateResponse} from '../../../src/engine/fp30x/parser';
 
 describe('parseNotification', () => {
-  describe('DT1 volume echo', () => {
-    it('parses volume 52 from DT1 echo', () => {
+  describe('DT1 output volume echo', () => {
+    it('parses output volume 52 from DT1 echo', () => {
       // Raw SysEx: F0 41 10 00 00 00 28 12 01 00 02 13 34 36 F7
       const bytes = [
         0xf0, 0x41, 0x10, 0x00, 0x00, 0x00, 0x28, 0x12,
         0x01, 0x00, 0x02, 0x13, 0x34, 0x36, 0xf7,
       ];
       const event = parseNotification(bytes);
-      expect(event).toEqual({type: 'volume', value: 0x34}); // 52
+      expect(event).toEqual({type: 'outputVolume', value: 0x34}); // 52
     });
 
-    it('parses volume 127 (max)', () => {
+    it('parses output volume 127 (max)', () => {
       const bytes = [
         0xf0, 0x41, 0x10, 0x00, 0x00, 0x00, 0x28, 0x12,
         0x01, 0x00, 0x02, 0x13, 0x7f, 0x00, 0xf7,
       ];
       const event = parseNotification(bytes);
-      expect(event).toEqual({type: 'volume', value: 127});
+      expect(event).toEqual({type: 'outputVolume', value: 127});
     });
   });
 
@@ -353,7 +353,7 @@ describe('parseStateResponse', () => {
     expect(events).toContainEqual({type: 'balance', value: 64});
     expect(events).toContainEqual({type: 'tone', category: 0, indexHigh: 0, indexLow: 0});
     expect(events).toContainEqual({type: 'leftTone', category: 3, indexHigh: 0, indexLow: 0});
-    expect(events).toContainEqual({type: 'volume', value: 100});
+    expect(events).toContainEqual({type: 'outputVolume', value: 100});
     expect(events).toContainEqual({type: 'keyTouch', value: 3});
     expect(events).toContainEqual({type: 'metronomeBeat', value: 3});
     expect(events).toContainEqual({type: 'metronomePattern', value: 0});

@@ -86,7 +86,7 @@ export class PresetService {
     ) as PerformanceSnapshot['quickToneSlots'];
 
     return {
-      volume: perf.volume,
+      volume: perf.outputVolume,
       tempo: perf.tempo,
       keyTouch: perf.keyTouch,
       metronome: {
@@ -189,9 +189,9 @@ export class PresetService {
       }
     }
 
-    // 4. Volume.
+    // 4. Output Volume.
     if (snapshot.volume !== undefined) {
-      commands.push(engine.buildVolumeChange(snapshot.volume));
+      commands.push(engine.buildOutputVolumeChange(snapshot.volume));
     }
 
     // 5. Tempo.

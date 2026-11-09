@@ -19,7 +19,7 @@ describe('performanceStore — voicing-mode setters', () => {
     const after = usePerformanceStore.getState();
     expect(after.splitLeftShift).toBe(0x41);
     // Sanity: an unrelated field is unchanged
-    expect(after.volume).toBe(before.volume);
+    expect(after.outputVolume).toBe(before.outputVolume);
   });
 
   it('setSplitRightShift updates only its own field', () => {
