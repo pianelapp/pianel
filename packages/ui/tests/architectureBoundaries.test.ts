@@ -94,6 +94,26 @@ describe('Renderer architecture boundaries', () => {
     expect(importers).toEqual([SESSION_STORE_OWNER]);
   });
 
+  it('imports the audio-ui primitive only from the fader control and the vendored fader', () => {
+    const importers = allSourceFiles
+      .filter(f => /from\s+['"]@audio-ui\//.test(f.source))
+      .map(f => f.path)
+      .sort();
+    expect(importers).toEqual(
+      [
+        join('components', 'audio-ui', 'fader.tsx'),
+        join('components', 'controls', 'Fader.tsx'),
+      ].sort(),
+    );
+  });
+
+  it('reaches the vendored registry fader only through the fader control', () => {
+    const importers = allSourceFiles
+      .filter(f => /from\s+['"][^'"]*audio-ui\/fader['"]/.test(f.source))
+      .map(f => f.path);
+    expect(importers).toEqual([join('components', 'controls', 'Fader.tsx')]);
+  });
+
   it('scans the presentation files it is meant to cover', () => {
     const scanned = new Set(presentation.map(f => f.path));
     expect(scanned.size).toBeGreaterThan(30);

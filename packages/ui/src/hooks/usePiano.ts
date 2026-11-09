@@ -14,7 +14,6 @@ export function getPianoService(): PianoService | null {
 }
 
 export function usePiano() {
-  const volume = usePerformanceStore(s => s.outputVolume);
   const tempo = usePerformanceStore(s => s.tempo);
   const metronomeOn = usePerformanceStore(s => s.metronomeOn);
   const headphonesConnected = usePerformanceStore(s => s.headphonesConnected);
@@ -24,15 +23,6 @@ export function usePiano() {
   const metronomeTone = usePerformanceStore(s => s.metronomeTone);
   const keyTouch = usePerformanceStore(s => s.keyTouch);
   const activeTone = usePerformanceStore(s => s.activeTone);
-
-  const changeVolume = useCallback(async (value: number) => {
-    const service = getPianoService();
-    if (!service) {
-      usePerformanceStore.getState().setOutputVolume(value);
-      return;
-    }
-    await service.changeOutputVolume(value);
-  }, []);
 
   const changeTempo = useCallback(async (bpm: number) => {
     usePerformanceStore.getState().setTempo(bpm);
@@ -77,7 +67,6 @@ export function usePiano() {
   }, []);
 
   return {
-    volume,
     tempo,
     metronomeOn,
     headphonesConnected,
@@ -87,7 +76,6 @@ export function usePiano() {
     metronomeTone,
     keyTouch,
     activeTone,
-    changeVolume,
     changeTempo,
     toggleMetronome,
     changeMetronomeParam,

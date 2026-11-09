@@ -72,4 +72,9 @@ describe('Web host architecture boundaries', () => {
     );
     expect(violations.map((x) => `${x.f}: ${x.spec}`)).toEqual([]);
   });
+
+  it('never imports the audio-ui fader primitive directly', () => {
+    const direct = allImports.filter(({ spec }) => spec.startsWith('@audio-ui/'));
+    expect(direct.map((x) => `${x.f}: ${x.spec}`)).toEqual([]);
+  });
 });

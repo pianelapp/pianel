@@ -68,3 +68,37 @@ describe('Feature parity — primary tab structure', () => {
     expect(profiles.className).toMatch(/text-cyan-400/);
   });
 });
+
+describe('Feature parity — Master Volume panel', () => {
+  it('opens from the StatusBar with Engine Volume left and Output Volume right', () => {
+    render(<App />);
+    const trigger = screen.getAllByRole('button', { name: 'Master Volume' })[0];
+    fireEvent.click(trigger);
+    const panel = screen.getByRole('dialog', { name: 'Master Volume' });
+    const faders = Array.from(
+      panel.querySelectorAll('input[type="range"]'),
+    ).map((input) => input.getAttribute('aria-label'));
+    expect(faders).toEqual(['Engine Volume', 'Output Volume']);
+    expect(panel.textContent).not.toMatch(/dB/);
+    expect(panel.querySelectorAll('button')).toHaveLength(0);
+  });
+
+  it('moves Engine Volume from the panel without touching Output Volume', () => {
+    render(<App />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Master Volume' })[0]);
+    const panel = screen.getByRole('dialog', { name: 'Master Volume' });
+    const engine = panel.querySelector(
+      'input[aria-label="Engine Volume"]',
+    ) as HTMLInputElement;
+    const output = panel.querySelector(
+      'input[aria-label="Output Volume"]',
+    ) as HTMLInputElement;
+    const outputBefore = output.value;
+    fireEvent.keyDown(engine, { key: 'PageDown' });
+    expect(engine.value).toBe('90');
+    expect(
+      panel.querySelector('[data-strip="engine"] [data-readout]')?.textContent,
+    ).toBe('90');
+    expect(output.value).toBe(outputBefore);
+  });
+});
