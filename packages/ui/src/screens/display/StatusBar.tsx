@@ -127,7 +127,6 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
           open={showMasterVolume}
           onOpenChange={setShowMasterVolume}
           isLightMode={isLightMode}
-          compact={compact}
           trigger={
             <button
               type="button"

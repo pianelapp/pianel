@@ -9,6 +9,7 @@ import {
   MasterVolumePanel,
   MASTER_VOLUME_MARKS,
   MASTER_VOLUME_PANEL_PLACEMENT,
+  MASTER_VOLUME_FADER_HEIGHT,
 } from '../../src/components/MasterVolumePanel';
 
 beforeAll(() => {
@@ -24,12 +25,10 @@ beforeEach(() => {
 
 function Harness({
   isLightMode = true,
-  compact = false,
   initialOpen = true,
   onOpenChange,
 }: {
   isLightMode?: boolean;
-  compact?: boolean;
   initialOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -46,7 +45,6 @@ function Harness({
           setOpen(next);
         }}
         isLightMode={isLightMode}
-        compact={compact}
         trigger={
           <button type="button" aria-label="Master Volume">
             trigger
@@ -77,8 +75,24 @@ function readout(name: 'engine' | 'output'): HTMLElement {
   return strip(name).querySelector('[data-readout]') as HTMLElement;
 }
 
-function caption(name: 'engine' | 'output'): HTMLElement {
-  return strip(name).querySelector('[data-caption]') as HTMLElement;
+function pin(name: 'engine' | 'output'): HTMLButtonElement {
+  return strip(name).querySelector('[data-pin]') as HTMLButtonElement;
+}
+
+function pressOutside(container: HTMLElement): void {
+  const outside = container.querySelector('[data-testid="outside"]')!;
+  act(() => {
+    outside.dispatchEvent(
+      new PointerEvent('pointerdown', {bubbles: true, button: 0}),
+    );
+    outside.dispatchEvent(new MouseEvent('click', {bubbles: true, button: 0}));
+  });
+}
+
+function stripNames(): string[] {
+  return Array.from(panel()!.querySelectorAll('[data-strip]')).map(
+    s => s.getAttribute('data-strip') ?? '',
+  );
 }
 
 async function flush(): Promise<void> {
@@ -128,18 +142,6 @@ describe('MasterVolumePanel', () => {
     unmount();
   });
 
-  it('describes what each volume affects, linked to its fader', () => {
-    const {unmount} = render(<Harness />);
-    const [engine, output] = sliders();
-    expect(caption('engine').textContent).toBe('Piano sound + USB recording');
-    expect(caption('output').textContent).toBe(
-      'Speakers & phones, incl. USB/BT in',
-    );
-    expect(engine.getAttribute('aria-describedby')).toBe(caption('engine').id);
-    expect(output.getAttribute('aria-describedby')).toBe(caption('output').id);
-    unmount();
-  });
-
   it('draws the 0, 25, 50, 75, 100 scale labelled at 0 and 100 on both faders', () => {
     const {unmount} = render(<Harness />);
     expect(MASTER_VOLUME_MARKS).toEqual([
@@ -157,10 +159,117 @@ describe('MasterVolumePanel', () => {
     unmount();
   });
 
-  it('renders no close button', () => {
+  it('renders no close button and no captions', () => {
     const {unmount} = render(<Harness />);
-    expect(panel()!.querySelectorAll('button')).toHaveLength(0);
-    expect(panel()!.textContent).not.toMatch(/close/i);
+    const buttons = Array.from(panel()!.querySelectorAll('button'));
+    expect(buttons.every(b => b.hasAttribute('data-pin'))).toBe(true);
+    expect(panel()!.textContent).not.toMatch(/close|USB|Speakers/i);
+    unmount();
+  });
+
+  it('places the value below the fader in the regular sans font', () => {
+    const {unmount} = render(<Harness />);
+    for (const name of ['engine', 'output'] as const) {
+      const children = Array.from(strip(name).children);
+      const faderIndex = children.findIndex(c =>
+        c.classList.contains('pianel-fader'),
+      );
+      const readoutIndex = children.indexOf(readout(name));
+      expect(readoutIndex).toBeGreaterThan(faderIndex);
+      expect(readout(name).className).toContain('font-sans');
+      expect(readout(name).className).not.toMatch(/font-mono|font-orbitron/);
+    }
+    unmount();
+  });
+
+  it('gives each fader its own pin, off by default', () => {
+    const {unmount} = render(<Harness />);
+    expect(pin('engine').getAttribute('aria-label')).toBe('Pin Engine Volume');
+    expect(pin('output').getAttribute('aria-label')).toBe('Pin Output Volume');
+    expect(pin('engine').getAttribute('aria-pressed')).toBe('false');
+    expect(pin('output').getAttribute('aria-pressed')).toBe('false');
+    click(pin('engine'));
+    expect(pin('engine').getAttribute('aria-pressed')).toBe('true');
+    expect(pin('engine').className).toContain('text-cyan-500');
+    expect(pin('output').className).not.toContain('text-cyan-500');
+    click(pin('engine'));
+    expect(pin('engine').getAttribute('aria-pressed')).toBe('false');
+    unmount();
+  });
+
+  it('keeps only the pinned fader on screen after a press outside', async () => {
+    const onOpenChange = jest.fn();
+    const {container, unmount} = render(<Harness onOpenChange={onOpenChange} />);
+    await flush();
+    click(pin('output'));
+    pressOutside(container);
+    await flush();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    expect(stripNames()).toEqual(['output']);
+    pressOutside(container);
+    await flush();
+    expect(stripNames()).toEqual(['output']);
+    unmount();
+  });
+
+  it('keeps both faders on screen when both are pinned', async () => {
+    const {container, unmount} = render(<Harness />);
+    await flush();
+    click(pin('engine'));
+    click(pin('output'));
+    pressOutside(container);
+    await flush();
+    expect(stripNames()).toEqual(['engine', 'output']);
+    unmount();
+  });
+
+  it('keeps pinned faders on screen on Escape', () => {
+    const {unmount} = render(<Harness />);
+    click(pin('engine'));
+    act(() => {
+      panel()!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(stripNames()).toEqual(['engine']);
+    unmount();
+  });
+
+  it('brings back every fader when the trigger is pressed while pinned, then closes on the next press', async () => {
+    const onOpenChange = jest.fn();
+    const {container, unmount} = render(<Harness onOpenChange={onOpenChange} />);
+    await flush();
+    click(pin('engine'));
+    pressOutside(container);
+    await flush();
+    const trigger = container.querySelector(
+      'button[aria-label="Master Volume"]',
+    ) as HTMLButtonElement;
+    click(trigger);
+    expect(stripNames()).toEqual(['engine', 'output']);
+    click(trigger);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(panel()).toBeNull();
+    click(trigger);
+    expect(stripNames()).toEqual(['engine', 'output']);
+    expect(pin('engine').getAttribute('aria-pressed')).toBe('true');
+    unmount();
+  });
+
+  it('closes when the last pinned fader left on screen is unpinned', async () => {
+    const onOpenChange = jest.fn();
+    const {container, unmount} = render(<Harness onOpenChange={onOpenChange} />);
+    await flush();
+    click(pin('output'));
+    pressOutside(container);
+    await flush();
+    click(pin('output'));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(panel()).toBeNull();
     unmount();
   });
 
@@ -262,27 +371,23 @@ describe('MasterVolumePanel', () => {
     const [engine, output] = sliders();
     expect(engine.disabled).toBe(true);
     expect(output.disabled).toBe(false);
-    expect(caption('engine').textContent).toBe('Not available on this piano');
+    const note = strip('engine').querySelector('[data-unavailable]')!;
+    expect(note.textContent).toBe('Not available on this piano');
+    expect(engine.getAttribute('aria-describedby')).toBe(note.id);
     expect(readout('engine').className).toContain('opacity-40');
     expect(readout('output').className).not.toContain('opacity-40');
     unmount();
   });
 
-  it('uses a shorter fader in the compact layout', () => {
-    const regular = render(<Harness />);
-    const regularRoot = strip('engine').querySelector(
-      '.pianel-fader',
-    ) as HTMLElement;
-    expect(regularRoot.style.getPropertyValue('--fader-min-height')).toBe(
-      '10rem',
-    );
-    regular.unmount();
-    const compact = render(<Harness compact />);
+  it('makes both faders 60% of the viewport height', () => {
+    expect(MASTER_VOLUME_FADER_HEIGHT).toBe('60vh');
+    const {unmount} = render(<Harness />);
     for (const name of ['engine', 'output'] as const) {
       const root = strip(name).querySelector('.pianel-fader') as HTMLElement;
-      expect(root.style.getPropertyValue('--fader-min-height')).toBe('8rem');
+      expect(root.style.getPropertyValue('--fader-min-height')).toBe('60vh');
+      expect(root.style.height).toBe('60vh');
     }
-    compact.unmount();
+    unmount();
   });
 
   it('renders matched strips in the light theme', () => {

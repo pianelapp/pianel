@@ -80,7 +80,11 @@ describe('Feature parity — Master Volume panel', () => {
     ).map((input) => input.getAttribute('aria-label'));
     expect(faders).toEqual(['Engine Volume', 'Output Volume']);
     expect(panel.textContent).not.toMatch(/dB/);
-    expect(panel.querySelectorAll('button')).toHaveLength(0);
+    const buttons = Array.from(panel.querySelectorAll('button'));
+    expect(buttons.map(b => b.getAttribute('aria-label'))).toEqual([
+      'Pin Engine Volume',
+      'Pin Output Volume',
+    ]);
   });
 
   it('moves Engine Volume from the panel without touching Output Volume', () => {
