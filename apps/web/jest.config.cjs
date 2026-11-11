@@ -1,3 +1,8 @@
+const path = require('path');
+
+const audioUi = path.join(__dirname, '../../node_modules', '@audio-ui');
+const workspacePaths = require('./tsconfig.json').compilerOptions.paths;
+
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
@@ -12,7 +17,11 @@ module.exports = {
     '<rootDir>/node_modules',
     '<rootDir>/../../node_modules',
   ],
+  transformIgnorePatterns: ['/node_modules/(?!@audio-ui/)'],
   moduleNameMapper: {
+    '^@audio-ui/react/fader$': `${audioUi}/react/dist/fader.js`,
+    '^@audio-ui/core$': `${audioUi}/core/dist/index.js`,
+    '^@audio-ui/core/(.*)$': `${audioUi}/core/dist/$1.js`,
     // lucide-react ships ESM-only JS; stub icon imports in tests.
     '^lucide-react/.*$': '<rootDir>/tests/__mocks__/lucideIcon.tsx',
     '^lucide-react$': '<rootDir>/tests/__mocks__/lucideIcon.tsx',
@@ -33,6 +42,28 @@ module.exports = {
           module: 'commonjs',
           moduleResolution: 'node',
           types: ['jest', 'node', '@testing-library/jest-dom'],
+          paths: {
+            ...workspacePaths,
+            '@audio-ui/react/fader': [
+              `${audioUi}/react/dist/entries/fader.d.ts`,
+            ],
+            '@audio-ui/core': [`${audioUi}/core/dist/index.d.ts`],
+            '@audio-ui/core/*': [
+              `${audioUi}/core/dist/primitives/*/index.d.ts`,
+              `${audioUi}/core/dist/audio/*/index.d.ts`,
+            ],
+          },
+        },
+      },
+    ],
+    '^.+/node_modules/@audio-ui/.+\\.js$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          allowJs: true,
+          module: 'CommonJS',
+          moduleResolution: 'node',
+          target: 'ES2020',
         },
       },
     ],

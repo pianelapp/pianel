@@ -62,7 +62,7 @@ export function ProfileRow({
           </span>
           {isActive && (
             <span
-              className={`text-xs font-bold tracking-widest px-1.5 py-0.5 rounded ${
+              className={`text-xs font-bold tracking-widest px-1.5 py-0.5 rounded-sm ${
                 isLightMode ? 'bg-cyan-100 text-cyan-700' : 'bg-cyan-900/30 text-cyan-300'
               }`}
             >
@@ -71,7 +71,7 @@ export function ProfileRow({
           )}
           {isDefault && (
             <span
-              className={`text-xs font-bold tracking-widest px-1.5 py-0.5 rounded ${
+              className={`text-xs font-bold tracking-widest px-1.5 py-0.5 rounded-sm ${
                 isLightMode
                   ? 'bg-amber-100 text-amber-700'
                   : 'bg-amber-900/30 text-amber-300'

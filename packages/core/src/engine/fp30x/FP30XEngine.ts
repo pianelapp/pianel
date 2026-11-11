@@ -17,7 +17,24 @@ import type {
 } from '../../types/types';
 import {encodeShift} from '../../helpers/voicingMode';
 import type {ShiftTarget} from '../../types/voicingMode';
-import {buildDT1, buildRQ1, buildIdentityRequest, encodeTempo} from './sysex';
+import {
+  DRUM_CHANNEL,
+  KEYBOARD_CHANNEL,
+  type MidiChannel,
+} from '../../types/midiChannelStrip';
+import type {ChannelToneChangePlan} from '../../types/midiChannelAssignment';
+import {
+  bankProgramForTone,
+  buildChannelToneChange,
+  isDrumKit,
+} from './bankProgram';
+import {
+  buildDT1,
+  buildRQ1,
+  buildIdentityRequest,
+  buildUniversalMasterVolume,
+  encodeTempo,
+} from './sysex';
 import {parseNotification, parseStateResponse, isAliveReply} from './parser';
 import {fp30xToneCatalog} from './tones';
 import {
@@ -50,6 +67,7 @@ const SHIFT_ADDR: Readonly<Record<ShiftTarget, readonly number[]>> = {
 export class FP30XEngine implements PianoEngine {
   readonly modelName = FP30X_MODEL_NAME;
   readonly tones: ToneCatalog = fp30xToneCatalog;
+  readonly supportsEngineVolume: boolean = true;
 
   buildToneChange(tone: Tone): number[] {
     return buildDT1(ADDR.TONE_CATEGORY, [
@@ -59,9 +77,13 @@ export class FP30XEngine implements PianoEngine {
     ]);
   }
 
-  buildVolumeChange(value: number): number[] {
+  buildOutputVolumeChange(value: number): number[] {
     const clamped = Math.max(0, Math.min(100, Math.round(value)));
-    return buildDT1(ADDR.VOLUME, [clamped]);
+    return buildDT1(ADDR.OUTPUT_VOLUME, [clamped]);
+  }
+
+  buildEngineVolumeChange(value: number): number[] {
+    return buildUniversalMasterVolume(value);
   }
 
   buildTempoChange(bpm: number): number[] {
@@ -207,6 +229,25 @@ export class FP30XEngine implements PianoEngine {
 
   buildIdentityRequest(): number[] {
     return buildIdentityRequest();
+  }
+
+  planChannelToneChange(
+    channel: MidiChannel,
+    tone: Tone,
+  ): ChannelToneChangePlan {
+    if (!Number.isInteger(channel) || channel < 1 || channel > 16) {
+      return {eligible: false, reason: 'channel-out-of-range'};
+    }
+    if (channel === KEYBOARD_CHANNEL) {
+      return {eligible: false, reason: 'keyboard-channel'};
+    }
+    if (channel === DRUM_CHANNEL && !isDrumKit(tone)) {
+      return {eligible: false, reason: 'requires-drum-kit'};
+    }
+    if (!bankProgramForTone(tone)) {
+      return {eligible: false, reason: 'tone-not-assignable'};
+    }
+    return {eligible: true, messages: buildChannelToneChange(channel, tone)};
   }
 
   parseNotification(rawMidiBytes: number[]): PianoEvent | null {

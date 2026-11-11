@@ -49,7 +49,9 @@ const mockEngine: PianoEngine = {
   modelName: 'Roland FP-30X',
   tones: mockCatalog,
   buildToneChange: jest.fn().mockReturnValue([]),
-  buildVolumeChange: jest.fn().mockReturnValue([]),
+  supportsEngineVolume: true,
+  buildEngineVolumeChange: jest.fn().mockReturnValue([]),
+  buildOutputVolumeChange: jest.fn().mockReturnValue([]),
   buildTempoChange: jest.fn().mockReturnValue([]),
   buildMetronomeToggle: jest.fn().mockReturnValue([]),
   buildMetronomeParam: jest.fn().mockReturnValue([]),
@@ -63,6 +65,7 @@ const mockEngine: PianoEngine = {
   buildKeyTouchChange: jest.fn().mockReturnValue([]),
   buildShiftChange: jest.fn().mockReturnValue([]),
   buildTwinModeSet: jest.fn().mockReturnValue([]),
+  planChannelToneChange: jest.fn().mockReturnValue({eligible: true, messages: []}),
   buildSessionUnlock: jest.fn().mockReturnValue([]),
   buildInitialStateRequest: jest.fn().mockReturnValue([]),
   buildIdentityRequest: jest.fn().mockReturnValue([]),
@@ -95,7 +98,7 @@ describe('PianoService.dispatchEvent — headphonesConnection', () => {
   it('does not modify unrelated performance fields', () => {
     const before = usePerformanceStore.getState();
     const baseline = {
-      volume: before.volume,
+      outputVolume: before.outputVolume,
       tempo: before.tempo,
       metronomeOn: before.metronomeOn,
       activeTone: before.activeTone,
@@ -105,7 +108,7 @@ describe('PianoService.dispatchEvent — headphonesConnection', () => {
     service.dispatchEvent({type: 'headphonesConnection', connected: true});
 
     const after = usePerformanceStore.getState();
-    expect(after.volume).toBe(baseline.volume);
+    expect(after.outputVolume).toBe(baseline.outputVolume);
     expect(after.tempo).toBe(baseline.tempo);
     expect(after.metronomeOn).toBe(baseline.metronomeOn);
     expect(after.activeTone).toBe(baseline.activeTone);

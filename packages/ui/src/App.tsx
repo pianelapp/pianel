@@ -13,6 +13,7 @@ import {
   SettingsSurface,
   type SettingsView,
 } from './components/settings/SettingsSurface';
+import { Toast } from './components/Toast';
 import { DisplayScreen } from './screens/display/DisplayScreen';
 import { StatusBar } from './screens/display/StatusBar';
 import { PerformMode } from './screens/perform/PerformMode';
@@ -169,7 +170,7 @@ export default function App() {
               data-library-backdrop
               onClick={() => setLibraryOpen(false)}
               aria-hidden
-              className={`absolute inset-0 z-30 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${
+              className={`absolute inset-0 z-30 bg-black/40 backdrop-blur-xs transition-opacity duration-200 ${
                 libraryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             />
@@ -206,6 +207,7 @@ export default function App() {
       />
       <MIDIDeviceChooser isLightMode={isLightMode} />
       <AlertModal isLightMode={isLightMode} />
+      <Toast isLightMode={isLightMode} />
       <PerformMode isLightMode={isLightMode} />
       <PerformActions />
       <PianoActions />

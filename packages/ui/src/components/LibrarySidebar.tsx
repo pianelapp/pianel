@@ -1,10 +1,19 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import LibraryBig from 'lucide-react/dist/esm/icons/library-big';
 import Search from 'lucide-react/dist/esm/icons/search';
 import X from 'lucide-react/dist/esm/icons/x';
 import Star from 'lucide-react/dist/esm/icons/star';
 import { useTones } from '../hooks/useTones';
 import { useFavorites } from '../hooks/useFavorites';
+import { useConnection } from '../hooks/useConnection';
+import { useLongPress, type LongPressPoint } from '../hooks/useLongPress';
+import { RowContextMenu, type RowAction } from './RowContextMenu';
+import { ChannelPickerModal } from './modals/ChannelPickerModal';
+import {
+  ASSIGN_ACTION_DISCONNECTED_LABEL,
+  ASSIGN_ACTION_LABEL,
+} from '../helpers/channelAssignmentLabels';
 import type { Tone } from '@pianel/core/types/types';
 
 interface LibrarySidebarProps {
@@ -14,6 +23,38 @@ interface LibrarySidebarProps {
 }
 
 const FAVORITES_IDX = -1;
+
+interface ToneRowShellProps {
+  className: string;
+  onSecondaryAction: (point: LongPressPoint) => void;
+  children: React.ReactNode;
+}
+
+/**
+ * Row wrapper that owns the secondary-action gesture. A component rather than
+ * inline markup because `useLongPress` is a hook and the rows are rendered in a
+ * loop — the same shape `SceneRow` uses.
+ */
+function ToneRowShell({
+  className,
+  onSecondaryAction,
+  children,
+}: ToneRowShellProps) {
+  const longPress = useLongPress({ onLongPress: onSecondaryAction });
+  return (
+    <div
+      onContextMenu={e => {
+        e.preventDefault();
+        onSecondaryAction({ x: e.clientX, y: e.clientY });
+      }}
+      {...longPress}
+      className={className}>
+      {children}
+    </div>
+  );
+}
+
+type RowMenuState = { tone: Tone; x: number; y: number } | null;
 
 export function LibrarySidebar({
   isLightMode,
@@ -30,7 +71,10 @@ export function LibrarySidebar({
     setCategoryIndex,
   } = useTones();
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
+  const { isConnected } = useConnection();
 
+  const [rowMenu, setRowMenu] = useState<RowMenuState>(null);
+  const [pickerTone, setPickerTone] = useState<Tone | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [favoritesSelected, setFavoritesSelected] = useState(false);
   const tonesScrollRef = useRef<HTMLDivElement>(null);
@@ -83,6 +127,21 @@ export function LibrarySidebar({
     [toggleFavorite],
   );
 
+  const rowActions: RowAction[] = [
+    {
+      id: 'assignChannel',
+      label: isConnected
+        ? ASSIGN_ACTION_LABEL
+        : ASSIGN_ACTION_DISCONNECTED_LABEL,
+      disabled: !isConnected,
+    },
+  ];
+
+  const handleRowAction = () => {
+    if (rowMenu) setPickerTone(rowMenu.tone);
+    setRowMenu(null);
+  };
+
   const containerClass = isLightMode
     ? 'bg-zinc-50 border-zinc-200 shadow-[2px_0_10px_rgba(0,0,0,0.02)]'
     : 'bg-zinc-950 border-zinc-800 shadow-[2px_0_15px_rgba(0,0,0,0.4)]';
@@ -122,9 +181,12 @@ export function LibrarySidebar({
       ? 'text-zinc-300 hover:text-orange-400'
       : 'text-zinc-700 hover:text-orange-500';
     return (
-      <div
+      <ToneRowShell
         key={tone.id}
-        className={`${toneItemBase} ${isActive ? toneItemActive : toneItemInactive}`}>
+        className={`${toneItemBase} ${isActive ? toneItemActive : toneItemInactive}`}
+        onSecondaryAction={point =>
+          setRowMenu({ tone, x: point.x, y: point.y })
+        }>
         <button
           data-tone-item
           onClick={() => handleToneClick(tone)}
@@ -165,7 +227,7 @@ export function LibrarySidebar({
             fill={isFav ? 'currentColor' : 'none'}
           />
         </button>
-      </div>
+      </ToneRowShell>
     );
   };
 
@@ -182,6 +244,36 @@ export function LibrarySidebar({
   const rightColumnEmptyText = favoritesSelected
     ? 'No favorites yet. Tap the star on a tone to add it.'
     : 'No tones in this category';
+
+  /**
+   * Portalled to the body: on mobile this sidebar lives inside the library
+   * drawer, whose `translate-x-*` class emits a real `transform`. That makes
+   * the drawer the containing block for `position: fixed` descendants, so an
+   * inline overlay would be clipped to a 360px-wide box instead of covering
+   * the viewport — and the row menu's viewport-clamped coordinates would be
+   * measured against the wrong box.
+   */
+  const overlays = createPortal(
+    <>
+      {rowMenu && (
+        <RowContextMenu
+          x={rowMenu.x}
+          y={rowMenu.y}
+          actions={rowActions}
+          isLightMode={isLightMode}
+          onClose={() => setRowMenu(null)}
+          onAction={handleRowAction}
+        />
+      )}
+      <ChannelPickerModal
+        tone={pickerTone}
+        open={pickerTone !== null}
+        isLightMode={isLightMode}
+        onClose={() => setPickerTone(null)}
+      />
+    </>,
+    document.body,
+  );
 
   return (
     <div
@@ -211,7 +303,7 @@ export function LibrarySidebar({
             placeholder="Search tones..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className={`w-full pl-9 pr-9 py-2 text-lg rounded-md outline-none transition-all ${
+            className={`w-full pl-9 pr-9 py-2 text-lg rounded-md outline-hidden transition-all ${
               isLightMode
                 ? 'bg-zinc-200/50 border border-zinc-300 text-zinc-800 placeholder-zinc-500 focus:border-[#519B9F] focus:ring-1 focus:ring-[#519B9F]/20'
                 : 'bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500 shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)] focus:border-cyan-700'
@@ -339,6 +431,7 @@ export function LibrarySidebar({
           </div>
         </div>
       )}
+      {overlays}
     </div>
   );
 }

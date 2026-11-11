@@ -2,6 +2,8 @@
  * Roland DT1/RQ1 SysEx Message Builders for FP-30X.
  *
  * All byte construction per discovery doc Section 4 + Appendix A.
+ * Universal Realtime Master Volume per docs/researches/roland-sysex-discovery.md
+ * §9 and §9a, and docs/researches/fader-volume-scale.md.
  * Constitution IV: DT1 SysEx Protocol Fidelity.
  */
 
@@ -121,4 +123,11 @@ export function encodeTempo(bpm: number): [number, number] {
  */
 export function decodeTempo(byte1: number, byte2: number): number {
   return byte1 * 128 + byte2;
+}
+
+export function buildUniversalMasterVolume(value: number): number[] {
+  const vv = Number.isFinite(value)
+    ? Math.max(0, Math.min(127, Math.round(value)))
+    : 0;
+  return [SYSEX_START, 0x7f, 0x7f, 0x04, 0x01, 0x00, vv, SYSEX_END];
 }

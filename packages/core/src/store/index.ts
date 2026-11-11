@@ -49,6 +49,46 @@ export {useAppSettingsStore, createAppSettingsStore} from './appSettingsStore';
 export type {CursorState, CursorActions, CursorAnchor} from './cursorStore';
 export {useCursorStore} from './cursorStore';
 
+export type {
+  MidiChannelState,
+  MidiChannelActions,
+  ChannelAssignment,
+} from './midiChannelStore';
+export {
+  useMidiChannelStore,
+  selectChannelAssignments,
+  selectAssignmentsMayBeStale,
+} from './midiChannelStore';
+
+export type {
+  EngineVolumeState,
+  EngineVolumeActions,
+} from './engineVolumeStore';
+export type {
+  EngineVolumeDelivery,
+  EngineVolumeSkipReason,
+} from '../types/engineVolume';
+export {
+  useEngineVolumeStore,
+  selectEngineVolumeValue,
+  selectEngineVolumeAttenuated,
+} from './engineVolumeStore';
+
+export type {MidiChannel} from '../types/midiChannelStrip';
+export {
+  KEYBOARD_CHANNEL,
+  DRUM_CHANNEL,
+  ALL_MIDI_CHANNELS,
+} from '../types/midiChannelStrip';
+
+export type {
+  ChannelToneIneligibility,
+  ChannelToneChangePlan,
+  ChannelToneAssignmentRefusal,
+  ChannelToneAssignmentResult,
+  ChannelToneTarget,
+} from '../types/midiChannelAssignment';
+
 export type {Scene, Song, SetlistEntry, Setlist} from '../types/setlist';
 export type {SchemaVersion} from '../types/schemaVersion';
 export {CURRENT_SCHEMA_VERSION} from '../types/schemaVersion';

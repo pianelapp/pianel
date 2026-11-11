@@ -1,6 +1,50 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import './audio-ui.css';
+
+@source '../';
+
+@theme {
+  --font-orbitron: Orbitron, monospace;
+  --font-mono: Orbitron, monospace;
+
+  --animate-slide-text: slide-text 4s ease-in-out infinite;
+  --animate-toast-in: toast-in 180ms ease-out;
+  --animate-marquee-x: marquee-x var(--marquee-duration, 7s) ease-in-out
+    infinite;
+
+  @keyframes slide-text {
+    0%,
+    15% {
+      transform: translateX(10px);
+    }
+    85%,
+    100% {
+      transform: translateX(-40px);
+    }
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes marquee-x {
+    0%,
+    15% {
+      transform: translateX(0);
+    }
+    85%,
+    100% {
+      transform: translateX(var(--marquee-distance, 0px));
+    }
+  }
+}
 
 @font-face {
   font-family: 'Orbitron';
@@ -17,26 +61,10 @@ html {
   font-size: 18px;
 }
 
-/* Mobile root-font scaling. The boundary mirrors MEDIA.mobile in
-   src/constants/breakpoints.ts — these two are the only places the mobile boundary
-   appears and must stay in sync. Lowering the root font-size scales the
-   rem-based type/spacing/component sizes down on phone-width viewports; it is
-   independent of the pixel-based tier queries used by useBreakpoint. */
 @media (max-width: 599.98px) {
   html {
     font-size: 14px;
   }
-}
-
-/* Minimum touch hit-area guard for primary mobile controls (applied by the
-   App-integration wave). Keeps controls tappable after the mobile down-scaling
-   above. */
-.tap-target {
-  min-height: 44px;
-  min-width: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 * {
@@ -53,93 +81,100 @@ body {
   user-select: none;
 }
 
-.titlebar-drag {
+@utility tap-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@utility titlebar-drag {
   -webkit-app-region: drag;
 }
 
-.titlebar-no-drag {
+@utility titlebar-no-drag {
   -webkit-app-region: no-drag;
 }
 
-@keyframes slide-text {
-  0%, 15% { transform: translateX(10px); }
-  85%, 100% { transform: translateX(-40px); }
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #3f3f46;
+    border-radius: 8px;
+  }
+
+  :where(.dark) &::-webkit-scrollbar-thumb {
+    background-color: #3f3f46;
+  }
+
+  :where(.light) &::-webkit-scrollbar-thumb {
+    background-color: #d4d4d8;
+  }
 }
 
-.animate-slide-text {
-  animation: slide-text 4s ease-in-out infinite;
-}
-
-@keyframes marquee-x {
-  0%, 15% { transform: translateX(0); }
-  85%, 100% { transform: translateX(var(--marquee-distance, 0px)); }
-}
-
-.animate-marquee-x {
-  animation: marquee-x var(--marquee-duration, 7s) ease-in-out infinite;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #3f3f46;
-  border-radius: 8px;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #3f3f46;
-}
-
-.light .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #d4d4d8;
-}
-
-/* ─── Center-pivot slider (balance) ─────────────────────────── */
-.center-slider {
+@utility center-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
   height: 28px;
   background: transparent;
   cursor: pointer;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--center-slider-track, #3f3f46);
+  }
+
+  &::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--center-slider-track, #3f3f46);
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -7px;
+    border-radius: 9999px;
+    background: var(--center-slider-thumb, #06b6d4);
+    border: 2px solid var(--center-slider-thumb-border, #0e7490);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+    cursor: grab;
+    transition: transform 80ms;
+  }
+
+  &::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: var(--center-slider-thumb, #06b6d4);
+    border: 2px solid var(--center-slider-thumb-border, #0e7490);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+    cursor: grab;
+  }
+
+  &:active::-webkit-slider-thumb {
+    cursor: grabbing;
+    transform: scale(1.08);
+  }
+
+  &:active::-moz-range-thumb {
+    cursor: grabbing;
+  }
 }
-.center-slider:focus { outline: none; }
-.center-slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 9999px;
-  background: var(--center-slider-track, #3f3f46);
-}
-.center-slider::-moz-range-track {
-  height: 4px;
-  border-radius: 9999px;
-  background: var(--center-slider-track, #3f3f46);
-}
-.center-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  margin-top: -7px;
-  border-radius: 9999px;
-  background: var(--center-slider-thumb, #06b6d4);
-  border: 2px solid var(--center-slider-thumb-border, #0e7490);
-  box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
-  cursor: grab;
-  transition: transform 80ms;
-}
-.center-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 9999px;
-  background: var(--center-slider-thumb, #06b6d4);
-  border: 2px solid var(--center-slider-thumb-border, #0e7490);
-  box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
-  cursor: grab;
-}
-.center-slider:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.08); }
-.center-slider:active::-moz-range-thumb { cursor: grabbing; }

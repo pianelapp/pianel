@@ -140,7 +140,7 @@ export function AlertModal({ isLightMode }: AlertModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="alert-modal-title"

@@ -11,7 +11,7 @@
  */
 import * as React from 'react';
 import {act} from 'react';
-import {usePerformanceStore} from '@pianel/core/store';
+import {useEngineVolumeStore, usePerformanceStore} from '@pianel/core/store';
 import {render, click} from '../utils/render';
 import {initTestStores} from '../utils/stores';
 import {StatusBar} from '../../src/screens/display/StatusBar';
@@ -103,7 +103,7 @@ describe('StatusBar', () => {
         buttonByLabel(container, 'Metronome settings'),
         voicingButton(container),
         buttonByLabel(container, 'Metronome off'),
-        buttonByLabel(container, 'Volume'),
+        buttonByLabel(container, 'Master Volume'),
       ];
       for (const btn of controls) {
         expect(btn).toBeDefined();
@@ -116,7 +116,7 @@ describe('StatusBar', () => {
       const iconOnly = [
         voicingButton(container),
         buttonByLabel(container, 'Metronome off'),
-        buttonByLabel(container, 'Volume'),
+        buttonByLabel(container, 'Master Volume'),
       ];
       for (const btn of iconOnly) {
         expect(btn!.querySelector('svg')).not.toBeNull();
@@ -133,10 +133,127 @@ describe('StatusBar', () => {
       unmount();
     });
 
-    it('keeps the volume control opening its popover on click', () => {
+    it('keeps the volume control opening the Master Volume panel on click', () => {
       const {container, unmount} = render(<StatusBar isLightMode compact />);
-      click(buttonByLabel(container, 'Volume') as Element);
-      expect(container.textContent ?? '').toContain('VOL');
+      click(buttonByLabel(container, 'Master Volume') as Element);
+      const panel = document.querySelector(
+        '[role="dialog"][aria-label="Master Volume"]',
+      );
+      expect(panel).not.toBeNull();
+      expect(panel!.querySelectorAll('input[type="range"]')).toHaveLength(2);
+      unmount();
+    });
+  });
+
+  describe('Master Volume control', () => {
+    beforeEach(() => {
+      act(() => {
+        useEngineVolumeStore.getState().reset();
+        usePerformanceStore.setState({
+          outputVolume: 100,
+          headphonesConnected: false,
+        });
+      });
+    });
+
+    function masterButton(root: HTMLElement): HTMLButtonElement {
+      const btn = buttonByLabel(root, 'Master Volume');
+      expect(btn).toBeDefined();
+      return btn!;
+    }
+
+    it('is labelled Master Volume in both layouts with no bare Volume label', () => {
+      for (const compact of [false, true]) {
+        const {container, unmount} = render(
+          <StatusBar isLightMode compact={compact} />,
+        );
+        masterButton(container);
+        const labels = Array.from(
+          container.querySelectorAll('[aria-label], [title]'),
+        ).flatMap(el => [
+          el.getAttribute('aria-label') ?? '',
+          el.getAttribute('title') ?? '',
+        ]);
+        expect(labels.filter(l => /^volume$/i.test(l.trim()))).toEqual([]);
+        unmount();
+      }
+    });
+
+    it('shows the Output Volume number and the speakers icon', () => {
+      act(() => {
+        usePerformanceStore.setState({outputVolume: 64});
+      });
+      const {container, unmount} = render(<StatusBar isLightMode />);
+      const btn = masterButton(container);
+      expect((btn.textContent ?? '').trim()).toBe('64');
+      expect(btn.querySelector('svg[aria-label="Speakers"]')).not.toBeNull();
+      unmount();
+    });
+
+    it('shows the headphones icon when headphones are connected', () => {
+      act(() => {
+        usePerformanceStore.setState({headphonesConnected: true});
+      });
+      const {container, unmount} = render(<StatusBar isLightMode compact />);
+      const btn = masterButton(container);
+      expect(
+        btn.querySelector('svg[aria-label="Headphones connected"]'),
+      ).not.toBeNull();
+      unmount();
+    });
+
+    it('opens the same panel from the regular layout', () => {
+      const {container, unmount} = render(<StatusBar isLightMode={false} />);
+      click(masterButton(container));
+      const panel = document.querySelector(
+        '[role="dialog"][aria-label="Master Volume"]',
+      );
+      expect(panel).not.toBeNull();
+      const names = Array.from(
+        panel!.querySelectorAll('input[type="range"]'),
+      ).map(i => i.getAttribute('aria-label'));
+      expect(names).toEqual(['Engine Volume', 'Output Volume']);
+      unmount();
+    });
+
+    it('marks an attenuated Engine Volume only below 100', () => {
+      const {container, unmount} = render(<StatusBar isLightMode />);
+      const btn = masterButton(container);
+      expect(btn.querySelector('[data-engine-attenuated]')).toBeNull();
+      expect(btn.getAttribute('title')).toBeNull();
+      expect(btn.getAttribute('aria-describedby')).toBeNull();
+
+      act(() => {
+        useEngineVolumeStore.getState().setPosition(72);
+      });
+      const dot = btn.querySelector('[data-engine-attenuated]') as HTMLElement;
+      expect(dot).not.toBeNull();
+      expect(dot.getAttribute('aria-hidden')).toBe('true');
+      expect(dot.className).toContain('absolute');
+      expect(dot.className).toContain('bg-amber-500');
+      expect(dot.className).toContain('pointer-events-none');
+      expect(btn.getAttribute('title')).toBe('Engine Volume 72');
+      const descId = btn.getAttribute('aria-describedby')!;
+      expect(document.getElementById(descId)?.textContent).toBe(
+        'Engine Volume 72',
+      );
+      expect((btn.textContent ?? '').trim()).toBe('100');
+
+      act(() => {
+        useEngineVolumeStore.getState().setPosition(100);
+      });
+      expect(btn.querySelector('[data-engine-attenuated]')).toBeNull();
+      expect(btn.getAttribute('title')).toBeNull();
+      unmount();
+    });
+
+    it('keeps the button position and classes', () => {
+      const {container, unmount} = render(<StatusBar isLightMode compact />);
+      const btn = masterButton(container);
+      expect(btn.className).toContain('tap-target');
+      expect(btn.className).toContain('pl-3 py-1.5 rounded-xl');
+      const row = container.querySelector('[data-statusbar] > div')!;
+      expect(row.lastElementChild!.contains(btn)).toBe(true);
       unmount();
     });
   });

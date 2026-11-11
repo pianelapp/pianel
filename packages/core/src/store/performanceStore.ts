@@ -32,8 +32,8 @@ export interface PerformanceState {
   activePresetId: string | null;
   /** Tone queued while disconnected (sent on connect) */
   pendingTone: Tone | null;
-  /** Current volume (0-100). DT1 address: 01 00 02 13 */
-  volume: number;
+  /** Current Output Volume (0-100). DT1 address: 01 00 02 13 */
+  outputVolume: number;
   /** Current tempo (BPM 20-250). DT1 address: 01 00 03 09 (2 bytes) */
   tempo: number;
   /** Metronome on/off. Read from: 01 00 01 0F */
@@ -100,8 +100,8 @@ export interface PerformanceActions {
   clearPendingTone: () => void;
   /** Set the active preset ID */
   setActivePreset: (presetId: string) => void;
-  /** Set volume (0-100) */
-  setVolume: (value: number) => void;
+  /** Set Output Volume (0-100) */
+  setOutputVolume: (value: number) => void;
   /** Set tempo (BPM 20-250) */
   setTempo: (bpm: number) => void;
   /** Set metronome on/off */
@@ -161,7 +161,7 @@ const initialState: PerformanceState = {
   dualTone2History: [],
   activePresetId: null,
   pendingTone: null,
-  volume: 100,
+  outputVolume: 100,
   tempo: 120,
   metronomeOn: false,
   metronomeBeat: 3, // 4/4
@@ -223,7 +223,7 @@ function _build() {
     setPendingTone: (tone) => set({pendingTone: tone}),
     clearPendingTone: () => set({pendingTone: null}),
     setActivePreset: (presetId) => set({activePresetId: presetId}),
-    setVolume: (value) => set({volume: value}),
+    setOutputVolume: (value) => set({outputVolume: value}),
     setTempo: (bpm) => set({tempo: bpm}),
     setMetronomeOn: (on) => set({metronomeOn: on}),
     setMetronomeBeat: (value) => set({metronomeBeat: value}),

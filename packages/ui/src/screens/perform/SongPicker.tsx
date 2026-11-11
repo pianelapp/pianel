@@ -33,7 +33,7 @@ export function SongPicker({
       onClick={e => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4">
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-xs p-4">
       <div
         data-picker-panel
         className={`w-full max-w-md rounded-xl border overflow-hidden ${

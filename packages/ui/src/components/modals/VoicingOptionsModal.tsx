@@ -90,7 +90,7 @@ function BalanceSlider({
       </div>
 
       <div className="flex items-center gap-3">
-        <span className={`${sideLabelClass} min-w-[3.5rem] text-right`}>
+        <span className={`${sideLabelClass} min-w-14 text-right`}>
           {leftLabel}
         </span>
         <div className="relative flex-1 h-7">
@@ -113,7 +113,7 @@ function BalanceSlider({
             aria-label="Balance"
           />
         </div>
-        <span className={`${sideLabelClass} min-w-[3.5rem] text-left`}>
+        <span className={`${sideLabelClass} min-w-14 text-left`}>
           {rightLabel}
         </span>
       </div>
@@ -140,8 +140,8 @@ export function VoicingOptionsModal({
   } = useVoicingMode();
 
   const overlayClass = isLightMode
-    ? 'bg-black/30 backdrop-blur-sm'
-    : 'bg-black/60 backdrop-blur-sm';
+    ? 'bg-black/30 backdrop-blur-xs'
+    : 'bg-black/60 backdrop-blur-xs';
 
   const contentClass = isLightMode
     ? 'bg-white/95 border-zinc-200 text-zinc-800'

@@ -44,7 +44,7 @@ export function ToneSlotTabs({
         className={`flex-1 py-2 rounded-md font-mono text-sm uppercase tracking-widest transition-all ${
           active
             ? isLightMode
-              ? 'bg-zinc-100 text-cyan-700 shadow-sm'
+              ? 'bg-zinc-100 text-cyan-700 shadow-xs'
               : 'bg-zinc-900 text-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.6)]'
             : isLightMode
               ? 'text-zinc-500 hover:text-zinc-800'

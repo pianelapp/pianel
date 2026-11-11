@@ -60,7 +60,7 @@ function AddSongDialog({ songs, isLightMode, onSelect, onCancel }: AddSongDialog
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-song-dialog-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs"
     >
       <div
         className={`w-[320px] max-h-[70vh] rounded-3xl p-6 shadow-2xl border flex flex-col ${
@@ -419,7 +419,7 @@ export function SetlistDetail({
             disabled={!canPerform}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
               isLightMode
-                ? 'bg-white text-cyan-700 border border-cyan-200 shadow-sm'
+                ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
                 : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50'
             }`}
           >

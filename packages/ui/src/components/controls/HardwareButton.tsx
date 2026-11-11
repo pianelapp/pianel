@@ -28,8 +28,8 @@ export function HardwareButton({
   isLightMode = false,
 }: HardwareButtonProps) {
   const baseStyles = isLightMode
-    ? 'bg-gradient-to-b from-white to-zinc-200 border-zinc-300 shadow-[0_4px_0_#a1a1aa,0_5px_10px_rgba(0,0,0,0.1)] active:shadow-[0_0px_0_#a1a1aa,0_2px_5px_rgba(0,0,0,0.1)] text-zinc-700'
-    : 'bg-gradient-to-b from-zinc-700 to-zinc-800 border-zinc-600 shadow-[0_4px_0_#18181b,0_5px_10px_rgba(0,0,0,0.5)] active:shadow-[0_0px_0_#18181b,0_2px_5px_rgba(0,0,0,0.5)] text-zinc-200';
+    ? 'bg-linear-to-b from-white to-zinc-200 border-zinc-300 shadow-[0_4px_0_#a1a1aa,0_5px_10px_rgba(0,0,0,0.1)] active:shadow-[0_0px_0_#a1a1aa,0_2px_5px_rgba(0,0,0,0.1)] text-zinc-700'
+    : 'bg-linear-to-b from-zinc-700 to-zinc-800 border-zinc-600 shadow-[0_4px_0_#18181b,0_5px_10px_rgba(0,0,0,0.5)] active:shadow-[0_0px_0_#18181b,0_2px_5px_rgba(0,0,0,0.5)] text-zinc-200';
 
   const activeStyles = active && isLightMode
     ? 'border-orange-400 bg-orange-50'

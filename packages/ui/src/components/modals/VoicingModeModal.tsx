@@ -47,7 +47,7 @@ export function VoicingModeModal({
           <button
             onClick={onClose}
             aria-label="Close"
-            className={`text-xs font-bold tracking-widest px-2 py-1 rounded ${
+            className={`text-xs font-bold tracking-widest px-2 py-1 rounded-sm ${
               isLightMode
                 ? 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100'
                 : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'

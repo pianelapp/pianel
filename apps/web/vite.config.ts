@@ -2,6 +2,7 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import tailwindcss from "@tailwindcss/vite";
 
 const uiSrc = resolve(__dirname, "../../packages/ui/src");
 const coreDist = resolve(__dirname, "../../packages/core/dist");
@@ -16,6 +17,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    tailwindcss(),
     // PWA installability + offline app shell (Tasks 8.1–8.3).
     VitePWA({
       // injectManifest: ship our own service worker (src/sw.ts) into which
@@ -78,9 +80,6 @@ export default defineConfig({
       },
     }),
   ],
-  css: {
-    postcss: resolve(__dirname, "postcss.config.cjs"),
-  },
   build: {
     outDir: "dist",
     emptyOutDir: true,

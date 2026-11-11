@@ -65,8 +65,8 @@ export function MetronomeModal({ open, onClose, isLightMode }: MetronomeModalPro
   }, [metronomeVolume, changeMetronomeParam]);
 
   const overlayClass = isLightMode
-    ? 'bg-black/30 backdrop-blur-sm'
-    : 'bg-black/60 backdrop-blur-sm';
+    ? 'bg-black/30 backdrop-blur-xs'
+    : 'bg-black/60 backdrop-blur-xs';
 
   const contentClass = isLightMode
     ? 'bg-white/95 border-zinc-200 text-zinc-800'

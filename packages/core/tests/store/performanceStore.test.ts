@@ -59,8 +59,8 @@ describe('performanceStore', () => {
       expect(usePerformanceStore.getState().toneHistory).toHaveLength(0);
     });
 
-    it('has default volume 100', () => {
-      expect(usePerformanceStore.getState().volume).toBe(100);
+    it('has default output volume 100', () => {
+      expect(usePerformanceStore.getState().outputVolume).toBe(100);
     });
 
     it('has default tempo 120', () => {
@@ -149,10 +149,10 @@ describe('performanceStore', () => {
     });
   });
 
-  describe('volume', () => {
-    it('sets volume', () => {
-      usePerformanceStore.getState().setVolume(80);
-      expect(usePerformanceStore.getState().volume).toBe(80);
+  describe('outputVolume', () => {
+    it('sets output volume', () => {
+      usePerformanceStore.getState().setOutputVolume(80);
+      expect(usePerformanceStore.getState().outputVolume).toBe(80);
     });
   });
 
@@ -269,7 +269,7 @@ describe('performanceStore', () => {
   describe('resetPerformance', () => {
     it('resets all state to defaults', () => {
       usePerformanceStore.getState().setActiveTone(concertPiano);
-      usePerformanceStore.getState().setVolume(50);
+      usePerformanceStore.getState().setOutputVolume(50);
       usePerformanceStore.getState().setTempo(200);
       usePerformanceStore.getState().setMetronomeOn(true);
       usePerformanceStore.getState().setHeadphonesConnected(true);
@@ -279,7 +279,7 @@ describe('performanceStore', () => {
       const state = usePerformanceStore.getState();
       expect(state.activeTone).toBeNull();
       expect(state.toneHistory).toHaveLength(0);
-      expect(state.volume).toBe(100);
+      expect(state.outputVolume).toBe(100);
       expect(state.tempo).toBe(120);
       expect(state.metronomeOn).toBe(false);
       expect(state.headphonesConnected).toBeNull();

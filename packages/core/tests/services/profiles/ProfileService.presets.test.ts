@@ -22,6 +22,7 @@ import {createAppSettingsStore} from '../../../src/store/appSettingsStore';
 import {createFavoritesStore} from '../../../src/store/favoritesStore';
 import {createConnectionStore} from '../../../src/store/connectionStore';
 import {inMemoryStorage} from '../../../src/store/storage';
+import {useEngineVolumeStore} from '../../../src/store/engineVolumeStore';
 import {PresetGridFullError} from '../../../src/types/profile';
 import type {Transport} from '../../../src/transport/types';
 import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerAdapter';
@@ -76,6 +77,7 @@ beforeAll(() => {
 beforeEach(async () => {
   useProfilesStore.setState({profiles: [], activeProfileId: ''});
   usePerformanceStore.getState().resetPerformance();
+  useEngineVolumeStore.getState().reset();
 });
 
 // ─── savePresetToTile ───────────────────────────────────────────
@@ -133,7 +135,7 @@ describe('ProfileService.updatePreset', () => {
   it('re-captures snapshot and optionally updates label', async () => {
     const service = await newProfileService();
     const preset = await service.savePresetToTile(0, 'Old');
-    usePerformanceStore.getState().setVolume(42);
+    useEngineVolumeStore.getState().setPosition(42);
 
     const updated = await service.updatePreset(preset.id, {label: 'New'});
     expect(updated.label).toBe('New');
@@ -156,7 +158,7 @@ describe('ProfileService.renamePreset', () => {
     const service = await newProfileService();
     const preset = await service.savePresetToTile(0, 'Before');
     // Mutate performance state so a re-capture WOULD differ.
-    usePerformanceStore.getState().setVolume(33);
+    useEngineVolumeStore.getState().setPosition(33);
     const renamed = await service.renamePreset(preset.id, 'After');
     expect(renamed.label).toBe('After');
     expect(renamed.snapshot).toEqual(preset.snapshot);

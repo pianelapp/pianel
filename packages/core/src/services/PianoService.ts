@@ -7,26 +7,59 @@ import {
   hasLeftToneSlot,
 } from '../helpers/voicingMode';
 import { clampKeyTouch } from '../helpers/keyTouch';
+import {
+  clampEngineVolumePosition,
+  engineVolumeValueForPosition,
+} from '../helpers/engineVolume';
+import type { EngineVolumeDelivery } from '../types/engineVolume';
 import type { VoicingMode, ShiftTarget } from '../types/voicingMode';
 import type { QuickToneSlot } from '../types/quickToneSlot';
+import type { MidiChannel } from '../types/midiChannelStrip';
+import { ALL_MIDI_CHANNELS } from '../types/midiChannelStrip';
+import type {
+  ChannelToneAssignmentResult,
+  ChannelToneTarget,
+} from '../types/midiChannelAssignment';
 import { usePerformanceStore } from '../store/performanceStore';
 import { useAppSettingsStore } from '../store/appSettingsStore';
+import { useConnectionStore } from '../store/connectionStore';
+import { useMidiChannelStore } from '../store/midiChannelStore';
+import { useEngineVolumeStore } from '../store/engineVolumeStore';
 import { getChordService } from './ChordService';
+import { LatestValueSender } from './volume/LatestValueSender';
 
 /** Debounce timeout for rapid input (ms). */
 const DEBOUNCE_MS = 50;
+
+export const ENGINE_VOLUME_SEND_INTERVAL_MS = 25;
 
 export class PianoService {
   private transport: Transport;
   private engine: PianoEngine | null = null;
   private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private channelToneQueue: Promise<unknown> = Promise.resolve();
+  private engineVolumeSender: LatestValueSender;
 
   constructor(transport: Transport) {
     this.transport = transport;
+    this.engineVolumeSender = new LatestValueSender({
+      intervalMs: ENGINE_VOLUME_SEND_INTERVAL_MS,
+      send: value => this.sendEngineVolume(value),
+      now: () => Date.now(),
+      setTimer: (callback, delayMs) => {
+        const id = setTimeout(callback, delayMs);
+        return () => clearTimeout(id);
+      },
+      onDelivered: () => undefined,
+      onFailed: (value, error) => {
+        console.debug(`Engine Volume send failed: vv=${value}`, error);
+      },
+    });
   }
 
   setEngine(engine: PianoEngine): void {
     this.engine = engine;
+    useEngineVolumeStore.getState().setSupported(engine.supportsEngineVolume);
   }
 
   getEngine(): PianoEngine | null {
@@ -63,8 +96,8 @@ export class PianoService {
         }
         break;
       }
-      case 'volume':
-        store.setVolume(event.value);
+      case 'outputVolume':
+        store.setOutputVolume(event.value);
         break;
       case 'tempo':
         store.setTempo(event.bpm);
@@ -177,18 +210,54 @@ export class PianoService {
     });
   }
 
-  /**
-   * Change volume.
-   * @param value 0–100
-   */
-  async changeVolume(value: number): Promise<void> {
+  async changeOutputVolume(value: number): Promise<void> {
+    const clamped = Math.max(0, Math.min(100, Math.round(value)));
+    usePerformanceStore.getState().setOutputVolume(clamped);
     if (!this.engine) return;
 
-    this.debounce('volume', async () => {
+    this.debounce('outputVolume', async () => {
       if (!this.engine) return;
-      const sysex = this.engine.buildVolumeChange(value);
+      const sysex = this.engine.buildOutputVolumeChange(clamped);
       await this.transport.send(sysex);
     });
+  }
+
+  setEngineVolume(position: number): void {
+    const clamped = clampEngineVolumePosition(position);
+    useEngineVolumeStore.getState().setPosition(clamped);
+    if (!this.canSendEngineVolume()) return;
+    this.engineVolumeSender.request(engineVolumeValueForPosition(clamped));
+  }
+
+  async resyncEngineVolume(): Promise<EngineVolumeDelivery> {
+    this.engineVolumeSender.resetDelivered();
+    const engine = this.engine;
+    if (!engine || !this.isLinkUp()) {
+      return {status: 'skipped', reason: 'not-connected'};
+    }
+    if (!engine.supportsEngineVolume) {
+      return {status: 'skipped', reason: 'unsupported'};
+    }
+    try {
+      const position = useEngineVolumeStore.getState().position;
+      this.engineVolumeSender.request(engineVolumeValueForPosition(position), {
+        force: true,
+      });
+      const outcome = await this.engineVolumeSender.settled();
+      if (outcome === null) return {status: 'skipped', reason: 'not-connected'};
+      if (outcome.status === 'unchanged') {
+        return {status: 'skipped', reason: 'unchanged'};
+      }
+      return outcome;
+    } catch (error) {
+      console.debug('Engine Volume resync failed', error);
+      return {status: 'skipped', reason: 'not-connected'};
+    }
+  }
+
+  handleLinkClosed(): void {
+    this.engineVolumeSender.cancel();
+    this.engineVolumeSender.resetDelivered();
   }
 
   /**
@@ -475,7 +544,131 @@ export class PianoService {
     }
   }
 
+  // ─── MIDI channel tone assignment ───────────────────────────
+
+  /**
+   * Place `tone` on `channel` and record what was sent.
+   *
+   * Deliberately not debounced: this is a discrete commit, and `debounce()`
+   * resolves before the send and swallows rejections, which would make both
+   * "report the failure" and "record only after sending" unimplementable.
+   * Calls are chained on a per-instance FIFO promise instead, so two
+   * assignments can never interleave their message triples and none is dropped.
+   *
+   * Never rejects — every failure mode is a returned value.
+   */
+  async assignChannelTone(
+    channel: MidiChannel,
+    tone: Tone,
+  ): Promise<ChannelToneAssignmentResult> {
+    const run = this.channelToneQueue.then(() =>
+      this.commitChannelTone(channel, tone),
+    );
+    this.channelToneQueue = run.catch(() => undefined);
+    return run;
+  }
+
+  /**
+   * Eligibility of all sixteen channels for `tone`, ascending.
+   *
+   * Derived from the same call that would build the bytes, so what the pick-up
+   * list shows and what the wire accepts cannot drift apart.
+   */
+  getChannelToneTargets(tone: Tone): ChannelToneTarget[] {
+    const engine = this.engine;
+    if (!engine) return [];
+    return ALL_MIDI_CHANNELS.map(channel => {
+      const plan = engine.planChannelToneChange(channel, tone);
+      return plan.eligible
+        ? {channel, eligible: true, reason: null}
+        : {channel, eligible: false, reason: plan.reason};
+    });
+  }
+
   // ─── Private ────────────────────────────────────────────────
+
+  private async commitChannelTone(
+    channel: MidiChannel,
+    tone: Tone,
+  ): Promise<ChannelToneAssignmentResult> {
+    try {
+      return await this.runChannelToneCommit(channel, tone);
+    } catch (err) {
+      // The contract is that failure is always a returned value. Anything
+      // thrown outside the send loop — an engine fault, an uninitialised store
+      // proxy — becomes a refusal rather than an unhandled rejection in the
+      // caller, which would leave the user with no feedback at all.
+      console.debug(
+        `Channel tone assignment failed: ch=${channel} tone=${tone.id}`,
+        err,
+      );
+      return {status: 'refused', channel, reason: 'send-failed'};
+    }
+  }
+
+  private async runChannelToneCommit(
+    channel: MidiChannel,
+    tone: Tone,
+  ): Promise<ChannelToneAssignmentResult> {
+    const engine = this.engine;
+    const connection = useConnectionStore.getState();
+    // 'stale' means two missed heartbeats — the piano is unresponsive, so the
+    // assignment cannot be delivered and must be refused rather than recorded.
+    if (!engine || connection.status !== 'connected') {
+      return {status: 'refused', channel, reason: 'not-connected'};
+    }
+
+    const plan = engine.planChannelToneChange(channel, tone);
+    if (!plan.eligible) {
+      return {status: 'refused', channel, reason: plan.reason};
+    }
+
+    // Snapshot before the first send so the record describes the link the
+    // messages actually travelled over.
+    const deviceId = connection.deviceId;
+    const connectionMark = connection.lastConnectedAt;
+
+    for (const message of plan.messages) {
+      try {
+        await this.transport.send(message);
+      } catch (err) {
+        console.debug(
+          `Channel tone assignment failed: ch=${channel} tone=${tone.id}`,
+          err,
+        );
+        return {status: 'refused', channel, reason: 'send-failed'};
+      }
+    }
+
+    useMidiChannelStore
+      .getState()
+      .record({channel, toneId: tone.id, deviceId, connectionMark});
+
+    return {status: 'applied', channel, toneId: tone.id};
+  }
+
+  private isLinkUp(): boolean {
+    try {
+      const status = useConnectionStore.getState().status;
+      return status === 'connected' || status === 'stale';
+    } catch {
+      return false;
+    }
+  }
+
+  private canSendEngineVolume(): boolean {
+    return (
+      this.engine !== null && this.engine.supportsEngineVolume && this.isLinkUp()
+    );
+  }
+
+  private async sendEngineVolume(value: number): Promise<void> {
+    const engine = this.engine;
+    if (!engine || !engine.supportsEngineVolume) {
+      throw new Error('Engine Volume is not available');
+    }
+    await this.transport.send(engine.buildEngineVolumeChange(value));
+  }
 
   private debounce(key: string, fn: () => Promise<void>): void {
     const existing = this.debounceTimers.get(key);

@@ -71,7 +71,7 @@ export function ConnectionPanelPopover({
         <Popover.Content
           sideOffset={8}
           align="end"
-          className={`z-50 w-[320px] rounded-2xl border shadow-2xl p-4 outline-none ${
+          className={`z-50 w-[320px] rounded-2xl border shadow-2xl p-4 outline-hidden ${
             isLightMode
               ? 'bg-white border-zinc-200'
               : 'bg-zinc-900 border-zinc-800'
@@ -202,7 +202,7 @@ function ConnectedPanel({
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
-              className={`text-[10px] font-bold tracking-widest px-1.5 py-0.5 rounded ${
+              className={`text-[10px] font-bold tracking-widest px-1.5 py-0.5 rounded-sm ${
                 isLightMode
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-emerald-500/20 text-emerald-300'
@@ -263,7 +263,7 @@ function StalePanel({
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
-              className={`text-[10px] font-bold tracking-widest px-1.5 py-0.5 rounded ${
+              className={`text-[10px] font-bold tracking-widest px-1.5 py-0.5 rounded-sm ${
                 isLightMode
                   ? 'bg-amber-100 text-amber-700'
                   : 'bg-amber-500/20 text-amber-300'

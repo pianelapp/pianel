@@ -7,6 +7,10 @@
 
 import {DEFAULT_PERFORMANCE_SNAPSHOT} from '../../src/types/performanceSnapshot';
 import type {PerformanceSnapshot} from '../../src/types/performanceSnapshot';
+import {CURRENT_SCHEMA_VERSION} from '../../src/types/schemaVersion';
+import {SCHEMA_HISTORY} from '../../src/helpers/schemaHistory';
+import {readFileSync} from 'fs';
+import {join} from 'path';
 
 describe('PerformanceSnapshot shape', () => {
   it('has every required field per data-model §4', () => {
@@ -54,5 +58,35 @@ describe('DEFAULT_PERFORMANCE_SNAPSHOT (defaults table — data-model §9)', () 
       null,
       null,
     ]);
+  });
+});
+
+describe('PerformanceSnapshot.volume as the Engine Volume position', () => {
+  const source = readFileSync(
+    join(__dirname, '../../src/types/performanceSnapshot.ts'),
+    'utf8',
+  );
+  const volumeDoc = (): string => {
+    const match = source.match(/\/\*\*([^]*?)\*\/\s*volume: number;/);
+    return match ? match[1] : '';
+  };
+
+  it('keeps the field named volume with a numeric type', () => {
+    expect(source).toMatch(/\n  volume: number;/);
+    expect(source).not.toMatch(/engineVolume/);
+  });
+
+  it('documents the field as the Engine Volume fader position sent as Universal Realtime Master Volume', () => {
+    const doc = volumeDoc();
+    expect(doc).toMatch(/Engine Volume/);
+    expect(doc).toMatch(/Universal Realtime Master Volume/);
+    expect(doc).toMatch(/0-100/);
+    expect(doc).not.toMatch(/01 00 02 13/);
+  });
+
+  it('does not bump the profile schema version or add a history entry', () => {
+    expect(CURRENT_SCHEMA_VERSION).toBe(3);
+    expect(SCHEMA_HISTORY[SCHEMA_HISTORY.length - 1].version).toBe(3);
+    expect(SCHEMA_HISTORY).toHaveLength(3);
   });
 });

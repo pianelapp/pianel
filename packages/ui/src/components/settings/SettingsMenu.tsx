@@ -15,8 +15,8 @@ export function SettingsMenu({
   onClose,
 }: SettingsMenuProps) {
   const overlayClass = isLightMode
-    ? 'bg-black/30 backdrop-blur-sm'
-    : 'bg-black/60 backdrop-blur-sm';
+    ? 'bg-black/30 backdrop-blur-xs'
+    : 'bg-black/60 backdrop-blur-xs';
   const contentClass = isLightMode
     ? 'bg-white border-zinc-200'
     : 'bg-zinc-900 border-zinc-800';

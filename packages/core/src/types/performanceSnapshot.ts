@@ -15,7 +15,8 @@
 import type {QuickToneSlot} from './quickToneSlot';
 
 export interface PerformanceSnapshot {
-  /** Master output volume (0-100). DT1: 01 00 02 13. */
+  /** Engine Volume fader position (0-100), sent through the curve as the
+   *  Universal Realtime Master Volume message. Never the DT1 Output Volume. */
   volume: number;
 
   /** Tempo (BPM 20-250). DT1: 01 00 03 09. */

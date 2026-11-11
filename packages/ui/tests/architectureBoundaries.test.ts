@@ -54,6 +54,16 @@ const presentation = walk(SRC)
   .map(readPresentationFile)
   .filter(f => !isServiceLayer(f.path));
 
+const SESSION_STORE_NAMES =
+  /\b(useMidiChannelStore|selectChannelAssignments|selectAssignmentsMayBeStale)\b/;
+const SESSION_STORE_OWNER = join('hooks', 'useChannelAssignment.ts');
+const SESSION_STORE_BARREL = join('store', 'index.ts');
+
+const allSourceFiles = walk(SRC).map(file => ({
+  path: relative(SRC, file),
+  source: readFileSync(file, 'utf-8'),
+}));
+
 describe('Renderer architecture boundaries', () => {
   it('imports core services into presentation only as types', () => {
     const violations = presentation.flatMap(f =>
@@ -74,6 +84,34 @@ describe('Renderer architecture boundaries', () => {
       .filter(f => DYNAMIC_SERVICE_IMPORT.test(f.source))
       .map(f => f.path);
     expect(violations).toEqual([]);
+  });
+
+  it('reaches the session channel store from the assignment hook alone', () => {
+    const importers = allSourceFiles
+      .filter(f => f.path !== SESSION_STORE_BARREL)
+      .filter(f => SESSION_STORE_NAMES.test(f.source))
+      .map(f => f.path);
+    expect(importers).toEqual([SESSION_STORE_OWNER]);
+  });
+
+  it('imports the audio-ui primitive only from the fader control and the vendored fader', () => {
+    const importers = allSourceFiles
+      .filter(f => /from\s+['"]@audio-ui\//.test(f.source))
+      .map(f => f.path)
+      .sort();
+    expect(importers).toEqual(
+      [
+        join('components', 'audio-ui', 'fader.tsx'),
+        join('components', 'controls', 'Fader.tsx'),
+      ].sort(),
+    );
+  });
+
+  it('reaches the vendored registry fader only through the fader control', () => {
+    const importers = allSourceFiles
+      .filter(f => /from\s+['"][^'"]*audio-ui\/fader['"]/.test(f.source))
+      .map(f => f.path);
+    expect(importers).toEqual([join('components', 'controls', 'Fader.tsx')]);
   });
 
   it('scans the presentation files it is meant to cover', () => {

@@ -110,7 +110,7 @@ export function AppearanceSettings({ isLightMode }: AppearanceSettingsProps) {
                 className={`flex-1 min-w-0 px-2 py-1.5 rounded-md font-bold tracking-wide text-xs uppercase whitespace-nowrap transition-all ${
                   selected
                     ? isLightMode
-                      ? 'bg-white text-cyan-700 border border-cyan-200 shadow-sm'
+                      ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
                       : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
                     : isLightMode
                       ? 'text-zinc-500 hover:text-zinc-700'

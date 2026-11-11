@@ -40,8 +40,8 @@ export function TempoModal({ open, onClose, isLightMode }: TempoModalProps) {
   }, [directInput, changeTempo]);
 
   const overlayClass = isLightMode
-    ? 'bg-black/30 backdrop-blur-sm'
-    : 'bg-black/60 backdrop-blur-sm';
+    ? 'bg-black/30 backdrop-blur-xs'
+    : 'bg-black/60 backdrop-blur-xs';
 
   const contentClass = isLightMode
     ? 'bg-white/95 border-zinc-200 text-zinc-800'
@@ -126,7 +126,7 @@ export function TempoModal({ open, onClose, isLightMode }: TempoModalProps) {
                     }
                   }}
                   placeholder={`${BPM_MIN}-${BPM_MAX}`}
-                  className={`flex-1 font-mono text-lg tabular-nums text-center rounded-lg border px-3 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/30 ${inputClass}`}
+                  className={`flex-1 font-mono text-lg tabular-nums text-center rounded-lg border px-3 py-2 transition-colors focus:outline-hidden focus:ring-2 focus:ring-cyan-500/30 ${inputClass}`}
                 />
                 <button
                   onClick={handleDirectSubmit}

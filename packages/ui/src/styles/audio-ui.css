@@ -1,0 +1,31 @@
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-muted-foreground: var(--muted-foreground);
+}
+
+.pianel-fader {
+  --background: var(--color-white);
+  --foreground: var(--color-zinc-800);
+  --card: var(--color-white);
+  --primary: #519b9f;
+  --input: var(--color-zinc-200);
+  --ring: var(--color-zinc-800);
+  --muted-foreground: var(--color-zinc-400);
+}
+
+.pianel-fader.dark {
+  --background: var(--color-zinc-950);
+  --foreground: var(--color-zinc-100);
+  --card: var(--color-zinc-900);
+  --primary: var(--color-cyan-600);
+  --input: var(--color-zinc-800);
+  --ring: var(--color-cyan-400);
+  --muted-foreground: var(--color-zinc-500);
+}

@@ -4,9 +4,15 @@ import Plus from "lucide-react/dist/esm/icons/plus";
 import Undo2 from "lucide-react/dist/esm/icons/undo-2";
 import { useTones } from "../../hooks/useTones";
 import { useFavorites } from "../../hooks/useFavorites";
+import { useConnection } from "../../hooks/useConnection";
 import { MARQUEE_MASK_IMAGE, useMarquee } from "../../hooks/useMarquee";
 import { HardwareButton } from "../../components/controls/HardwareButton";
 import { ToneActionsModal } from "../../components/modals/ToneActionsModal";
+import {
+  ChannelPickerModal,
+  type ChannelPickerMode,
+} from "../../components/modals/ChannelPickerModal";
+import type { Tone } from "@pianel/core/types/types";
 
 interface ToneSelectorProps {
   isLightMode: boolean;
@@ -29,8 +35,13 @@ export function ToneSelector({ isLightMode }: ToneSelectorProps) {
   // undo arrow is available whenever the currently-edited slot has a history.
   const canUndo = toneHistory.length > 0;
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isConnected } = useConnection();
 
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [picker, setPicker] = useState<{
+    mode: ChannelPickerMode;
+    tone: Tone;
+  } | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toneName = activeTone?.name ?? "No Tone";
@@ -88,6 +99,26 @@ export function ToneSelector({ isLightMode }: ToneSelectorProps) {
   const handleSetAsDefault = useCallback(() => {
     // Placeholder — mirrors mobile (T043). Will store default tone in appSettingsStore.
   }, []);
+
+  // Snapshotted rather than tracking `activeTone`: an inbound tone echo from
+  // the piano while the list is open must not silently retarget the assignment.
+  const openPicker = useCallback(
+    (mode: ChannelPickerMode) => {
+      if (!activeTone) return;
+      setPicker({ mode, tone: activeTone });
+    },
+    [activeTone],
+  );
+
+  const handleAssignToChannel = useCallback(
+    () => openPicker("assign"),
+    [openPicker],
+  );
+
+  const handleViewChannelAssignments = useCallback(
+    () => openPicker("review"),
+    [openPicker],
+  );
 
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-[500px]">
@@ -209,7 +240,18 @@ export function ToneSelector({ isLightMode }: ToneSelectorProps) {
         isLightMode={isLightMode}
         onToggleFavorite={handleToggleFavorite}
         onSetAsDefault={handleSetAsDefault}
+        onAssignToChannel={handleAssignToChannel}
+        canAssignToChannel={isConnected}
+        onViewChannelAssignments={handleViewChannelAssignments}
         onClose={() => setActionsOpen(false)}
+      />
+
+      <ChannelPickerModal
+        tone={picker?.tone ?? null}
+        mode={picker?.mode ?? "assign"}
+        open={picker !== null}
+        isLightMode={isLightMode}
+        onClose={() => setPicker(null)}
       />
     </div>
   );

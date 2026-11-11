@@ -54,7 +54,7 @@ export function ConnectionIndicator({ isLightMode }: ConnectionIndicatorProps) {
         type="button"
         title={titleText}
         aria-label={titleText}
-        className="flex flex-col items-center gap-0.5 outline-none"
+        className="flex flex-col items-center gap-0.5 outline-hidden"
       >
         <IconComponent
           className={`w-5 h-5 ${iconColor} ${shouldPulse ? 'animate-pulse' : ''}`}
