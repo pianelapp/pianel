@@ -5,6 +5,13 @@ automatically by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/); see
 [docs/VERSIONING.md](docs/VERSIONING.md) for the versioning rules.
 
+## [0.1.6](https://github.com/pianelapp/pianel/compare/v0.1.5...v0.1.6) (2026-11-11)
+
+
+### Features
+
+* midi controls ([#18](https://github.com/pianelapp/pianel/issues/18)) ([171c264](https://github.com/pianelapp/pianel/commit/171c26458e7cdf9067f6a127c42a89089a40172f))
+
 ## [0.1.5](https://github.com/pianelapp/pianel/compare/v0.1.4...v0.1.5) (2026-09-06)
 
 
