@@ -25,6 +25,7 @@ function fakeProfileService() {
   return {
     syncActiveTheme: jest.fn(),
     syncActiveAccidentals: jest.fn(),
+    syncActiveMasterVolumeSide: jest.fn(),
   };
 }
 
@@ -37,6 +38,7 @@ beforeEach(() => {
   actSync(() => {
     useAppSettingsStore.getState().setThemePreference('system');
     useAppSettingsStore.getState().setAccidentalPreference('sharps');
+    useAppSettingsStore.getState().setMasterVolumeSide('right');
   });
 });
 
@@ -96,6 +98,33 @@ describe('usePreferences.setAccidentals', () => {
     ).not.toThrow();
     expect(useAppSettingsStore.getState().accidentalPreference).toBe('flats');
     expect(getChordService().getUseSharps()).toBe(false);
+    hook.unmount();
+  });
+});
+
+describe('usePreferences.setMasterVolumeSide', () => {
+  it('sets the store side (live) then calls the side write-back (durable)', () => {
+    const svc = fakeProfileService();
+    setProfileService(svc as unknown as ProfileService);
+    const hook = renderHook(() => usePreferences());
+
+    actSync(() => hook.current.setMasterVolumeSide('left'));
+
+    expect(useAppSettingsStore.getState().masterVolumeSide).toBe('left');
+    expect(hook.current.masterVolumeSide).toBe('left');
+    expect(svc.syncActiveMasterVolumeSide).toHaveBeenCalledTimes(1);
+    expect(svc.syncActiveTheme).not.toHaveBeenCalled();
+    expect(svc.syncActiveAccidentals).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('skips write-back safely when no profile service is registered', () => {
+    resetProfileService();
+    const hook = renderHook(() => usePreferences());
+    expect(() =>
+      actSync(() => hook.current.setMasterVolumeSide('left')),
+    ).not.toThrow();
+    expect(useAppSettingsStore.getState().masterVolumeSide).toBe('left');
     hook.unmount();
   });
 });

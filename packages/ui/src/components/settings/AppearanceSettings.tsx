@@ -3,13 +3,88 @@ import Moon from 'lucide-react/dist/esm/icons/moon';
 import Check from 'lucide-react/dist/esm/icons/check';
 import { usePreferences } from '../../hooks/usePreferences';
 
+interface SegmentedOption<T extends string> {
+  value: T;
+  label: string;
+}
+
+interface SegmentedCardProps<T extends string> {
+  title: string;
+  groupLabel: string;
+  dataKey: `data-${string}`;
+  options: ReadonlyArray<SegmentedOption<T>>;
+  selected: T;
+  onSelect: (value: T) => void;
+  isLightMode: boolean;
+}
+
+function SegmentedCard<T extends string>({
+  title,
+  groupLabel,
+  dataKey,
+  options,
+  selected,
+  onSelect,
+  isLightMode,
+}: SegmentedCardProps<T>) {
+  return (
+    <div
+      className={`p-3.5 rounded-xl border transition-colors ${
+        isLightMode
+          ? 'bg-slate-50 border-zinc-200'
+          : 'bg-zinc-950 border-zinc-800'
+      }`}>
+      <span
+        className={`block text-base font-medium mb-2.5 ${isLightMode ? 'text-zinc-700' : 'text-zinc-300'}`}>
+        {title}
+      </span>
+      <div
+        role="group"
+        aria-label={groupLabel}
+        className={`flex gap-1 p-1 rounded-lg border transition-colors ${
+          isLightMode
+            ? 'bg-zinc-200/60 border-zinc-200'
+            : 'bg-zinc-900/60 border-zinc-800/50'
+        }`}>
+        {options.map(({ value, label }) => {
+          const isSelected = selected === value;
+          return (
+            <button
+              key={value}
+              {...{ [dataKey]: value }}
+              onClick={() => onSelect(value)}
+              aria-pressed={isSelected}
+              className={`flex-1 min-w-0 px-2 py-1.5 rounded-md font-bold tracking-wide text-xs uppercase whitespace-nowrap transition-all ${
+                isSelected
+                  ? isLightMode
+                    ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
+                    : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
+                  : isLightMode
+                    ? 'text-zinc-500 hover:text-zinc-700'
+                    : 'text-zinc-500 hover:text-zinc-300'
+              }`}>
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface AppearanceSettingsProps {
   isLightMode: boolean;
 }
 
 export function AppearanceSettings({ isLightMode }: AppearanceSettingsProps) {
-  const { themePreference, accidentalPreference, setTheme, setAccidentals } =
-    usePreferences();
+  const {
+    themePreference,
+    accidentalPreference,
+    masterVolumeSide,
+    setTheme,
+    setAccidentals,
+    setMasterVolumeSide,
+  } = usePreferences();
 
   const isSystemTheme = themePreference === 'system';
 
@@ -76,52 +151,31 @@ export function AppearanceSettings({ isLightMode }: AppearanceSettingsProps) {
         </div>
       </div>
 
-      <div
-        className={`p-3.5 rounded-xl border transition-colors ${
-          isLightMode
-            ? 'bg-slate-50 border-zinc-200'
-            : 'bg-zinc-950 border-zinc-800'
-        }`}>
-        <span
-          className={`block text-base font-medium mb-2.5 ${isLightMode ? 'text-zinc-700' : 'text-zinc-300'}`}>
-          Accidentals
-        </span>
-        <div
-          role="group"
-          aria-label="Accidental spelling"
-          className={`flex gap-1 p-1 rounded-lg border transition-colors ${
-            isLightMode
-              ? 'bg-zinc-200/60 border-zinc-200'
-              : 'bg-zinc-900/60 border-zinc-800/50'
-          }`}>
-          {(
-            [
-              { value: 'sharps', label: 'Sharps ♯' },
-              { value: 'flats', label: 'Flats ♭' },
-            ] as const
-          ).map(({ value, label }) => {
-            const selected = accidentalPreference === value;
-            return (
-              <button
-                key={value}
-                data-accidental={value}
-                onClick={() => setAccidentals(value)}
-                aria-pressed={selected}
-                className={`flex-1 min-w-0 px-2 py-1.5 rounded-md font-bold tracking-wide text-xs uppercase whitespace-nowrap transition-all ${
-                  selected
-                    ? isLightMode
-                      ? 'bg-white text-cyan-700 border border-cyan-200 shadow-xs'
-                      : 'bg-zinc-800 text-cyan-400 border border-cyan-900/50 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
-                    : isLightMode
-                      ? 'text-zinc-500 hover:text-zinc-700'
-                      : 'text-zinc-500 hover:text-zinc-300'
-                }`}>
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <SegmentedCard
+        title="Accidentals"
+        groupLabel="Accidental spelling"
+        dataKey="data-accidental"
+        options={[
+          { value: 'sharps', label: 'Sharps ♯' },
+          { value: 'flats', label: 'Flats ♭' },
+        ]}
+        selected={accidentalPreference}
+        onSelect={setAccidentals}
+        isLightMode={isLightMode}
+      />
+
+      <SegmentedCard
+        title="Volume Panel"
+        groupLabel="Volume panel side"
+        dataKey="data-volume-side"
+        options={[
+          { value: 'left', label: 'Left' },
+          { value: 'right', label: 'Right' },
+        ]}
+        selected={masterVolumeSide}
+        onSelect={setMasterVolumeSide}
+        isLightMode={isLightMode}
+      />
     </div>
   );
 }

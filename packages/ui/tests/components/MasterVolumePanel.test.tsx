@@ -309,10 +309,9 @@ describe('MasterVolumePanel', () => {
     unmount();
   });
 
-  it('anchors above the trigger at the end with a 16px collision padding', () => {
+  it('anchors above the trigger, on the right by default, with a 16px collision padding', () => {
     expect(MASTER_VOLUME_PANEL_PLACEMENT).toEqual({
       side: 'top',
-      align: 'end',
       sideOffset: 8,
       collisionPadding: 16,
     });
@@ -408,5 +407,114 @@ describe('MasterVolumePanel', () => {
     const roots = panel()!.querySelectorAll('.pianel-fader');
     roots.forEach(r => expect(r.classList.contains('dark')).toBe(true));
     unmount();
+  });
+});
+
+type Box = {left: number; top: number; width: number; height: number};
+
+function mockBox(el: Element, box: Box): void {
+  const rect = {
+    ...box,
+    x: box.left,
+    y: box.top,
+    right: box.left + box.width,
+    bottom: box.top + box.height,
+    toJSON: () => ({}),
+  };
+  jest.spyOn(el, 'getBoundingClientRect').mockReturnValue(rect as DOMRect);
+}
+
+const TRIGGER: Box = {left: 900, top: 712, width: 92, height: 32};
+
+function SideHarness({side}: {side?: 'left' | 'right'}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <MasterVolumePanel
+        open={open}
+        onOpenChange={setOpen}
+        isLightMode
+        side={side}
+        trigger={
+          <button type="button" aria-label="Master Volume">
+            trigger
+          </button>
+        }
+      />
+    </div>
+  );
+}
+
+function useViewport(width: number, height: number): void {
+  const html = document.documentElement;
+  const original = {
+    width: Object.getOwnPropertyDescriptor(html, 'clientWidth'),
+    height: Object.getOwnPropertyDescriptor(html, 'clientHeight'),
+  };
+  beforeEach(() => {
+    Object.defineProperty(html, 'clientWidth', {configurable: true, value: width});
+    Object.defineProperty(html, 'clientHeight', {configurable: true, value: height});
+  });
+  afterEach(() => {
+    if (original.width) Object.defineProperty(html, 'clientWidth', original.width);
+    else delete (html as {clientWidth?: number}).clientWidth;
+    if (original.height) Object.defineProperty(html, 'clientHeight', original.height);
+    else delete (html as {clientHeight?: number}).clientHeight;
+  });
+}
+
+async function openAt(side?: 'left' | 'right') {
+  const view = render(
+    <React.StrictMode>
+      <SideHarness side={side} />
+    </React.StrictMode>,
+  );
+  const trigger = view.container.querySelector(
+    'button[aria-label="Master Volume"]',
+  )!;
+  mockBox(trigger, TRIGGER);
+  click(trigger);
+  await flush();
+  await flush();
+  const wrapper = panel()!.parentElement as HTMLElement;
+  return {view, transform: wrapper.style.transform};
+}
+
+describe('MasterVolumePanel side', () => {
+  useViewport(1024, 768);
+
+  it('lines the panel up with the right edge of the volume button on the right side', async () => {
+    const {view, transform} = await openAt('right');
+    expect(panel()!.getAttribute('data-align')).toBe('end');
+    expect(panel()!.getAttribute('data-master-volume-side')).toBe('right');
+    expect(transform).toBe('translate(992px, 704px)');
+    view.unmount();
+  });
+
+  it('puts the panel at the far left of the screen, inside the 16px padding, on the left side', async () => {
+    const {view, transform} = await openAt('left');
+    expect(panel()!.getAttribute('data-align')).toBe('start');
+    expect(panel()!.getAttribute('data-master-volume-side')).toBe('left');
+    expect(transform).toBe(
+      `translate(${MASTER_VOLUME_PANEL_PLACEMENT.collisionPadding}px, 704px)`,
+    );
+    view.unmount();
+  });
+
+  it('sits just above the volume button on both sides', async () => {
+    const buttonTopMinusOffset = `${TRIGGER.top - MASTER_VOLUME_PANEL_PLACEMENT.sideOffset}`;
+    const y = (t: string) => t.match(/, (.+)px\)/)?.[1];
+    for (const side of ['left', 'right'] as const) {
+      const {view, transform} = await openAt(side);
+      expect(y(transform)).toBe(buttonTopMinusOffset);
+      view.unmount();
+    }
+  });
+
+  it('defaults to the right side', async () => {
+    const {view} = await openAt();
+    expect(panel()!.getAttribute('data-align')).toBe('end');
+    expect(panel()!.getAttribute('data-master-volume-side')).toBe('right');
+    view.unmount();
   });
 });

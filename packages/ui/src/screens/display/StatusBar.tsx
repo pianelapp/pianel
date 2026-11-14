@@ -10,6 +10,7 @@ import {
 import { usePiano } from '../../hooks/usePiano';
 import { useMasterVolume } from '../../hooks/useMasterVolume';
 import { useVoicingMode } from '../../hooks/useVoicingMode';
+import { usePreferences } from '../../hooks/usePreferences';
 import { TempoModal } from '../../components/modals/TempoModal';
 import { MetronomeModal } from '../../components/modals/MetronomeModal';
 import { KeyTouchModal } from '../../components/modals/KeyTouchModal';
@@ -36,6 +37,7 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
   } = usePiano();
   const { output, engine } = useMasterVolume();
   const { mode, changeMode } = useVoicingMode();
+  const { masterVolumeSide } = usePreferences();
   const engineVolumeHintId = useId();
   const [showMasterVolume, setShowMasterVolume] = useState(false);
   const [showTempo, setShowTempo] = useState(false);
@@ -127,6 +129,7 @@ export function StatusBar({ isLightMode, compact = false }: StatusBarProps) {
           open={showMasterVolume}
           onOpenChange={setShowMasterVolume}
           isLightMode={isLightMode}
+          side={masterVolumeSide}
           trigger={
             <button
               type="button"
