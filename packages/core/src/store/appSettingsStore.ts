@@ -13,11 +13,17 @@ import {persist, createJSONStorage} from 'zustand/middleware';
 import type {StateStorage} from './storage';
 import type {ToneSlot} from '../types/voicingMode';
 import type {QuickToneSlot} from '../types/quickToneSlot';
+import {
+  DEFAULT_MASTER_VOLUME_SIDE,
+  type MasterVolumeSide,
+} from '../types/masterVolumeSide';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
 /** Sharp/flat spelling preference for chord and pitch-class display. */
 export type AccidentalPreference = 'sharps' | 'flats';
+
+export type {MasterVolumeSide};
 
 /** Three quick-tone slots. Each is a full voicing-mode snapshot or null. */
 export type QuickToneSlotsTuple = [
@@ -40,6 +46,7 @@ export interface AppSettingsState {
   /** Display preference for sharps vs flats in chord/pitch names. Default: 'sharps'.
    *  Consumed by `ChordService` via `setUseSharps(accidentalPreference === 'sharps')`. */
   accidentalPreference: AccidentalPreference;
+  masterVolumeSide: MasterVolumeSide;
   /** Which tone-slot the UI is currently editing (Tone 1/Upper = 'right', Tone 2/Lower = 'left').
    *  Single/Twin always force 'right'. Consumed by `useTones`/`useVoicingMode` so the
    *  Library, slot tabs, and tone steppers stay synchronized. */
@@ -63,6 +70,7 @@ export interface AppSettingsActions {
   setQuickToneSlot: (slot: 0 | 1 | 2, value: QuickToneSlot | null) => void;
   /** Set the sharp/flat display preference */
   setAccidentalPreference: (pref: AccidentalPreference) => void;
+  setMasterVolumeSide: (side: MasterVolumeSide) => void;
   /** Set the slot the UI is currently editing. */
   setActiveToneSlot: (slot: ToneSlot) => void;
   /** Set the profile id auto-loaded at app boot. */
@@ -82,6 +90,7 @@ function _build(storage: StateStorage) {
         defaultPresetId: null,
         quickToneSlots: [null, null, null] as QuickToneSlotsTuple,
         accidentalPreference: 'sharps',
+        masterVolumeSide: DEFAULT_MASTER_VOLUME_SIDE,
         activeToneSlot: 'right',
         bootProfileId: null,
 
@@ -96,6 +105,7 @@ function _build(storage: StateStorage) {
             return {quickToneSlots: slots};
           }),
         setAccidentalPreference: (pref) => set({accidentalPreference: pref}),
+        setMasterVolumeSide: (side) => set({masterVolumeSide: side}),
         setActiveToneSlot: (slot) => set({activeToneSlot: slot}),
         setBootProfileId: (profileId) => set({bootProfileId: profileId}),
       }),

@@ -43,7 +43,8 @@ export {
 export type {PerformanceSnapshot} from '../types/performanceSnapshot';
 export {DEFAULT_PERFORMANCE_SNAPSHOT} from '../types/performanceSnapshot';
 
-export type {ThemePreference, AccidentalPreference, AppSettingsState, AppSettingsActions} from './appSettingsStore';
+export type {ThemePreference, AccidentalPreference, MasterVolumeSide, AppSettingsState, AppSettingsActions} from './appSettingsStore';
+export {DEFAULT_MASTER_VOLUME_SIDE, toMasterVolumeSide} from '../types/masterVolumeSide';
 export {useAppSettingsStore, createAppSettingsStore} from './appSettingsStore';
 
 export type {CursorState, CursorActions, CursorAnchor} from './cursorStore';

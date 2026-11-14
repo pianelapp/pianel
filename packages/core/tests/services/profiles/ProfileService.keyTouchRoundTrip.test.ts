@@ -8,6 +8,7 @@ import {createAppSettingsStore} from '../../../src/store/appSettingsStore';
 import {createFavoritesStore} from '../../../src/store/favoritesStore';
 import {createConnectionStore} from '../../../src/store/connectionStore';
 import {inMemoryStorage} from '../../../src/store/storage';
+import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 import type {Transport} from '../../../src/transport/types';
 import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerAdapter';
 
@@ -88,16 +89,16 @@ beforeEach(() => {
   usePerformanceStore.setState({keyTouch: undefined});
 });
 
-describe('v2 profile re-saved from a v3 build', () => {
-  it('stamps v3 on import even before anything is edited', async () => {
+describe('v2 profile re-saved from a current build', () => {
+  it('stamps the current version on import even before anything is edited', async () => {
     const service = build(v2File());
     await service.importProfile();
     const stored = useProfilesStore.getState().profiles[0];
-    expect(stored.schemaVersion).toBe(3);
+    expect(stored.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(stored.defaultState.keyTouch).toBeUndefined();
   });
 
-  it('writes schemaVersion 3 and no keyTouch key when the piano never reported a curve', async () => {
+  it('writes the current schemaVersion and no keyTouch key when the piano never reported a curve', async () => {
     const service = build(v2File());
     await service.importProfile();
     const stored = useProfilesStore.getState().profiles[0];
@@ -105,7 +106,7 @@ describe('v2 profile re-saved from a v3 build', () => {
     await service.exportProfile(stored.id);
     const file = JSON.parse(saved[0]);
 
-    expect(file.schemaVersion).toBe(3);
+    expect(file.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect('keyTouch' in file.profile.defaultState).toBe(false);
     expect('keyTouch' in file.profile.presets[0].snapshot).toBe(false);
   });
@@ -121,7 +122,7 @@ describe('v2 profile re-saved from a v3 build', () => {
     await service.exportProfile(stored.id);
     const file = JSON.parse(saved[0]);
 
-    expect(file.schemaVersion).toBe(3);
+    expect(file.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(file.profile.defaultState.keyTouch).toBe(4);
   });
 
