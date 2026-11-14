@@ -1,7 +1,15 @@
 import * as Popover from '@radix-ui/react-popover';
 import Pin from 'lucide-react/dist/esm/icons/pin';
-import { useId, useRef, useState, type ReactElement } from 'react';
+import {
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+  type RefObject,
+} from 'react';
 import { useMasterVolume } from '../hooks/useMasterVolume';
+import type { MasterVolumeSide } from '../store';
 import { Fader, type FaderMarkSpec } from './controls/Fader';
 
 type StripKind = 'engine' | 'output';
@@ -13,6 +21,25 @@ interface MasterVolumePanelProps {
   onOpenChange: (open: boolean) => void;
   isLightMode: boolean;
   trigger: ReactElement;
+  side?: MasterVolumeSide;
+}
+
+interface Measurable {
+  getBoundingClientRect(): DOMRect;
+}
+
+function rectFrom(left: number, top: number, width: number, height: number): DOMRect {
+  return {
+    x: left,
+    y: top,
+    left,
+    top,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height,
+    toJSON: () => ({ left, top, width, height }),
+  } as DOMRect;
 }
 
 export const MASTER_VOLUME_MARKS: ReadonlyArray<FaderMarkSpec> = [
@@ -25,7 +52,6 @@ export const MASTER_VOLUME_MARKS: ReadonlyArray<FaderMarkSpec> = [
 
 export const MASTER_VOLUME_PANEL_PLACEMENT = {
   side: 'top',
-  align: 'end',
   sideOffset: 8,
   collisionPadding: 16,
 } as const;
@@ -124,9 +150,22 @@ export function MasterVolumePanel({
   onOpenChange,
   isLightMode,
   trigger,
+  side = 'right',
 }: MasterVolumePanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const screenLeftRef = useMemo<RefObject<Measurable>>(
+    () => ({
+      current: {
+        getBoundingClientRect: () => {
+          const button = triggerRef.current?.getBoundingClientRect();
+          const width = document.documentElement.clientWidth;
+          return rectFrom(0, button?.top ?? 0, width, button?.height ?? 0);
+        },
+      },
+    }),
+    [],
+  );
   const [pins, setPins] = useState<PinState>(UNPINNED);
   const pinsRef = useRef<PinState>(UNPINNED);
   const [collapsed, setCollapsed] = useState(false);
@@ -165,14 +204,22 @@ export function MasterVolumePanel({
       <Popover.Trigger ref={triggerRef} asChild>
         {trigger}
       </Popover.Trigger>
+      {side === 'left' && (
+        <Popover.Anchor
+          key={open ? 'open' : 'closed'}
+          virtualRef={screenLeftRef}
+        />
+      )}
       <Popover.Portal>
         <Popover.Content
           ref={contentRef}
           role="dialog"
           aria-label="Master Volume"
           data-collapsed={collapsed ? '' : undefined}
+          data-master-volume-side={side}
           tabIndex={-1}
           {...MASTER_VOLUME_PANEL_PLACEMENT}
+          align={side === 'left' ? 'start' : 'end'}
           onOpenAutoFocus={event => {
             event.preventDefault();
             contentRef.current?.focus();

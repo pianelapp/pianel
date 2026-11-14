@@ -84,9 +84,15 @@ describe('PerformanceSnapshot.volume as the Engine Volume position', () => {
     expect(doc).not.toMatch(/01 00 02 13/);
   });
 
-  it('does not bump the profile schema version or add a history entry', () => {
-    expect(CURRENT_SCHEMA_VERSION).toBe(3);
-    expect(SCHEMA_HISTORY[SCHEMA_HISTORY.length - 1].version).toBe(3);
-    expect(SCHEMA_HISTORY).toHaveLength(3);
+  it('needs no schema migration: no history entry touches snapshot.volume', () => {
+    const touched = SCHEMA_HISTORY.flatMap(entry => [
+      ...(entry.added ?? []),
+      ...(entry.removed ?? []),
+      ...(entry.changed ?? []),
+    ]);
+    expect(touched.filter(path => /snapshot\.volume$|defaultState\.volume$/.test(path))).toEqual([]);
+    expect(SCHEMA_HISTORY[SCHEMA_HISTORY.length - 1].version).toBe(
+      CURRENT_SCHEMA_VERSION,
+    );
   });
 });

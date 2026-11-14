@@ -2,7 +2,11 @@ import {useCallback} from 'react';
 import {useAppSettingsStore} from '../store';
 import {getProfileService} from './useProfiles';
 import {getChordService} from '@pianel/core/services/ChordService';
-import type {ThemePreference, AccidentalPreference} from '../store';
+import type {
+  ThemePreference,
+  AccidentalPreference,
+  MasterVolumeSide,
+} from '../store';
 
 export interface PreferencesApi {
   themePreference: ThemePreference;
@@ -11,6 +15,8 @@ export interface PreferencesApi {
   setTheme(pref: ThemePreference): void;
   /** Set accidentals: store (live) + write-back (durable) + ChordService sync. */
   setAccidentals(pref: AccidentalPreference): void;
+  masterVolumeSide: MasterVolumeSide;
+  setMasterVolumeSide(side: MasterVolumeSide): void;
 }
 
 /**
@@ -33,6 +39,10 @@ export function usePreferences(): PreferencesApi {
   const setAccidentalPreference = useAppSettingsStore(
     s => s.setAccidentalPreference,
   );
+  const masterVolumeSide = useAppSettingsStore(s => s.masterVolumeSide);
+  const setStoreMasterVolumeSide = useAppSettingsStore(
+    s => s.setMasterVolumeSide,
+  );
 
   const setTheme = useCallback(
     (pref: ThemePreference) => {
@@ -51,5 +61,20 @@ export function usePreferences(): PreferencesApi {
     [setAccidentalPreference],
   );
 
-  return {themePreference, accidentalPreference, setTheme, setAccidentals};
+  const setMasterVolumeSide = useCallback(
+    (side: MasterVolumeSide) => {
+      setStoreMasterVolumeSide(side);
+      getProfileService()?.syncActiveMasterVolumeSide();
+    },
+    [setStoreMasterVolumeSide],
+  );
+
+  return {
+    themePreference,
+    accidentalPreference,
+    setTheme,
+    setAccidentals,
+    masterVolumeSide,
+    setMasterVolumeSide,
+  };
 }

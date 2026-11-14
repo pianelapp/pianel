@@ -1,3 +1,4 @@
+import type {MasterVolumeSide} from './masterVolumeSide';
 import type {PerformanceSnapshot} from './performanceSnapshot';
 import {CURRENT_SCHEMA_VERSION} from './schemaVersion';
 import type {SchemaVersion} from './schemaVersion';
@@ -33,6 +34,8 @@ export interface Profile {
   theme: 'system' | 'light' | 'dark';
 
   accidentals: 'sharps' | 'flats';
+
+  masterVolumeSide?: MasterVolumeSide;
 
   favorites: FavoriteRef[];
 

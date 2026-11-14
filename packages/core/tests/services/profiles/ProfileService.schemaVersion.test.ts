@@ -17,6 +17,7 @@ import type {FilePickerAdapter} from '../../../src/services/profiles/FilePickerA
 import {CURRENT_SCHEMA_VERSION} from '../../../src/types/schemaVersion';
 import {OLDEST_SCHEMA_VERSION} from '../../../src/helpers/schemaHistory';
 
+const PRE_VOLUME_SIDE_VERSION = 3;
 const PRE_KEY_TOUCH_VERSION = 2;
 
 class FakeTransport implements Transport {
@@ -204,6 +205,36 @@ describe('schemaVersion validation', () => {
     expect(stored.defaultState.voiceModeSnapshot).toEqual(
       original.defaultState.voiceModeSnapshot,
     );
+  });
+
+  it('imports a v3 profile written before the volume panel side existed, on the right side', async () => {
+    const original = {...validProfile(), schemaVersion: PRE_VOLUME_SIDE_VERSION};
+    const file = {
+      schemaVersion: PRE_VOLUME_SIDE_VERSION,
+      exportedAt: '2026-01-01T00:00:00Z',
+      profile: original,
+    };
+    const service = buildService(JSON.stringify(file));
+    const result = await service.importProfile();
+
+    expect(result.kind).toBe('imported');
+    const stored = useProfilesStore.getState().profiles[0];
+    expect(stored.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(stored.masterVolumeSide).toBe('right');
+    expect(stored.name).toBe(original.name);
+    expect(stored.defaultState.volume).toBe(original.defaultState.volume);
+  });
+
+  it('keeps a left volume panel side through a current-version import', async () => {
+    const file = {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      exportedAt: '2026-01-01T00:00:00Z',
+      profile: {...validProfile(), masterVolumeSide: 'left'},
+    };
+    const service = buildService(JSON.stringify(file));
+    await service.importProfile();
+
+    expect(useProfilesStore.getState().profiles[0].masterVolumeSide).toBe('left');
   });
 
   it('keeps a captured key touch curve through a current-version import', async () => {

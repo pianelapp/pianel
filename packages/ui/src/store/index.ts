@@ -24,7 +24,7 @@ export type {
   Preset, Profile, ProfileExportFile, FavoriteRef,
   PerformanceSnapshot,
   ProfilesState, ProfilesActions,
-  ThemePreference, AccidentalPreference, AppSettingsState, AppSettingsActions,
+  ThemePreference, AccidentalPreference, MasterVolumeSide, AppSettingsState, AppSettingsActions,
 } from '@pianel/core/store';
 
 export {

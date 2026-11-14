@@ -46,7 +46,7 @@ function savedProfile(): Profile {
   return {
     id: '1-abcdef12',
     name: 'Bar Gig',
-    schemaVersion: 3,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: 'system',
     accidentals: 'sharps',
     favorites: [],
@@ -265,7 +265,7 @@ describe('previously saved profiles stay untouched', () => {
 
     const loaded = useProfilesStore.getState().profiles[0];
     expect(loaded).toEqual(profile);
-    expect(loaded.schemaVersion).toBe(3);
+    expect(loaded.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(snapshotVolumes(loaded)).toEqual(SAVED_VOLUMES);
 
     const stored = JSON.parse(storage.getItem(PROFILES_KEY) as string);
@@ -298,7 +298,7 @@ describe('previously saved profiles stay untouched', () => {
 
   it('an imported profile file keeps its schema version and snapshot volumes, and exports them unchanged', async () => {
     const file: ProfileExportFile = {
-      schemaVersion: 3 as typeof CURRENT_SCHEMA_VERSION,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
       exportedAt: NOW,
       profile: savedProfile(),
     };
@@ -308,12 +308,12 @@ describe('previously saved profiles stay untouched', () => {
     const result = await rig.profiles.importProfile();
     expect(result.kind).toBe('imported');
     const imported = (result as {kind: 'imported'; profile: Profile}).profile;
-    expect(imported.schemaVersion).toBe(3);
+    expect(imported.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(snapshotVolumes(imported)).toEqual(SAVED_VOLUMES);
 
     await rig.profiles.exportProfile(imported.id);
     const exported = JSON.parse(saved[0]) as ProfileExportFile;
-    expect(exported.schemaVersion).toBe(3);
+    expect(exported.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(snapshotVolumes(exported.profile)).toEqual(SAVED_VOLUMES);
 
     await settle(rig.presets.applySnapshot(imported.songs[0].scenes[0].snapshot), 3000);
