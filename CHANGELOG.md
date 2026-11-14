@@ -5,6 +5,13 @@ automatically by [release-please](https://github.com/googleapis/release-please)
 from [Conventional Commits](https://www.conventionalcommits.org/); see
 [docs/VERSIONING.md](docs/VERSIONING.md) for the versioning rules.
 
+## [0.1.7](https://github.com/pianelapp/pianel/compare/v0.1.6...v0.1.7) (2026-11-14)
+
+
+### Features
+
+* volume panel side ([#20](https://github.com/pianelapp/pianel/issues/20)) ([3da4212](https://github.com/pianelapp/pianel/commit/3da421238b481f4e076669edb0bc32fdbdfd9c6e))
+
 ## [0.1.6](https://github.com/pianelapp/pianel/compare/v0.1.5...v0.1.6) (2026-11-11)
 
 
