@@ -83,6 +83,34 @@ describe('schema history', () => {
     });
   });
 
+  it('adds the volume panel side without disturbing the rest of a v3 profile', () => {
+    const profile = {
+      id: '1234567890-abcdefgh',
+      name: 'Pre volume side',
+      theme: 'dark',
+      accidentals: 'flats',
+      presets: [{id: 'p1', label: 'Warm', snapshot: {volume: 70, keyTouch: 4}}],
+      songs: [{id: 's1', name: 'Opener'}],
+    };
+    const migrated = migrateToCurrent(
+      {schemaVersion: 3, exportedAt: 'x', profile},
+      3,
+    );
+
+    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(migrated.profile).toEqual({
+      ...profile,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+    });
+    expect('masterVolumeSide' in (migrated.profile as object)).toBe(false);
+  });
+
+  it('records the volume panel side as an addition in version 4', () => {
+    expect(findSchemaVersionEntry(4)?.added).toEqual([
+      'profile.masterVolumeSide',
+    ]);
+  });
+
   it('finds an entry by version and misses on an unknown one', () => {
     expect(findSchemaVersionEntry(OLDEST_SCHEMA_VERSION)?.version).toBe(
       OLDEST_SCHEMA_VERSION,

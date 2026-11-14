@@ -13,6 +13,7 @@ import {
   DEFAULT_PERFORMANCE_SNAPSHOT,
   type PerformanceSnapshot,
 } from '../../types/performanceSnapshot';
+import {toMasterVolumeSide} from '../../types/masterVolumeSide';
 import {CURRENT_SCHEMA_VERSION} from '../../types/schemaVersion';
 import {
   DuplicateProfileNameError,
@@ -80,6 +81,7 @@ export class ProfileService {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       theme: settings.themePreference,
       accidentals: settings.accidentalPreference,
+      masterVolumeSide: settings.masterVolumeSide,
       favorites: snapshotFavorites(),
       presets: [],
       songs: [],
@@ -108,6 +110,7 @@ export class ProfileService {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       theme: useAppSettingsStore.getState().themePreference,
       accidentals: useAppSettingsStore.getState().accidentalPreference,
+      masterVolumeSide: useAppSettingsStore.getState().masterVolumeSide,
       favorites: snapshotFavorites(),
       presets: store.profiles.find(p => p.id === store.activeProfileId)?.presets
         ? [...(store.profiles.find(p => p.id === store.activeProfileId)?.presets ?? [])]
@@ -150,6 +153,7 @@ export class ProfileService {
       name: newName,
       theme: useAppSettingsStore.getState().themePreference,
       accidentals: useAppSettingsStore.getState().accidentalPreference,
+      masterVolumeSide: useAppSettingsStore.getState().masterVolumeSide,
       favorites: snapshotFavorites(),
       defaultState: this.presetService.captureSnapshot(),
       updatedAt: new Date().toISOString(),
@@ -211,6 +215,9 @@ export class ProfileService {
 
     useAppSettingsStore.getState().setThemePreference(profile.theme);
     useAppSettingsStore.getState().setAccidentalPreference(profile.accidentals);
+    useAppSettingsStore
+      .getState()
+      .setMasterVolumeSide(toMasterVolumeSide(profile.masterVolumeSide));
 
     replaceFavorites(profile.favorites);
 
@@ -273,6 +280,18 @@ export class ProfileService {
     const next: Profile = {
       ...active,
       accidentals: useAppSettingsStore.getState().accidentalPreference,
+      updatedAt: new Date().toISOString(),
+    };
+    store.updateProfileInList(next);
+  }
+
+  syncActiveMasterVolumeSide(): void {
+    const store = useProfilesStore.getState();
+    const active = store.profiles.find(p => p.id === store.activeProfileId);
+    if (!active) return;
+    const next: Profile = {
+      ...active,
+      masterVolumeSide: useAppSettingsStore.getState().masterVolumeSide,
       updatedAt: new Date().toISOString(),
     };
     store.updateProfileInList(next);
@@ -543,6 +562,7 @@ export function applyExportFileDefaults(
     schemaVersion: CURRENT_SCHEMA_VERSION,
     theme: p.theme ?? 'system',
     accidentals: p.accidentals ?? 'sharps',
+    masterVolumeSide: toMasterVolumeSide(p.masterVolumeSide),
     favorites: Array.isArray(p.favorites) ? p.favorites : [],
     presets: Array.isArray(p.presets)
       ? p.presets.map(applyPresetDefaults)

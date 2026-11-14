@@ -15,6 +15,7 @@ beforeEach(() => {
   actSync(() => {
     useAppSettingsStore.getState().setThemePreference('light');
     useAppSettingsStore.getState().setAccidentalPreference('sharps');
+    useAppSettingsStore.getState().setMasterVolumeSide('right');
   });
 });
 
@@ -123,6 +124,42 @@ describe('AppearanceSettings', () => {
         'aria-pressed',
       ),
     ).toBe('true');
+    unmount();
+  });
+
+  it('offers a Left / Right choice for the volume panel, Right by default', () => {
+    const { container, unmount } = render(<AppearanceSettings isLightMode />);
+    const wrapper = query(container, '[data-appearance]');
+    expect(wrapper.textContent).toContain('Volume Panel');
+    const group = query(container, '[role="group"][aria-label="Volume panel side"]');
+    const options = Array.from(group.querySelectorAll('button'));
+    expect(options.map(b => b.getAttribute('data-volume-side'))).toEqual([
+      'left',
+      'right',
+    ]);
+    expect(options.map(b => b.textContent)).toEqual(['Left', 'Right']);
+    expect(
+      query(container, '[data-volume-side="right"]').getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(
+      query(container, '[data-volume-side="left"]').getAttribute('aria-pressed'),
+    ).toBe('false');
+    unmount();
+  });
+
+  it('stores the volume panel side chosen from its segmented control', () => {
+    const { container, unmount } = render(<AppearanceSettings isLightMode />);
+    click(query(container, '[data-volume-side="left"]'));
+    expect(useAppSettingsStore.getState().masterVolumeSide).toBe('left');
+    expect(
+      query(container, '[data-volume-side="left"]').getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(
+      query(container, '[data-volume-side="right"]').getAttribute('aria-pressed'),
+    ).toBe('false');
+
+    click(query(container, '[data-volume-side="right"]'));
+    expect(useAppSettingsStore.getState().masterVolumeSide).toBe('right');
     unmount();
   });
 

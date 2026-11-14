@@ -32,6 +32,13 @@ export const SCHEMA_HISTORY: readonly SchemaVersionEntry[] = [
       'profile.songs[].scenes[].snapshot.keyTouch',
       'profile.setlists[].entries[].override.scenes[].snapshot.keyTouch',
     ],
+    migrate: file => file,
+  },
+  {
+    version: 4,
+    notes:
+      'Master Volume panel side — the profile remembers whether the volume panel opens on the left or the right. Additive and optional: a v3 profile simply omits it, and loading then uses the right side.',
+    added: ['profile.masterVolumeSide'],
   },
 ];
 
